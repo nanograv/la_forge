@@ -67,8 +67,8 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
             else:
                 if Tspan is None:
-                    T = get_Tspan(pulsar, datadir=partimdir,
-                                  filepath = chaindir['free_spec_chaindir'])
+                    T = get_Tspan(pulsar, datadir=partimdir)
+                                  # filepath = chaindir['free_spec_chaindir'])
                 else:
                     T = Tspan
                 F = None

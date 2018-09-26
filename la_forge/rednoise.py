@@ -22,15 +22,15 @@ def determine_if_limit(vals, threshold=0.1, minval=-10):
         return True
 
 
-def get_Tspan(pulsar, filepath=None, fourier_components=None):
+def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
     if filepath:
         if os.path.isfile(filepath):
             data = np.loadtxt(filepath, dtype='str')
             psrs = list(data[:,0])
             return float(data[psrs.index(pulsar), 1])
         # elif os.path.isdir(filepath):
-        else:
-            datadir = '/Users/hazboun/GoogleDrive/NANOGrav_Detection/data/nanograv/11yr_v2/'
+
+    elif datadir is not None:
             return utils.get_Tspan(pulsar, datadir)
     elif fourier_components is not None:
         return 1/np.amin(fourier_components)
@@ -39,7 +39,7 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None):
 
 def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            show_figure=False, rn_type='', plot_2d_hist=True,
-                           verbose=True):
+                           verbose=True, Tspan=None, partimdir=None):
 
     secperyr = 365.25*24*3600
     fyr = 1./secperyr
@@ -59,10 +59,18 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         if pulsar + rn_type +  '_log10_rho_0' in c.params:
             if os.path.isfile(chaindir['free_spec_chaindir'] + '/fourier_components.txt'):
                 F = np.loadtxt(chaindir['free_spec_chaindir'] + '/fourier_components.txt')
-                T = get_Tspan(pulsar, fourier_components=F)
+                if Tspan is None:
+                    T = get_Tspan(pulsar, fourier_components=F,
+                                  datadir=partimdir)
+                else:
+                    T = Tspan
 
             else:
-                T = get_Tspan(pulsar, filepath = chaindir['free_spec_chaindir'])
+                if Tspan is None:
+                    T = get_Tspan(pulsar, datadir=partimdir,
+                                  filepath = chaindir['free_spec_chaindir'])
+                else:
+                    T = Tspan
                 F = None
 
             if verbose:
@@ -104,10 +112,18 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         elif pulsar + rn_type + '_alphas_0' in c.params:
             if os.path.isfile(chaindir['tproc_chaindir'] + '/fourier_components.txt'):
                 F = np.loadtxt(chaindir['tproc_chaindir'] + '/fourier_components.txt')
-                T = get_Tspan(pulsar, fourier_components=F)
-
+                if Tspan is None:
+                    T = get_Tspan(pulsar, fourier_components=F,
+                                  datadir=partimdir)
+                else:
+                    T = Tspan
             else:
-                T = get_Tspan(pulsar, filepath = chaindir['free_spec_chaindir'])
+                if Tspan is None:
+                    T = get_Tspan(pulsar, datadir=partimdir,
+                                  filepath = chaindir['free_spec_chaindir'])
+                else:
+                    T = Tspan
+
                 F = None
 
             # sort data in descending order of lnlike
@@ -145,10 +161,14 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                 ax1_ylim_tp = axs[1].get_ylim()
 
         else:
-            T = get_Tspan(pulsar, filepath = chaindir['plaw_chaindir'])
-
+            if Tspan is None:
+                T = get_Tspan(pulsar, datadir=partimdir)
+                              # filepath = chaindir['plaw_chaindir'])
+            else:
+                T = Tspan
 
             log10_A, gamma = utils.get_noise_params(c, pulsar)
+
             if verbose:
                 print('Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
                 print('Red noise parameters: log10_A = {0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))

@@ -69,7 +69,9 @@ class Core(object):
         if not isinstance(names_list,list):
             raise ValueError('Names must be in list form.')
         if len(names_list)!= len(self.params):
-            raise ValueError('Must supply same number of names as parameters.'
-                             '{0} names supplied '.format(len(names_list))
-                             'for {0} parameters.'.format(len(self.params)))
+            err_msg = 'Must supply same number of names as parameters.'
+            err_msg += '{0} names supplied '.format(len(names_list))
+            err_msg += 'for {0} parameters.'.format(len(self.params))
+            raise ValueError(err_msg)
+            
         self.fancy_par_names = names_list

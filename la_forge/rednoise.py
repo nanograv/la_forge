@@ -198,16 +198,16 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     axs[0].set_xlabel('Frequency (Hz)')
     axs[0].grid(which='both', ls='--')
     axs[0].set_xscale('log')
-    axs[0].set_ylim((-10,-5))
-
-    axs[1].set_title('Red Noise Amplitude Posterior: ' + pulsar)
-    axs[1].set_xlabel(pulsar + '_gamma')
-    axs[1].set_ylabel(pulsar + '_log10_A')
-    axs[1].set_xlim((0,7))
-    if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
-        ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
-        ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
-        axs[1].set_ylim((ymin,ymax))
+    axs[0].set_ylim((-10,-2))
+    if plot_2d_hist:
+        axs[1].set_title('Red Noise Amplitude Posterior: ' + pulsar)
+        axs[1].set_xlabel(pulsar + '_gamma')
+        axs[1].set_ylabel(pulsar + '_log10_A')
+        axs[1].set_xlim((0,7))
+        if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
+            ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
+            ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
+            axs[1].set_ylim((ymin,ymax))
 
     plt.tight_layout()
 

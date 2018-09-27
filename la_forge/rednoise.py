@@ -89,7 +89,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                         f2.append((n+1)/T)
                     else:
                         f2.append(F[n])
-                    x = c.get_param_confint(paramname, onesided=True, interval=0.95)[0]
+                    x = c.get_param_confint(paramname, onesided=True, interval=95)[0]
                     ul.append(x)
                 else:
                     if F is None:
@@ -97,7 +97,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                     else:
                         f1.append(F[n])
                     median.append(c.get_param_median(paramname))
-                    x,y = c.get_param_confint(paramname, onesided=False, interval=0.95)
+                    x,y = c.get_param_confint(paramname, onesided=False, interval=95)
                     minval.append(x)
                     maxval.append(y)
 

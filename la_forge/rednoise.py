@@ -40,7 +40,7 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
 def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            show_figure=False, rn_type='', plot_2d_hist=True,
                            verbose=True, Tspan=None, partimdir=None,
-                           title_suffix='', freq_yr=1):
+                           title_suffix='', freq_yr=1, plotpath = None):
 
     secperyr = 365.25*24*3600
     fyr = 1./secperyr
@@ -216,11 +216,11 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
     plt.tight_layout()
 
-#    filename = 'figures/noiseplots_{0}_{1}.pdf'.format(dataset, pulsar)
-    filename = 'figures/noiseplots_{0}_{1}.png'.format('11yr', pulsar)
-
     if show_figure:
         plt.show()
     else:
-        plt.savefig(filename)
+        if plotpath is None:
+            plotpath = './{0}_red_noise_model_posteriors.png'.format(pulsar)
+
+        plt.savefig(plotpath, bbox_inches='tight')
         print('Figure saved to ' + filename)

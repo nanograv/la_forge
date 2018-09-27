@@ -40,7 +40,7 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
 def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            show_figure=False, rn_type='', plot_2d_hist=True,
                            verbose=True, Tspan=None, partimdir=None,
-                           title_suffix=''):
+                           title_suffix='', freq_yr=1):
 
     secperyr = 365.25*24*3600
     fyr = 1./secperyr
@@ -190,8 +190,12 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 #                          bins=50, normed=True)
 #            axs[1].plot(gamma, log10_A, marker='x', markersize=10, color='k')
 
-    axs[0].axvline(1./secperyr, color='0.3', ls='--')
-    # axs[0].axvline(2./secperyr, color='0.3', ls='--')
+    if isinstance(freq_yr, int):
+        for ln in [ii+1. for ii in range(freq_yr)]:
+            axs[0].axvline(ln/secperyr, color='0.3', ls='--')
+    elif freq_yr is None:
+        pass
+
     # axs[0].axvline(3./secperyr, color='0.3', ls='--')
 
     axs[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)

@@ -39,7 +39,8 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
 
 def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            show_figure=False, rn_type='', plot_2d_hist=True,
-                           verbose=True, Tspan=None, partimdir=None):
+                           verbose=True, Tspan=None, partimdir=None,
+                           title_suffix=''):
 
     secperyr = 365.25*24*3600
     fyr = 1./secperyr
@@ -176,7 +177,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             f = np.array([(i+1)/T for i in range(30)])
             rho = utils.compute_rho(log10_A, gamma, f, T)
 
-            axs[0].plot(f, np.log10(rho), color='C1', lw=1.5, ls='-', zorder=6)
+                axs[0].plot(f, np.log10(rho), color='C1', lw=1.5, ls='-', zorder=6)
             if plot_2d_hist:
                 corner.hist2d(c.get_param(pulsar+rn_type+'_gamma')[c.burn:],
                               c.get_param(pulsar+rn_type+'_log10_A')[c.burn:],
@@ -193,7 +194,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     # axs[0].axvline(2./secperyr, color='0.3', ls='--')
     # axs[0].axvline(3./secperyr, color='0.3', ls='--')
 
-    axs[0].set_title('Red Noise Spectrum: ' + pulsar + ', ' + '11yr')
+    axs[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
     axs[0].set_ylabel('log10 RMS (s)')
     axs[0].set_xlabel('Frequency (Hz)')
     axs[0].grid(which='both', ls='--')

@@ -46,7 +46,7 @@ class Core(object):
         if to_burn:
             return self.chain[self.burn:,self.params.index(param)]
         else:
-            return self.chain[self.burn:,self.params.index(param)]
+            return self.chain[:,self.params.index(param)]
 
     def get_param_median(self, param):
         return np.median(self.get_param(param)[self.burn:])
@@ -73,5 +73,5 @@ class Core(object):
             err_msg += '{0} names supplied '.format(len(names_list))
             err_msg += 'for {0} parameters.'.format(len(self.params))
             raise ValueError(err_msg)
-            
+
         self.fancy_par_names = names_list

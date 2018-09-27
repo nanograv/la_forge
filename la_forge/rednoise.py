@@ -216,11 +216,12 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
     plt.tight_layout()
 
+
+    if plotpath is not None:
+        plt.savefig(plotpath, bbox_inches='tight')
+        print('Figure saved to ' + plotpath)
+
     if show_figure:
         plt.show()
-    else:
-        if plotpath is None:
-            plotpath = './{0}_red_noise_model_posteriors.png'.format(pulsar)
 
-        plt.savefig(plotpath, bbox_inches='tight')
-        print('Figure saved to ' + filename)
+    plt.close()

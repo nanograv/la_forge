@@ -13,11 +13,7 @@ La Forge
         :target: https://la-forge.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-![stack Overflow](http://lmsotfy.com/so.png)
-
-![alt text][visor]
-
-[visor]: https://pre00.deviantart.net/ffe1/th/pre/i/2016/322/7/1/geordi_la_forge_star_trek_next_generation_visor_by_sjvernon-daosphq.png?raw=true
+![alt text](https://pre00.deviantart.net/ffe1/th/pre/i/2016/322/7/1/geordi_la_forge_star_trek_next_generation_visor_by_sjvernon-daosphq.png "by Stewart Vernon")
 
 Graphic Credit: Stewart Vernon, via Deviant Art
 

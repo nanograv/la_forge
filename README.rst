@@ -13,6 +13,7 @@ La Forge
         :target: https://la-forge.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
+![stack Overflow](http://lmsotfy.com/so.png)
 
 ![alt text][visor]
 

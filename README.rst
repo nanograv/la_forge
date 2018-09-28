@@ -18,7 +18,7 @@ La Forge
         :alt: Visor
 
 
-<div style="text-align: right"> Graphic Credit: Stewart Vernon, via Deviant Art </div>
+Graphic Credit: Stewart Vernon, via Deviant Art
 
 Python package for conveniently plotting results from pulsar timing array bayesian analyses.
 

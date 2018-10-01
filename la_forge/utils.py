@@ -97,7 +97,7 @@ def getMax2d(samples1, samples2, weights=None, smooth=True, bins=[40, 40],
     return xedges[ind[0]], yedges[ind[1]]
 
 
-def get_noise_params_2d_mlv(core, par1, par2):
+def get_params_2d_mlv(core, par1, par2):
     """Convenience function for finding two dimensional maximum likelihood
     value for any two parameters.
     """
@@ -113,7 +113,7 @@ def get_rn_noise_params_2d_mlv(core, pulsar):
     rn_si = pulsar + '_gamma'
     rn_amp = pulsar + '_log10_A'
 
-    return get_noise_params_2d_mlv(rn_si,rn_amp)
+    return get_params_2d_mlv(rn_si,rn_amp)
 
 def get_Tspan(pulsar, datadir):
     """Returns timespan of a pulsars dataset by loading the pulsar as an

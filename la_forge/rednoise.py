@@ -253,7 +253,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             else:
                 T = Tspan
 
-            log10_A, gamma = utils.get_noise_params(c, pulsar)
+            log10_A, gamma = utils.get_rn_noise_params_2d_mlv(c, pulsar)
 
             if verbose:
                 print('Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))

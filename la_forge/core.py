@@ -12,7 +12,29 @@ from astropy.table import Table
 class Core(object):
     """
     An object that stores the parameters and chains from a bayesian analysis
-        using enterprise.
+        currently configured specifically for posteriors produced by
+        `PTMCMCSampler`.
+
+    Parameters
+    ----------
+
+    label : str
+        Name of the core.
+
+    chaindir : str
+        Directory with chains and file with parameter names. Currently supports
+        chains as {'chain_1.txt','chain.fit'} and parameters as
+        {'pars.txt','params.txt','pars.npy'} . If chains are stored in a FITS
+        file it is assumed that the parameters are listed as the column names.
+
+    burn : int, optional
+        Number of samples burned from beginning of chain. Used when calculating
+        statistics and plotting histograms.
+
+    fancy_par_names : list of str
+        List of strings provided as names to be used when plotting parameters.
+        Must be the same length as the parameter list associated with the
+        chains.
     """
     def __init__(self, label, chaindir, burn=None, fancy_par_names=None):
         """
@@ -43,15 +65,33 @@ class Core(object):
             self.burn = int(burn)
 
     def get_param(self, param, to_burn=True):
+        """
+        Returns array of samples for the parameter given.
+        """
         if to_burn:
             return self.chain[self.burn:,self.params.index(param)]
         else:
             return self.chain[:,self.params.index(param)]
 
     def get_param_median(self, param):
+        """Returns median of parameter given.
+        """
         return np.median(self.get_param(param)[self.burn:])
 
     def get_param_confint(self, param, onesided=False, interval=68):
+        """Returns confidence interval of parameter givenself.
+
+        Parameters
+        ----------
+
+        param : str
+
+        onesided : bool, optional
+            Whether to calculate a one sided or two sided confidence interval.
+
+        interval: float, optional
+            Width of interval in percent. Default set to 68%.
+        """
         if onesided:
             return np.percentile(self.get_param(param)[self.burn:], q=interval)
         else:
@@ -63,9 +103,11 @@ class Core(object):
             return lower, upper
 
     def set_burn(burn):
+        """Set number of samples to burn."""
         self.burn = burn
 
     def set_fancy_par_names(names_list):
+        """Set fancy_par_names."""
         if not isinstance(names_list,list):
             raise ValueError('Names must be in list form.')
         if len(names_list)!= len(self.params):

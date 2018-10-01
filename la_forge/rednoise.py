@@ -12,9 +12,26 @@ from . import utils
 from .core import Core
 
 
-def determine_if_limit(vals, threshold=0.1, minval=-10):
+def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
+    """
+    Function to determine if an array or list of values is sufficiently
+        seperate from the minimum value.
 
-    lowerbound = np.percentile(vals,q=0.3)
+    Parameters
+    ----------
+    vals :  array or list
+
+    threshold: float
+        Threshold above `minval` for determining whether to count as twosided
+        interval.
+
+    minval: float
+        Minimum possible value for posterior.
+
+    lower_q: float
+        Percentile value to evaluate lower bound.
+    """
+    lowerbound = np.percentile(vals,q=lower_q)
 
     if lowerbound > minval + threshold:
         return False
@@ -23,6 +40,28 @@ def determine_if_limit(vals, threshold=0.1, minval=-10):
 
 
 def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
+    """
+    Function for getting timespan of a set of pulsar dataself.
+
+    Parameters
+    ----------
+
+    pulsar : str
+
+    filepath : str
+        Filepath to a `txt` file with pulsar name and timespan in two columns.
+        If supplied this file is used to return the timespan.
+
+    fourier_components : list or array
+        Frequencies used in gaussian process modeling. If given
+        `1/numpy.amin(fourier_components)` is retruned as timespan.
+
+    datadir : str
+        Directory with pulsar data (assumed the same for `tim` and `par` files.)
+        Calls the `utils.get_Tspan()` method which loads an
+        `enterprise.Pulsar()` and extracts the timespan.
+
+    """
     if filepath:
         if os.path.isfile(filepath):
             data = np.loadtxt(filepath, dtype='str')
@@ -41,6 +80,52 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            show_figure=False, rn_type='', plot_2d_hist=True,
                            verbose=True, Tspan=None, partimdir=None,
                            title_suffix='', freq_yr=1, plotpath = None):
+
+    """
+    Function to plot various red noise parameters in the same figure.
+
+    Parameters
+    ----------
+
+    pulsar : str
+
+    cores : list
+        List of `la_forge.core.Core()` objects which conatin the posteriors for
+        the relevant red noise parameters to be plotted.
+
+    nfreqs : int, optional
+        Number of frequencies used for red noise gaussian process.
+
+    chaindir : dict, optional
+        Dictionary of chain directories. Used for acquirinf fourier components
+        when set of frequencies is defined by user.
+
+    show_figure : bool
+
+    rn_type : str {'','_dm_gp','_chrom_gp'}
+        String to choose which type of red noise parameters are used in plots.
+
+    plot_2d_hist : bool, optional
+        Whether to include two dimensional histogram of powerlaw red noise
+        parameters.
+
+    verbose : bool, optional
+
+    Tspan : float, optional
+        Timespan of the data set. Used for calculating frequencies. Linear
+        array is calculated as `[1/Tspan, ... ,nfreqs/Tspan]`.
+
+    partimdir : str, optional
+        Common directory for pulsar `tim` and `par` files. Needed if no other
+        source of dataset Tspan is provided.
+
+    title_suffix : str, optional
+        Added to title of red noise plot as:
+        'Red Noise Spectrum: ' + pulsar + ' ' + title_suffix
+
+    freq_yr : int , optional
+        Number of 1/year harmonics to include in plot.
+    """
 
     secperyr = 365.25*24*3600
     fyr = 1./secperyr

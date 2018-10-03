@@ -310,3 +310,112 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         plt.show()
 
     plt.close()
+
+######### Retrieving Red Noise Process Realizations ########
+
+def get_process_timeseries(pta, psr, chain, burn, comp='DM',
+                           mle=False, model=0):
+        """
+        Construct a time series realization of various constrained processes.
+
+        Parameters
+        ----------
+        psr :
+            enterprise pulsar object
+
+        chain : array
+            MCMC chain from sampling all models
+
+        burn : int
+            Desired number of initial samples to discard
+
+        comp : str, {'DM', 'red', 'FD', 'all'}
+            Which process to reconstruct?
+
+        mle : bool
+            Create time series from ML of GP hyper-parameters?
+
+        model : int
+            Which sub-model within the super-model to reconstruct from?
+
+        Returns
+        -------
+        ret : array
+            Time-series of the reconstructed process.
+        """
+
+        wave = 0
+        pta = self.models[model]
+        model_chain = chain[np.rint(chain[:,-5])==model,:]
+
+        # get parameter dictionary
+        if mle:
+            ind = np.argmax(model_chain[:, -4])
+        else:
+            ind = np.random.randint(burn, model_chain.shape[0])
+        params = {par: model_chain[ind, ct]
+                  for ct, par in enumerate(self.param_names)
+                  if par in pta.param_names}
+
+        # deterministic signal part
+        wave += pta.get_delay(params=params)[0]
+
+        # get linear parameters
+        Nvec = pta.get_ndiag(params)[0]
+        phiinv = pta.get_phiinv(params, logdet=False)[0]
+        T = pta.get_basis(params)[0]
+
+        d = pta.get_TNr(params)[0]
+        TNT = pta.get_TNT(params)[0]
+
+        # Red noise piece
+        Sigma = TNT + (np.diag(phiinv) if phiinv.ndim == 1 else phiinv)
+
+        try:
+            u, s, _ = sl.svd(Sigma)
+            mn = np.dot(u, np.dot(u.T, d)/s)
+            Li = u * np.sqrt(1/s)
+        except np.linalg.LinAlgError:
+
+            Q, R = sl.qr(Sigma)
+            Sigi = sl.solve(R, Q.T)
+            mn = np.dot(Sigi, d)
+            u, s, _ = sl.svd(Sigi)
+            Li = u * np.sqrt(1/s)
+
+        b = mn + np.dot(Li, np.random.randn(Li.shape[0]))
+
+        # find basis indices
+        pardict = {}
+        for sc in pta._signalcollections:
+            ntot = 0
+            for sig in sc._signals:
+                if sig.signal_type == 'basis':
+                    basis = sig.get_basis(params=params)
+                    nb = basis.shape[1]
+                    pardict[sig.signal_name] = np.arange(ntot, nb+ntot)
+                    ntot += nb
+
+        # DM quadratic + GP
+        if comp == 'DM':
+            idx = pardict['dm_gp']
+            wave += np.dot(T[:,idx], b[idx])
+            ret = wave * (psr.freqs**2 * const.DM_K * 1e12)
+        elif comp == 'red':
+            idx = pardict['red noise']
+            wave += np.dot(T[:,idx], b[idx])
+            ret = wave
+        elif comp == 'FD':
+            idx = pardict['FD']
+            wave += np.dot(T[:,idx], b[idx])
+            ret = wave
+        elif comp == 'all':
+            wave += np.dot(T, b)
+            ret = wave
+        else:
+            ret = wave
+
+        return ret
+
+def get_hypermodel_process_timeseries(hypermodel, psr, chain, burn, comp='DM',
+                           mle=False, model=0):

@@ -13,7 +13,11 @@ La Forge
         :target: https://la-forge.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-![Graphic Credit: Stewart Vernon, via Deviant Art][visor]
+
+.. image:: ./visor.png
+        : target: https://www.deviantart.com/sjvernon/art/Geordi-La-Forge-Star-Trek-Next-Generation-Visor-646311950
+        : alt: Graphic Credit: Stewart Vernon, via Deviant Art
+
 Graphic Credit: Stewart Vernon, via Deviant Art
 
 Python package for conveniently plotting results from pulsar timing array bayesian analyses. Many of the functions are best used with `enterprise` outputs.
@@ -35,5 +39,3 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
-
-[visor](./visor.png)

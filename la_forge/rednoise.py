@@ -306,8 +306,8 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                 sorted_idx = c.chain[:,lnlike_idx].argsort()[::-1][:n_plaw_realizations]
                 sorted_idx = sorted_idx[sorted_idx>c.burn]
 
-                sorted_Amp = c.get_param(par2, to_burn=False)[sorted_idx]
-                sorted_gam = c.get_param(par2, to_burn=False)[sorted_idx]
+                sorted_Amp = c.get_param(amp_par, to_burn=False)[sorted_idx]
+                sorted_gam = c.get_param(gam_par, to_burn=False)[sorted_idx]
                 for idx in range(n_plaw_realizations):
                     rho = utils.compute_rho(sorted_Amp[idx],
                                             sorted_gam[idx], f, T)

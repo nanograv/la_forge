@@ -155,7 +155,10 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         ###Free Spectral Plotting
         if pulsar + rn_type +  '_log10_rho_0' in c.params:
             Color = Colors[1]
-            if free_spec_ct==1: Fillstyle='none' else: Fillstyle = 'full'
+            if free_spec_ct==1:
+                Fillstyle='none'
+            else:
+                Fillstyle = 'full'
 
             if os.path.isfile(chaindir['free_spec_chaindir'] + '/fourier_components.txt'):
                 F = np.loadtxt(chaindir['free_spec_chaindir'] + '/fourier_components.txt')
@@ -273,7 +276,10 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         ### Powerlaw Plotting
         else:
             Color = Colors[0]
-            if plaw_ct==1: Linestyle = '--' else: Linestyle = '-'
+            if plaw_ct==1:
+                Linestyle = '--'
+            else:
+                Linestyle = '-'
 
             if Tspan is None:
                 T = get_Tspan(pulsar, datadir=partimdir)

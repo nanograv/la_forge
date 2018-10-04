@@ -113,7 +113,7 @@ def get_rn_noise_params_2d_mlv(core, pulsar):
     rn_si = pulsar + '_gamma'
     rn_amp = pulsar + '_log10_A'
 
-    return get_params_2d_mlv(rn_si,rn_amp)
+    return get_params_2d_mlv(core,rn_si,rn_amp)
 
 def get_Tspan(pulsar, datadir):
     """Returns timespan of a pulsars dataset by loading the pulsar as an

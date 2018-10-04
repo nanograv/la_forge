@@ -324,6 +324,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             rho = utils.compute_rho(log10_A, gamma, f, T)
 
             axs[0].plot(f, np.log10(rho), color=Color, lw=1.5, ls='-', zorder=6)
+
             if plot_2d_hist:
                 corner.hist2d(c.get_param(gam_par, to_burn=True),
                               c.get_param(amp_par, to_burn=True),
@@ -351,7 +352,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     axs[0].set_xlabel('Frequency (Hz)')
     axs[0].grid(which='both', ls='--')
     axs[0].set_xscale('log')
-    #axs[0].set_ylim((-10,-4))
+    axs[0].set_ylim((-10,-4))
     if plot_2d_hist:
         axs[1].set_title('Red Noise Amplitude Posterior: ' + pulsar)
         axs[1].set_xlabel(pulsar + '_gamma')

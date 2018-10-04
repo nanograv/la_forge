@@ -81,7 +81,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            verbose=True, Tspan=None, partimdir=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
-                           n_tproc_realizations=1000):
+                           n_tproc_realizations=1000, Colors=None):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -132,9 +132,6 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     secperyr = 365.25*24*3600
     fyr = 1./secperyr
 
-    cm = plt.get_cmap(cmap)
-    NUM_COLORS = len(cores)
-
     if plot_2d_hist:
         fig, axs = plt.subplots(1, 2, figsize=(12,4))
     else:
@@ -147,17 +144,23 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     tproc_ct = 0
     plaw_ct = 0
 
-    Colors = cm(np.arange(3.)/3)
+    if Colors is None:
+        cm = plt.get_cmap(cmap)
+        NUM_COLORS = len(cores)
+        Colors = cm(np.arange(3.)/3)
+
 
     for ii, c in enumerate(cores): #
 
 
         ###Free Spectral Plotting
         if pulsar + rn_type +  '_log10_rho_0' in c.params:
-            Color = Colors[1]
+
             if free_spec_ct==1:
                 Fillstyle='none'
+                Color = Colors[3]
             else:
+                Color = Colors[1]
                 Fillstyle = 'full'
 
             if os.path.isfile(chaindir['free_spec_chaindir'] + '/fourier_components.txt'):
@@ -275,10 +278,11 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
         ### Powerlaw Plotting
         else:
-            Color = Colors[0]
             if plaw_ct==1:
                 Linestyle = '--'
+                Color = Colors[2]
             else:
+                Color = Colors[0]
                 Linestyle = '-'
 
             if Tspan is None:

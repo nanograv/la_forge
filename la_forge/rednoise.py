@@ -351,7 +351,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     axs[0].set_xlabel('Frequency (Hz)')
     axs[0].grid(which='both', ls='--')
     axs[0].set_xscale('log')
-    axs[0].set_ylim((-10,-4))
+    #axs[0].set_ylim((-10,-4))
     if plot_2d_hist:
         axs[1].set_title('Red Noise Amplitude Posterior: ' + pulsar)
         axs[1].set_xlabel(pulsar + '_gamma')

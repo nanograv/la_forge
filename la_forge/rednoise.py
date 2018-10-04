@@ -213,7 +213,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                             fmt='o', color=Color, zorder=8,
                             fillstyle = Fillstyle)#'C0'
             axs[0].errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
-                            color=Color, zorder=8, , fillstyle = Fillstyle)
+                            color=Color, zorder=8, fillstyle = Fillstyle)
 
             free_spec_ct += 1
 

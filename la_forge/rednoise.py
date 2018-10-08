@@ -189,7 +189,12 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                 paramname = pulsar + rn_type +  '_log10_rho_' + str(n)
 
                 # determine if we want to plot a limit to a measured value
-                if determine_if_limit(c.get_param(paramname)[c.burn:], threshold=0.1, minval=-10):
+                if np.amin(c.get_param(paramname)<-9):
+                    MinVal = -10
+                else:
+                    MinVal = -9
+
+                if determine_if_limit(c.get_param(paramname)[c.burn:], threshold=0.1, minval=MinVal):
                     if F is None:
                         f2.append((n+1)/T)
                     else:

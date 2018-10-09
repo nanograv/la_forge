@@ -79,7 +79,10 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
 def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            show_figure=False, rn_type='', plot_2d_hist=True,
                            verbose=True, Tspan=None, partimdir=None,
-                           title_suffix='', freq_yr=1, plotpath = None):
+                           title_suffix='', freq_yr=1, plotpath = None,
+                           cmap='gist_rainbow', n_plaw_realizations=0,
+                           n_tproc_realizations=1000, Colors=None,
+                           labels=None,legend_loc=None,leg_alpha=1.0):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -130,8 +133,6 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     secperyr = 365.25*24*3600
     fyr = 1./secperyr
 
-
-
     if plot_2d_hist:
         fig, axs = plt.subplots(1, 2, figsize=(12,4))
     else:
@@ -140,9 +141,34 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     ax1_ylim_pl = None
     ax1_ylim_tp = None
 
-    for c in cores:
+    free_spec_ct = 0
+    tproc_ct = 0
+    plaw_ct = 0
+    color_idx = 0
+    lines = []
+    if labels is None:
+        make_labels = True
+        labels = []
+    else:
+        make_labels = False
 
+    if Colors is None:
+        cm = plt.get_cmap(cmap)
+        NUM_COLORS = 6.#len(cores)
+        Colors = cm(np.arange(NUM_COLORS)/NUM_COLORS)
+
+
+    for ii, c in enumerate(cores): #
+
+
+        ###Free Spectral Plotting
         if pulsar + rn_type +  '_log10_rho_0' in c.params:
+            Color = Colors[color_idx]
+            if free_spec_ct==1:
+                Fillstyle='none'
+            else:
+                Fillstyle = 'full'
+
             if os.path.isfile(chaindir['free_spec_chaindir'] + '/fourier_components.txt'):
                 F = np.loadtxt(chaindir['free_spec_chaindir'] + '/fourier_components.txt')
                 if Tspan is None:
@@ -169,12 +195,17 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                 paramname = pulsar + rn_type +  '_log10_rho_' + str(n)
 
                 # determine if we want to plot a limit to a measured value
-                if determine_if_limit(c.get_param(paramname)[c.burn:], threshold=0.1, minval=-10):
+                if np.amin(c.get_param(paramname)<-9):
+                    MinVal = -10
+                else:
+                    MinVal = -9
+
+                if determine_if_limit(c.get_param(paramname)[c.burn:], threshold=0.1, minval=MinVal):
                     if F is None:
                         f2.append((n+1)/T)
                     else:
                         f2.append(F[n])
-                    x = c.get_param_confint(paramname, onesided=True, interval=95)[0]
+                    x = c.get_param_confint(paramname, onesided=True, interval=95)
                     ul.append(x)
                 else:
                     if F is None:
@@ -192,10 +223,21 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             maxval = np.array(maxval)
             f2 = np.array(f2)
             ul = np.array(ul)
-            axs[0].errorbar(f1, median, yerr=[ median-minval, maxval-median ], fmt='o', color='C0', zorder=8)
-            axs[0].errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o', color='C0', zorder=8)
+            axs[0].errorbar(f1, median, yerr=[ median-minval, maxval-median ],
+                            fmt='o', color=Color, zorder=8,
+                            fillstyle = Fillstyle)#'C0'
+            axs[0].errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
+                            color=Color, zorder=8, fillstyle=Fillstyle)
 
+            lines.append(plt.Line2D([0], [0],color=Color,linestyle='None',
+                                    marker='o',fillstyle=Fillstyle))
+            if make_labels is True: labels.append('Free Spectral')
+            free_spec_ct += 1
+            color_idx += 1
+
+        ### T-Process Plotting
         elif pulsar + rn_type + '_alphas_0' in c.params:
+            Color = Colors[color_idx]
             if os.path.isfile(chaindir['tproc_chaindir'] + '/fourier_components.txt'):
                 F = np.loadtxt(chaindir['tproc_chaindir'] + '/fourier_components.txt')
                 if Tspan is None:
@@ -220,8 +262,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
             sorted_data = c.chain[c.chain[:,lnlike_idx].argsort()[::-1]]
 
-            nlines = 1000    # number of t-process lines to draw
-            for n in range(nlines):
+            for n in range(n_tproc_realizations):
                 log10_A = sorted_data[n,c.params.index(pulsar + '_log10_A')]
                 gamma = sorted_data[n,c.params.index(pulsar + '_gamma')]
 
@@ -236,22 +277,59 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
                 rho1 = np.array([ rho[i]*alphas[i] for i in range(30) ])
 
-                axs[0].plot(f, np.log10(rho1), color='C2', lw=1., ls='-', zorder=4, alpha=0.01)
+                axs[0].plot(f, np.log10(rho1), color=Color, lw=1., ls='-',
+                            zorder=4, alpha=0.01)
 
             if plot_2d_hist:
                 corner.hist2d(c.get_param(pulsar+rn_type+'_gamma')[c.burn:],
                               c.get_param(pulsar+rn_type+'_log10_A')[c.burn:],
                               bins=20, ax=axs[1], plot_datapoints=False,
                               plot_density=False, plot_contours=True,
-                              no_fill_contours=True, color='C2')
+                              no_fill_contours=True, color=Color)
                 ax1_ylim_tp = axs[1].get_ylim()
 
+            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
+            if make_labels is True: labels.append('T-Process')
+            tproc_ct += 1
+            color_idx += 1
+
+        ### Powerlaw Plotting
         else:
+            if plaw_ct==1:
+                Linestyle = '-'
+            else:
+                Linestyle = '-'
+
+            Color = Colors[color_idx]
             if Tspan is None:
                 T = get_Tspan(pulsar, datadir=partimdir)
                               # filepath = chaindir['plaw_chaindir'])
             else:
                 T = Tspan
+
+            amp_par = pulsar+rn_type+'_log10_A'
+            gam_par = pulsar+rn_type+'_gamma'
+
+            f = np.array([(i+1)/T for i in range(30)])
+
+            if n_plaw_realizations>0:
+                # sort data in descending order of lnlike
+                if 'lnlike' in c.params:
+                    lnlike_idx = c.params.index('lnlike')
+                else:
+                    lnlike_idx = -4
+
+                sorted_idx = c.chain[:,lnlike_idx].argsort()[::-1]
+                sorted_idx = sorted_idx[sorted_idx>c.burn][:n_plaw_realizations]
+
+                sorted_Amp = c.get_param(amp_par, to_burn=False)[sorted_idx]
+                sorted_gam = c.get_param(gam_par, to_burn=False)[sorted_idx]
+                for idx in range(n_plaw_realizations):
+                    rho = utils.compute_rho(sorted_Amp[idx],
+                                            sorted_gam[idx], f, T)
+                    axs[0].plot(f, np.log10(rho), color=Color, lw=0.4,
+                                ls='-', zorder=6, alpha=0.03)
+
 
             log10_A, gamma = utils.get_rn_noise_params_2d_mlv(c, pulsar)
 
@@ -259,21 +337,29 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                 print('Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
                 print('Red noise parameters: log10_A = {0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))
 
-            f = np.array([(i+1)/T for i in range(30)])
             rho = utils.compute_rho(log10_A, gamma, f, T)
 
-            axs[0].plot(f, np.log10(rho), color='C1', lw=1.5, ls='-', zorder=6)
+            axs[0].plot(f, np.log10(rho), color=Color, lw=1.5,
+                        ls=Linestyle, zorder=6)
+
             if plot_2d_hist:
-                corner.hist2d(c.get_param(pulsar+rn_type+'_gamma')[c.burn:],
-                              c.get_param(pulsar+rn_type+'_log10_A')[c.burn:],
+                corner.hist2d(c.get_param(gam_par, to_burn=True),
+                              c.get_param(amp_par, to_burn=True),
                               bins=20, ax=axs[1], plot_datapoints=False,
                               plot_density=False, plot_contours=True,
-                              no_fill_contours=True, color='C1')
+                              no_fill_contours=True, color=Color)
                 ax1_ylim_pl = axs[1].get_ylim()
 #            axs[1].hist2d(c.get_param(pulsar + '_gamma')[c.burn:],
 #                          c.get_param(pulsar + '_log10_A')[c.burn:],
 #                          bins=50, normed=True)
 #            axs[1].plot(gamma, log10_A, marker='x', markersize=10, color='k')
+
+            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2,
+                                    linestyle=Linestyle))
+            if make_labels is True: labels.append('Power Law')
+
+            plaw_ct += 1
+            color_idx += 1
 
     if isinstance(freq_yr, int):
         for ln in [ii+1. for ii in range(freq_yr)]:
@@ -298,6 +384,13 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
             ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
             axs[1].set_ylim((ymin,ymax))
+
+        if legend_loc is None: legend_loc=(0.04,0.14)
+    else:
+        if legend_loc is None: legend_loc=(0.08,0.14)
+
+    leg=fig.legend(lines,labels,legend_loc,fontsize=12,fancybox=True)
+    leg.get_frame().set_alpha(leg_alpha)
 
     plt.tight_layout()
 

@@ -230,7 +230,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             axs[0].errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
                             color=Color, zorder=8, fillstyle=Fillstyle)
 
-            lines.append(plt.Line2D([0], [0],color=Colors[1],linestyle='None',
+            lines.append(plt.Line2D([0], [0],color=Color,linestyle='None',
                                     marker='o',fillstyle=Fillstyle))
             if make_labels is True: labels.append('Free Spectral')
             free_spec_ct += 1

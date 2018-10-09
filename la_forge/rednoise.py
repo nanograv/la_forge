@@ -81,7 +81,8 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            verbose=True, Tspan=None, partimdir=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
-                           n_tproc_realizations=1000, Colors=None, labels=None):
+                           n_tproc_realizations=1000, Colors=None,
+                           labels=None,legend_loc=None):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -372,9 +373,9 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
             axs[1].set_ylim((ymin,ymax))
 
-        legend_loc=(0.18,0.14)
+        if legend_loc is None: legend_loc=(0.04,0.14)
     else:
-        legend_loc=(0.18,0.14)
+        if legend_loc is None: legend_loc=(0.08,0.14)
 
     L0 = plt.Line2D([0], [0],color=Colors[0],linewidth=2)
     L1 = plt.Line2D([0], [0],color=Colors[1],linestyle='None',marker='o')
@@ -383,7 +384,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
     if labels is None:
         labels = ['Power Law','Free Spectral','T-Process']
-        
+
     if plaw_ct==2:
         L3 = plt.Line2D([0], [0],color=Colors[3],linewidth=2)
         lines.append(L3)

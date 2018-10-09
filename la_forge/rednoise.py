@@ -144,6 +144,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     free_spec_ct = 0
     tproc_ct = 0
     plaw_ct = 0
+    color_idx = 0
     lines = []
     if labels is None:
         make_labels = True
@@ -162,12 +163,10 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
         ###Free Spectral Plotting
         if pulsar + rn_type +  '_log10_rho_0' in c.params:
-
+            Color = Colors[color_idx]
             if free_spec_ct==1:
                 Fillstyle='none'
-                Color = Colors[4]
             else:
-                Color = Colors[1]
                 Fillstyle = 'full'
 
             if os.path.isfile(chaindir['free_spec_chaindir'] + '/fourier_components.txt'):
@@ -234,14 +233,11 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                                     marker='o',fillstyle=Fillstyle))
             if make_labels is True: labels.append('Free Spectral')
             free_spec_ct += 1
+            color_idx += 1
 
         ### T-Process Plotting
         elif pulsar + rn_type + '_alphas_0' in c.params:
-            if tproc_ct==1:
-                Color = Colors[5]
-            else:
-                Color = Colors[2]
-
+            Color = Colors[color_idx]
             if os.path.isfile(chaindir['tproc_chaindir'] + '/fourier_components.txt'):
                 F = np.loadtxt(chaindir['tproc_chaindir'] + '/fourier_components.txt')
                 if Tspan is None:
@@ -295,16 +291,16 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
             if make_labels is True: labels.append('T-Process')
             tproc_ct += 1
+            color_idx += 1
 
         ### Powerlaw Plotting
         else:
             if plaw_ct==1:
                 Linestyle = '-'
-                Color = Colors[3]
             else:
-                Color = Colors[0]
                 Linestyle = '-'
 
+            Color = Colors[color_idx]
             if Tspan is None:
                 T = get_Tspan(pulsar, datadir=partimdir)
                               # filepath = chaindir['plaw_chaindir'])
@@ -363,6 +359,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             if make_labels is True: labels.append('Power Law')
 
             plaw_ct += 1
+            color_idx += 1
 
     if isinstance(freq_yr, int):
         for ln in [ii+1. for ii in range(freq_yr)]:

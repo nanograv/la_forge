@@ -376,25 +376,25 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     else:
         legend_loc=(0.18,0.14)
 
-    L0 = Line2D([0], [0],color=Colors[0],linewidth=2)
-    L1 = Line2D([0], [0],color=Colors[1],linestyle='None',marker='o')
-    L2 = Line2D([0], [0],color=Colors[2],linewidth=2)
+    L0 = plt.Line2D([0], [0],color=Colors[0],linewidth=2)
+    L1 = plt.Line2D([0], [0],color=Colors[1],linestyle='None',marker='o')
+    L2 = plt.Line2D([0], [0],color=Colors[2],linewidth=2)
     lines = [L1,L2,L3]
 
     if labels is None:
         labels = ['Power Law','Free Spectral','T-Process']
     if plaw_ct==1:
-        L3 = Line2D([0], [0],color=Colors[3],linewidth=2)
+        L3 = plt.Line2D([0], [0],color=Colors[3],linewidth=2)
         lines.append(L3)
         labels.append('Power Law')
 
     if free_spec_ct==1:
-        L4 = Line2D([0], [0],color=Colors[4],linestyle='None', marker='o')
+        L4 = plt.Line2D([0], [0],color=Colors[4],linestyle='None', marker='o')
         lines.append(L4)
         labels.append('Free Spectral')
 
     if tproc_ct==1:
-        L5 = Line2D([0], [0],color=Colors[5],linewidth=2)
+        L5 = plt.Line2D([0], [0],color=Colors[5],linewidth=2)
         lines.append(L5)
         labels.append('T-Process')
 

@@ -398,8 +398,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
 
     if plotpath is not None:
-        additional_artists=[leg]
-        plt.savefig(plotpath,additional_artists=art, bbox_inches='tight')
+        plt.savefig(plotpath,additional_artists=[leg], bbox_inches='tight')
         print('Figure saved to ' + plotpath)
 
     if show_figure:

@@ -82,7 +82,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
                            n_tproc_realizations=1000, Colors=None,
-                           labels=None,legend_loc=None):
+                           labels=None,legend_loc=None,leg_alpha=1.0):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -389,7 +389,8 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     else:
         if legend_loc is None: legend_loc=(0.08,0.14)
 
-    fig.legend(lines,labels,legend_loc,fontsize=12)
+    leg=fig.legend(lines,labels,legend_loc,fontsize=12,fancybox=True)
+    leg.get_frame().set_alpha(leg_alpha)
 
     plt.tight_layout()
 

@@ -390,7 +390,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         if legend_loc is None: legend_loc=(0.08,0.14)
 
     leg=axs[0].legend(lines,labels,loc=9,fontsize=12,fancybox=True,
-                   bbox_to_anchor=(0.0, -0.1), ncol=len(labels))
+                   bbox_to_anchor=(0.5, -0.15), ncol=len(labels))
     leg.get_frame().set_alpha(leg_alpha)
 
     plt.tight_layout()

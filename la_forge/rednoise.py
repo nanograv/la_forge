@@ -379,7 +379,7 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     L0 = plt.Line2D([0], [0],color=Colors[0],linewidth=2)
     L1 = plt.Line2D([0], [0],color=Colors[1],linestyle='None',marker='o')
     L2 = plt.Line2D([0], [0],color=Colors[2],linewidth=2)
-    lines = [L1,L2,L3]
+    lines = [L0,L1,L2]
 
     if labels is None:
         labels = ['Power Law','Free Spectral','T-Process']

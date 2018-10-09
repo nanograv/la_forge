@@ -386,9 +386,9 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
             axs[1].set_ylim((ymin,ymax))
 
-        if legend_loc is None: legend_loc=(0.04,0.14)
+        if legend_loc is None: legend_loc=(-0.45,-0.15)
     else:
-        if legend_loc is None: legend_loc=(0.08,0.14)
+        if legend_loc is None: legend_loc=(-0.15,-0.15)
 
     leg=axs[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
                    bbox_to_anchor=Bbox_anchor, ncol=len(labels))

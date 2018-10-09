@@ -146,8 +146,8 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
     if Colors is None:
         cm = plt.get_cmap(cmap)
-        NUM_COLORS = len(cores)
-        Colors = cm(np.arange(3.)/3)
+        NUM_COLORS = 6.#len(cores)
+        Colors = cm(np.arange(NUM_COLORS)/NUM_COLORS)
 
 
     for ii, c in enumerate(cores): #
@@ -227,7 +227,10 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
         ### T-Process Plotting
         elif pulsar + rn_type + '_alphas_0' in c.params:
-            Color = Colors[2]
+            if tproc_ct==1:
+                Color = Colors[5]
+            else:
+                Color = Colors[2]
 
             if os.path.isfile(chaindir['tproc_chaindir'] + '/fourier_components.txt'):
                 F = np.loadtxt(chaindir['tproc_chaindir'] + '/fourier_components.txt')
@@ -284,8 +287,8 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         ### Powerlaw Plotting
         else:
             if plaw_ct==1:
-                Linestyle = '--'
-                Color = Colors[2]
+                Linestyle = '-'
+                Color = Colors[3]
             else:
                 Color = Colors[0]
                 Linestyle = '-'
@@ -328,7 +331,8 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
             rho = utils.compute_rho(log10_A, gamma, f, T)
 
-            axs[0].plot(f, np.log10(rho), color=Color, lw=1.5, ls='-', zorder=6)
+            axs[0].plot(f, np.log10(rho), color=Color, lw=1.5,
+                        ls=Linestyle, zorder=6)
 
             if plot_2d_hist:
                 corner.hist2d(c.get_param(gam_par, to_burn=True),
@@ -367,6 +371,34 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
             ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
             axs[1].set_ylim((ymin,ymax))
+
+        legend_loc=(0.18,0.14)
+    else:
+        legend_loc=(0.18,0.14)
+
+    L0 = Line2D([0], [0],color=Colors[0],linewidth=2)
+    L1 = Line2D([0], [0],color=Colors[1],linestyle='None',marker='o')
+    L2 = Line2D([0], [0],color=Colors[2],linewidth=2)
+    lines = [L1,L2,L3]
+
+    if labels is None:
+        labels = ['Power Law','Free Spectral','T-Process']
+    if plaw_ct==1:
+        L3 = Line2D([0], [0],color=Colors[3],linewidth=2)
+        lines.append(L3)
+        labels.append('Power Law')
+
+    if free_spec_ct==1:
+        L4 = Line2D([0], [0],color=Colors[4],linestyle='None', marker='o')
+        lines.append(L4)
+        labels.append('Free Spectral')
+
+    if tproc_ct==1:
+        L5 = Line2D([0], [0],color=Colors[5],linewidth=2)
+        lines.append(L5)
+        labels.append('T-Process')
+
+    fig.legend(lines,labels,legend_loc,fontsize=20)
 
     plt.tight_layout()
 

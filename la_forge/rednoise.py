@@ -389,15 +389,16 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     else:
         if legend_loc is None: legend_loc=(0.08,0.14)
 
-    leg=fig.legend(lines,labels,legend_loc,fontsize=12,fancybox=True,
-                   bbox_to_anchor=(0.5, -0.1), ncol=len(labels))
+    leg=axs[0].legend(lines,labels,legend_loc,fontsize=12,fancybox=True,
+                   bbox_to_anchor=(0.0, -0.1), ncol=len(labels))
     leg.get_frame().set_alpha(leg_alpha)
 
     plt.tight_layout()
 
 
     if plotpath is not None:
-        plt.savefig(plotpath, bbox_inches='tight')
+        additional_artists=[leg]
+        plt.savefig(plotpath,additional_artists=art, bbox_inches='tight')
         print('Figure saved to ' + plotpath)
 
     if show_figure:

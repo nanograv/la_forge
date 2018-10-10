@@ -72,8 +72,20 @@ class Core(object):
         else:
             self.set_burn(burn)
 
+        if fancy_par_names is None:
+            pass
+        else:
+            self.set_fancy_par_names(fancy_par_names)
+
+        self.rn_freqs = None
         try:
             self.set_rn_freqs()
+        except FileNotFoundError:
+            if verbose:
+                print('No red noise frequencies set. Please use '
+                      'core.set_rn_freqs() to set, if needed.')
+            else:
+                pass
 
 
     def get_param(self, param, to_burn=True):
@@ -119,7 +131,7 @@ class Core(object):
         self.burn = int(burn)
 
     def set_rn_freqs(self, freqs=None, Tspan=None, nfreqs=30, log=False,
-                     partimdir=None):
+                     partimdir=None, freq_path='fourier_components.txt'):
         """
         Set gaussian process red noise frequency array.
 
@@ -163,10 +175,18 @@ class Core(object):
             else:
                 F = np.linspace(1/T, n_freqs/T, nfreqs)
         else:
-            try:
-                F = np.loadtxt(self.chaindir + '/fourier_components.txt')
-            except:
-                raise ValueError('No file')
+            if os.path.isfile(freq_path):
+                F = np.loadtxt(freq_path)
+            else:
+                try:
+                    F = np.loadtxt(self.chaindir + freq_path)
+                except FileNotFoundError:
+                    err_msg = 'No txt file of red noise frequencies found at '
+                    err_msg += '{0} or '.format(freq_path,)
+                    err_msg += '{0}.'.format(self.chaindir + freq_path)
+                    err_msg += '\n' + 'See core.set_rn_freqs() docstring '
+                    err_msg += 'for additional options.'
+                    raise FileNotFoundError(err_msg)
 
         self.rn_freqs = F
 

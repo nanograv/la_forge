@@ -121,19 +121,36 @@ class Core(object):
     def set_rn_freqs(self, freqs=None, Tspan=None, nfreqs=30, log=False,
                      partimdir=None):
         """
-        Set red noise frequency array.
+        Set gaussian process red noise frequency array.
 
         Parameters
         ----------
+
+        freqs : list or array of floats
+            List or array of frequencies used for red noise gaussian process.
+
         Tspan : float, optional
             Timespan of the data set. Used for calculating frequencies.
             Linear array is calculated as `[1/Tspan, ... ,nfreqs/Tspan]`.
 
         nfreqs : int, optional
             Number of frequencies used for red noise gaussian process.
+
+        log : bool, optional
+            Whether to use a log-linear space when calculating the frequency
+            array.
+
+        partimdir :
+            Pulsar data directory. Needed for loading enterprise.Pulsar object
+            from which to get timespan of data.
+
+        Returns
+        -------
+
+        Array of red noise frequencies.
         """
         if freqs is not None:
-            F = freqs
+            F = np.array(freqs)
         elif Tspan is not None:
             if log:
                 F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)

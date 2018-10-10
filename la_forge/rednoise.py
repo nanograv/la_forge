@@ -368,8 +368,6 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     elif freq_yr is None:
         pass
 
-    # axs[0].axvline(3./secperyr, color='0.3', ls='--')
-
     axs[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
     axs[0].set_ylabel('log10 RMS (s)')
     axs[0].set_xlabel('Frequency (Hz)')

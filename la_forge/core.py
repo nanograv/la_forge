@@ -165,6 +165,7 @@ class Core(object):
         if freqs is not None:
             F = np.array(freqs)
         elif Tspan is not None:
+            T = Tspan
             if log:
                 F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)
             else:

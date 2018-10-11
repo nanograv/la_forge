@@ -39,6 +39,8 @@ def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
         return True
 
 def get_rn_freqs(core):
+    """Get red noise frequency array from a core, with error message if noise
+    array has not been included."""
     if core.rn_freqs is None:
         raise ValueError('Please set red noise frequency array in '
                          ' the core named {0}.'.format(core.label))
@@ -84,7 +86,7 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
 
 
 def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
-                           plot_2d_hist=True, verbose=True,
+                           plot_2d_hist=True, verbose=True, Tspan=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
                            n_tproc_realizations=1000, Colors=None,
@@ -104,7 +106,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
         the relevant red noise parameters to be plotted.
 
     Tspan : float, optional
-        Timespan of the data set. Used for calculating frequencies.
+        Timespan of the data set. Used for converting amplitudes to residual
+        time. Calculated from lowest red noise frequency if not provided.
 
     show_figure : bool
 
@@ -123,6 +126,34 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
 
     freq_yr : int , optional
         Number of 1/year harmonics to include in plot.
+
+    plotpath : str, optional
+        Path and file name to which plot will be saved.
+
+    cmap : str, optional
+        Color map from which to cycle plot colrs, if not given in Colors kwarg.
+
+    n_plaw_realizations : int, optional
+        Number of powerlaw realizations to plot.
+
+    n_tproc_realizations : int, optional
+        Number of T-process realizations to plot.
+
+    Colors : list, optional
+        List of colors to cycle through in plots.
+
+    labels : list, optional
+        Labels of various plots, for legend.
+
+    legend_loc : tuple or str, optional
+        Legend location with respect to Bbox_anchor.
+
+    leg_alpha : float, optional
+        Opacity of legend background.
+
+    Bbox_anchor : tuple, optional
+        This is the bbox_to_anchor value for the legend.
+
     """
 
     secperyr = 365.25*24*3600

@@ -152,7 +152,7 @@ class Core(object):
             Whether to use a log-linear space when calculating the frequency
             array.
 
-        partimdir : str
+        partimdir : str, optional
             Directory with pulsar data (assumed the same for `tim` and `par` files.)
             Calls the `utils.get_Tspan()` method which loads an
             `enterprise.Pulsar()` and extracts the timespan.

@@ -337,7 +337,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
 
             rho = utils.compute_rho(log10_A, gamma, F, T)
 
-            axs[0].plot(f, np.log10(rho), color=Color, lw=1.5,
+            axs[0].plot(F, np.log10(rho), color=Color, lw=1.5,
                         ls=Linestyle, zorder=6)
 
             if plot_2d_hist:

@@ -25,8 +25,8 @@ Python package for conveniently plotting results from pulsar timing array bayesi
 Not yet available on PyPI, please use
 
 .. code-block:: python
-pip install git+https://github.com/Hazboun6@master
 
+pip install git+https://github.com/Hazboun6@master
 
 to install or run the `setup.py` script once cloned to your pc.
 

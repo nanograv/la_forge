@@ -36,11 +36,13 @@ class Core(object):
         Must be the same length as the parameter list associated with the
         chains.
     """
-    def __init__(self, label, chaindir, burn=None, fancy_par_names=None):
+    def __init__(self, label, chaindir, burn=None, verbose=True,
+                 fancy_par_names=None):
         """
 
         """
         self.label = label
+        self.chaindir = chaindir
         self.fancy_par_names = fancy_par_names
 
         if os.path.isfile(chaindir + '/chain.fits'):
@@ -60,9 +62,31 @@ class Core(object):
             self.chain = np.loadtxt(chaindir + '/chain_1.txt')
 
         if burn is None:
-            self.burn = int(0.25*self.chain.shape[0])
+            self.set_burn(int(0.25*self.chain.shape[0]))
+            if verbose:
+                burn_msg = 'No burn specified. Burn set to 25% of'
+                burn_msg += ' chain length, {0}'.format(self.burn)
+                burn_msg += '\n'+'You may change the burn length'
+                burn_msg += ' with core.set_burn()'
+                print(burn_msg)
         else:
-            self.burn = int(burn)
+            self.set_burn(burn)
+
+        if fancy_par_names is None:
+            pass
+        else:
+            self.set_fancy_par_names(fancy_par_names)
+
+        self.rn_freqs = None
+        try:
+            self.set_rn_freqs()
+        except FileNotFoundError:
+            if verbose:
+                print('No red noise frequencies set. Please use '
+                      'core.set_rn_freqs() to set, if needed.')
+            else:
+                pass
+
 
     def get_param(self, param, to_burn=True):
         """
@@ -102,11 +126,73 @@ class Core(object):
                                    q = 100-lower_q)
             return lower, upper
 
-    def set_burn(burn):
+    def set_burn(self, burn):
         """Set number of samples to burn."""
-        self.burn = burn
+        self.burn = int(burn)
 
-    def set_fancy_par_names(names_list):
+    def set_rn_freqs(self, freqs=None, Tspan=None, nfreqs=30, log=False,
+                     partimdir=None, freq_path='fourier_components.txt'):
+        """
+        Set gaussian process red noise frequency array.
+
+        Parameters
+        ----------
+
+        freqs : list or array of floats
+            List or array of frequencies used for red noise gaussian process.
+
+        Tspan : float, optional
+            Timespan of the data set. Used for calculating frequencies.
+            Linear array is calculated as `[1/Tspan, ... ,nfreqs/Tspan]`.
+
+        nfreqs : int, optional
+            Number of frequencies used for red noise gaussian process.
+
+        log : bool, optional
+            Whether to use a log-linear space when calculating the frequency
+            array.
+
+        partimdir : str, optional
+            Directory with pulsar data (assumed the same for `tim` and `par` files.)
+            Calls the `utils.get_Tspan()` method which loads an
+            `enterprise.Pulsar()` and extracts the timespan.
+
+        Returns
+        -------
+
+        Array of red noise frequencies.
+        """
+        if freqs is not None:
+            F = np.array(freqs)
+        elif Tspan is not None:
+            T = Tspan
+            if log:
+                F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)
+            else:
+                F = np.linspace(1/T, nfreqs/T, nfreqs)
+        elif partimdir is not None:
+            T = utils.get_Tspan(pulsar, partimdir)
+            if log:
+                F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)
+            else:
+                F = np.linspace(1/T, n_freqs/T, nfreqs)
+        else:
+            if os.path.isfile(freq_path):
+                F = np.loadtxt(freq_path)
+            else:
+                try:
+                    F = np.loadtxt(self.chaindir + freq_path)
+                except FileNotFoundError:
+                    err_msg = 'No txt file of red noise frequencies found at '
+                    err_msg += '{0} or '.format(freq_path,)
+                    err_msg += '{0}.'.format(self.chaindir + freq_path)
+                    err_msg += '\n' + 'See core.set_rn_freqs() docstring '
+                    err_msg += 'for additional options.'
+                    raise FileNotFoundError(err_msg)
+
+        self.rn_freqs = F
+
+    def set_fancy_par_names(self, names_list):
         """Set fancy_par_names."""
         if not isinstance(names_list,list):
             raise ValueError('Names must be in list form.')

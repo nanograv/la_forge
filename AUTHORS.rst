@@ -2,12 +2,14 @@
 Credits
 =======
 
-Development Lead
-----------------
+Development Leads
+-----------------
 
 * Jeffrey Shafiq Hazboun <jeffrey.hazboun@gmail.com>
+
+* Sarah Vigeland
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Kristina Islo

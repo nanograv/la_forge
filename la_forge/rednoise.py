@@ -38,6 +38,15 @@ def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     else:
         return True
 
+def get_rn_freqs(core):
+    """Get red noise frequency array from a core, with error message if noise
+    array has not been included."""
+    if core.rn_freqs is None:
+        raise ValueError('Please set red noise frequency array in '
+                         ' the core named {0}.'.format(core.label))
+    else:
+        return core.rn_freqs, core.rn_freqs.size
+
 
 def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
     """
@@ -76,9 +85,8 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
 
 
 
-def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
-                           show_figure=False, rn_type='', plot_2d_hist=True,
-                           verbose=True, Tspan=None, partimdir=None,
+def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
+                           plot_2d_hist=True, verbose=True, Tspan=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
                            n_tproc_realizations=1000, Colors=None,
@@ -97,12 +105,9 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         List of `la_forge.core.Core()` objects which conatin the posteriors for
         the relevant red noise parameters to be plotted.
 
-    nfreqs : int, optional
-        Number of frequencies used for red noise gaussian process.
-
-    chaindir : dict, optional
-        Dictionary of chain directories. Used for acquirinf fourier components
-        when set of frequencies is defined by user.
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to residual
+        time. Calculated from lowest red noise frequency if not provided.
 
     show_figure : bool
 
@@ -115,20 +120,40 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
     verbose : bool, optional
 
-    Tspan : float, optional
-        Timespan of the data set. Used for calculating frequencies. Linear
-        array is calculated as `[1/Tspan, ... ,nfreqs/Tspan]`.
-
-    partimdir : str, optional
-        Common directory for pulsar `tim` and `par` files. Needed if no other
-        source of dataset Tspan is provided.
-
     title_suffix : str, optional
         Added to title of red noise plot as:
         'Red Noise Spectrum: ' + pulsar + ' ' + title_suffix
 
     freq_yr : int , optional
         Number of 1/year harmonics to include in plot.
+
+    plotpath : str, optional
+        Path and file name to which plot will be saved.
+
+    cmap : str, optional
+        Color map from which to cycle plot colrs, if not given in Colors kwarg.
+
+    n_plaw_realizations : int, optional
+        Number of powerlaw realizations to plot.
+
+    n_tproc_realizations : int, optional
+        Number of T-process realizations to plot.
+
+    Colors : list, optional
+        List of colors to cycle through in plots.
+
+    labels : list, optional
+        Labels of various plots, for legend.
+
+    legend_loc : tuple or str, optional
+        Legend location with respect to Bbox_anchor.
+
+    leg_alpha : float, optional
+        Opacity of legend background.
+
+    Bbox_anchor : tuple, optional
+        This is the bbox_to_anchor value for the legend.
+
     """
 
     secperyr = 365.25*24*3600
@@ -170,21 +195,12 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             else:
                 Fillstyle = 'full'
 
-            if os.path.isfile(chaindir['free_spec_chaindir'] + '/fourier_components.txt'):
-                F = np.loadtxt(chaindir['free_spec_chaindir'] + '/fourier_components.txt')
-                if Tspan is None:
-                    T = get_Tspan(pulsar, fourier_components=F,
-                                  datadir=partimdir)
-                else:
-                    T = Tspan
+            F , nfreqs = get_rn_freqs(c)
 
+            if Tspan is None:
+                T = 1/np.amin(F)
             else:
-                if Tspan is None:
-                    T = get_Tspan(pulsar, datadir=partimdir)
-                                  # filepath = chaindir['free_spec_chaindir'])
-                else:
-                    T = Tspan
-                F = None
+                T = Tspan
 
             if verbose:
                 print('Tspan = {0:.1f} yrs   1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
@@ -202,17 +218,11 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                     MinVal = -9
 
                 if determine_if_limit(c.get_param(paramname)[c.burn:], threshold=0.1, minval=MinVal):
-                    if F is None:
-                        f2.append((n+1)/T)
-                    else:
-                        f2.append(F[n])
+                    f2.append(F[n])
                     x = c.get_param_confint(paramname, onesided=True, interval=95)
                     ul.append(x)
                 else:
-                    if F is None:
-                        f1.append((n+1)/T)
-                    else:
-                        f1.append(F[n])
+                    f1.append(F[n])
                     median.append(c.get_param_median(paramname))
                     x,y = c.get_param_confint(paramname, onesided=False, interval=95)
                     minval.append(x)
@@ -239,21 +249,13 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
         ### T-Process Plotting
         elif pulsar + rn_type + '_alphas_0' in c.params:
             Color = Colors[color_idx]
-            if os.path.isfile(chaindir['tproc_chaindir'] + '/fourier_components.txt'):
-                F = np.loadtxt(chaindir['tproc_chaindir'] + '/fourier_components.txt')
-                if Tspan is None:
-                    T = get_Tspan(pulsar, fourier_components=F,
-                                  datadir=partimdir)
-                else:
-                    T = Tspan
-            else:
-                if Tspan is None:
-                    T = get_Tspan(pulsar, datadir=partimdir,
-                                  filepath = chaindir['free_spec_chaindir'])
-                else:
-                    T = Tspan
 
-                F = None
+            F , nfreqs = get_rn_freqs(c)
+
+            if Tspan is None:
+                T = 1/np.amin(F)
+            else:
+                T = Tspan
 
             # sort data in descending order of lnlike
             if 'lnlike' in c.params:
@@ -269,14 +271,9 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
                 alphas = np.array([sorted_data[n,c.params.index('{0}{1}_alphas_{2}'.format(pulsar,rn_type,i))] for i in range(30)])
 
-                if F is None:
-                    f = np.array([(i+1)/T for i in range(30)])
-                else:
-                    f = F
+                rho = utils.compute_rho(log10_A, gamma, F, T)
 
-                rho = utils.compute_rho(log10_A, gamma, f, T)
-
-                rho1 = np.array([ rho[i]*alphas[i] for i in range(30) ])
+                rho1 = np.array([ rho[i]*alphas[i] for i in range(nfreqs) ])
 
                 axs[0].plot(f, np.log10(rho1), color=Color, lw=1., ls='-',
                             zorder=4, alpha=0.01)
@@ -302,16 +299,16 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                 Linestyle = '-'
 
             Color = Colors[color_idx]
+
+            F , nfreqs = get_rn_freqs(c)
+
             if Tspan is None:
-                T = get_Tspan(pulsar, datadir=partimdir)
-                              # filepath = chaindir['plaw_chaindir'])
+                T = 1/np.amin(F)
             else:
                 T = Tspan
 
             amp_par = pulsar+rn_type+'_log10_A'
             gam_par = pulsar+rn_type+'_gamma'
-
-            f = np.array([(i+1)/T for i in range(30)])
 
             if n_plaw_realizations>0:
                 # sort data in descending order of lnlike
@@ -327,8 +324,8 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                 sorted_gam = c.get_param(gam_par, to_burn=False)[sorted_idx]
                 for idx in range(n_plaw_realizations):
                     rho = utils.compute_rho(sorted_Amp[idx],
-                                            sorted_gam[idx], f, T)
-                    axs[0].plot(f, np.log10(rho), color=Color, lw=0.4,
+                                            sorted_gam[idx], F, T)
+                    axs[0].plot(F, np.log10(rho), color=Color, lw=0.4,
                                 ls='-', zorder=6, alpha=0.03)
 
 
@@ -338,9 +335,9 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
                 print('Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
                 print('Red noise parameters: log10_A = {0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))
 
-            rho = utils.compute_rho(log10_A, gamma, f, T)
+            rho = utils.compute_rho(log10_A, gamma, F, T)
 
-            axs[0].plot(f, np.log10(rho), color=Color, lw=1.5,
+            axs[0].plot(F, np.log10(rho), color=Color, lw=1.5,
                         ls=Linestyle, zorder=6)
 
             if plot_2d_hist:
@@ -367,8 +364,6 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
             axs[0].axvline(ln/secperyr, color='0.3', ls='--')
     elif freq_yr is None:
         pass
-
-    # axs[0].axvline(3./secperyr, color='0.3', ls='--')
 
     axs[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
     axs[0].set_ylabel('log10 RMS (s)')

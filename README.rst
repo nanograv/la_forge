@@ -20,7 +20,7 @@ La Forge
 
 Graphic Credit: Stewart Vernon, via Deviant Art
 
-Python package for conveniently plotting results from pulsar timing array bayesian analyses. Many of the functions are best used with ``enterprise``_ outputs.
+Python package for conveniently plotting results from pulsar timing array bayesian analyses. Many of the functions are best used with enterprise_ outputs.
 
 Not yet available on PyPI, please use
 

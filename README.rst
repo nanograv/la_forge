@@ -23,11 +23,12 @@ Graphic Credit: Stewart Vernon, via Deviant Art
 Python package for conveniently plotting results from pulsar timing array bayesian analyses. Many of the functions are best used with `enterprise`_ outputs.
 
 Not yet available on PyPI, please use
-```
-pip install git+https://github.com/Hazboun6@master
-```
 
-to install or run the `setup.py` script once cloned to your pc. 
+.. code-block:: python
+pip install git+https://github.com/Hazboun6@master
+
+
+to install or run the `setup.py` script once cloned to your pc.
 
 * Free software: MIT license
 * Documentation: https://la-forge.readthedocs.io.

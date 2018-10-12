@@ -33,6 +33,36 @@ to install or run the `setup.py` script once cloned to your pc.
 * Free software: MIT license
 * Documentation: https://la-forge.readthedocs.io.
 
+Example code
+------------
+
+.. code-block:: python
+
+   from la_forge import rednoise as plot_rn
+   from la_forge.core import Core
+   from la_forge import utils
+
+   normal_ul_dir = '../BF_standard/DE436/'
+   free_spec_ul_dir = '../BF_free_spec/DE436/'
+
+   a = Core('plaw',chaindir=normal_ul_dir)
+   b = Core('free_spec',chaindir=free_spec_ul_dir)
+
+   tspan = year*365.25*24*3600
+
+   a.set_rn_freqs(Tspan=tspan)
+   b.set_rn_freqs(Tspan=tspan)
+
+   compare = [a,b]
+   plot_filename = './noise_model_plots.png'
+   Colors = ['blue','red']
+   Labels = ['PTA PLaw', 'PTA Free Spec']
+
+   plot_rn.plot_rednoise_spectrum(pulsar=psr, cores=compare, chaindir=chaindir,
+                                  show_figure=True, rn_type='', verbose=False,
+                                  Tspan=tspan, Colors=Colors, labels=Labels
+                                  n_plaw_realizations=100)
+
 
 Features
 --------

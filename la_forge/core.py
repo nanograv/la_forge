@@ -131,8 +131,9 @@ class Core(object):
         """Set number of samples to burn."""
         self.burn = int(burn)
 
-    def set_rn_freqs(self, freqs=None, Tspan=None, nfreqs=30, log=False,
-                     partimdir=None, freq_path='fourier_components.txt'):
+    def set_rn_freqs(self, freqs=None, Tspan=None, nfreqs=30,
+                     log=False, partimdir=None, psr=None,
+                     freq_path='fourier_components.txt'):
         """
         Set gaussian process red noise frequency array.
 
@@ -154,9 +155,15 @@ class Core(object):
             array.
 
         partimdir : str, optional
-            Directory with pulsar data (assumed the same for `tim` and `par` files.)
-            Calls the `utils.get_Tspan()` method which loads an
-            `enterprise.Pulsar()` and extracts the timespan.
+            Directory with pulsar data (assumed the same for `tim` and `par`
+            files.) Calls the `utils.get_Tspan()` method which loads an
+            `enterprise.Pulsar(psr,partimdir)` and extracts the timespan.
+
+        psr : str, optional
+            Puslar name, used when get the time span by loading
+            `enterprise.Pulsar()` as in the documentation of `partimdir` above.
+            It is assumed that tere is only one par and tim file in the
+            directory with this pulsar name in the file name.
 
         Returns
         -------
@@ -172,7 +179,7 @@ class Core(object):
             else:
                 F = np.linspace(1/T, nfreqs/T, nfreqs)
         elif partimdir is not None:
-            T = utils.get_Tspan(pulsar, partimdir)
+            T = utils.get_Tspan(psr, partimdir)
             if log:
                 F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)
             else:

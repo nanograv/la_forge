@@ -183,7 +183,7 @@ class Core(object):
             if log:
                 F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)
             else:
-                F = np.linspace(1/T, n_freqs/T, nfreqs)
+                F = np.linspace(1/T, nfreqs/T, nfreqs)
         else:
             if os.path.isfile(freq_path):
                 F = np.loadtxt(freq_path)

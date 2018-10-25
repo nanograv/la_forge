@@ -7,6 +7,7 @@ import glob
 from astropy.io import fits
 from astropy.table import Table
 
+from . import utils
 
 
 class Core(object):

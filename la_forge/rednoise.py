@@ -102,17 +102,19 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
     pulsar : str
 
     cores : list
-        List of `la_forge.core.Core()` objects which conatin the posteriors for
-        the relevant red noise parameters to be plotted.
+        List of `la_forge.core.Core()` objects which contain the posteriors
+        for the relevant red noise parameters to be plotted.
 
     Tspan : float, optional
-        Timespan of the data set. Used for converting amplitudes to residual
-        time. Calculated from lowest red noise frequency if not provided.
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
 
     show_figure : bool
 
     rn_type : str {'','_dm_gp','_chrom_gp'}
-        String to choose which type of red noise parameters are used in plots.
+        String to choose which type of red noise parameters are used in
+        plots.
 
     plot_2d_hist : bool, optional
         Whether to include two dimensional histogram of powerlaw red noise
@@ -131,7 +133,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
         Path and file name to which plot will be saved.
 
     cmap : str, optional
-        Color map from which to cycle plot colrs, if not given in Colors kwarg.
+        Color map from which to cycle plot colrs, if not given in Colors
+        kwarg.
 
     n_plaw_realizations : int, optional
         Number of powerlaw realizations to plot.
@@ -217,14 +220,17 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
                 else:
                     MinVal = -9
 
-                if determine_if_limit(c.get_param(paramname)[c.burn:], threshold=0.1, minval=MinVal):
+                if determine_if_limit(c.get_param(paramname)[c.burn:],
+                                      threshold=0.1, minval=MinVal):
                     f2.append(F[n])
-                    x = c.get_param_confint(paramname, onesided=True, interval=95)
+                    x = c.get_param_confint(paramname, onesided=True,
+                                            interval=95)
                     ul.append(x)
                 else:
                     f1.append(F[n])
                     median.append(c.get_param_median(paramname))
-                    x,y = c.get_param_confint(paramname, onesided=False, interval=95)
+                    x,y = c.get_param_confint(paramname, onesided=False,
+                                              interval=95)
                     minval.append(x)
                     maxval.append(y)
 
@@ -234,8 +240,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
             maxval = np.array(maxval)
             f2 = np.array(f2)
             ul = np.array(ul)
-            axs[0].errorbar(f1, median, yerr=[ median-minval, maxval-median ],
-                            fmt='o', color=Color, zorder=8,
+            axs[0].errorbar(f1, median, fmt='o', color=Color, zorder=8,
+                            yerr=[ median-minval,maxval-median],
                             fillstyle = Fillstyle)#'C0'
             axs[0].errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
                             color=Color, zorder=8, fillstyle=Fillstyle)

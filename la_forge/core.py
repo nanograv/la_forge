@@ -155,15 +155,20 @@ class Core(object):
             array.
 
         partimdir : str, optional
-            Directory with pulsar data (assumed the same for `tim` and `par`
-            files.) Calls the `utils.get_Tspan()` method which loads an
-            `enterprise.Pulsar(psr,partimdir)` and extracts the timespan.
+            Directory with pulsar data (assumed the same for `tim` and
+            `par` files.) Calls the `utils.get_Tspan()` method which loads
+            an `enterprise.Pulsar(psr,partimdir)` and extracts the
+            timespan.
 
         psr : str, optional
             Puslar name, used when get the time span by loading
-            `enterprise.Pulsar()` as in the documentation of `partimdir` above.
-            It is assumed that tere is only one par and tim file in the
-            directory with this pulsar name in the file name.
+            `enterprise.Pulsar()` as in the documentation of `partimdir`
+            above. It is assumed that tere is only one par and tim file in
+            the directory with this pulsar name in the file name.
+
+        freq_path : str, optional
+            Path to a txt file containing the rednoise frequencies to be
+            used.
 
         Returns
         -------

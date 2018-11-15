@@ -22,8 +22,8 @@ def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     vals :  array or list
 
     threshold: float
-        Threshold above `minval` for determining whether to count as twosided
-        interval.
+        Threshold above `minval` for determining whether to count as
+        twosided interval.
 
     minval: float
         Minimum possible value for posterior.
@@ -39,8 +39,10 @@ def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
         return True
 
 def get_rn_freqs(core):
-    """Get red noise frequency array from a core, with error message if noise
-    array has not been included."""
+    """
+    Get red noise frequency array from a core, with error message if noise
+    array has not been included.
+    """
     if core.rn_freqs is None:
         raise ValueError('Please set red noise frequency array in '
                          ' the core named {0}.'.format(core.label))
@@ -48,7 +50,8 @@ def get_rn_freqs(core):
         return core.rn_freqs, core.rn_freqs.size
 
 
-def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
+def get_Tspan(pulsar, filepath=None, fourier_components=None,
+              datadir=None):
     """
     Function for getting timespan of a set of pulsar dataself.
 
@@ -58,16 +61,16 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
     pulsar : str
 
     filepath : str
-        Filepath to a `txt` file with pulsar name and timespan in two columns.
-        If supplied this file is used to return the timespan.
+        Filepath to a `txt` file with pulsar name and timespan in two
+        columns. If supplied this file is used to return the timespan.
 
     fourier_components : list or array
         Frequencies used in gaussian process modeling. If given
         `1/numpy.amin(fourier_components)` is retruned as timespan.
 
     datadir : str
-        Directory with pulsar data (assumed the same for `tim` and `par` files.)
-        Calls the `utils.get_Tspan()` method which loads an
+        Directory with pulsar data (assumed the same for `tim` and `par`
+        files.) Calls the `utils.get_Tspan()` method which loads an
         `enterprise.Pulsar()` and extracts the timespan.
 
     """

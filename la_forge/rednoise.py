@@ -91,7 +91,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
                            cmap='gist_rainbow', n_plaw_realizations=0,
                            n_tproc_realizations=1000, Colors=None,
                            labels=None,legend_loc=None,leg_alpha=1.0,
-                           Bbox_anchor=(0.5, -0.25, 1.0, 0.2)):
+                           Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
+                           freq_xtra=None):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -370,6 +371,13 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
             axs[0].axvline(ln/secperyr, color='0.3', ls='--')
     elif freq_yr is None:
         pass
+
+    if freq_xtra is not None:
+        if isinstance(freq_xtra, float):
+            axs[0].axvline(freq_xtra, color='0.3', ls='--')
+        elif isinstance(freq_xtra,list) or isinstance(freq_xtra,array):
+            for xfreq in freq_xtra:
+                axs[0].axvline(xfreq, color='0.3', ls='--')
 
     axs[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
     axs[0].set_ylabel('log10 RMS (s)')

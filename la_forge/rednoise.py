@@ -92,7 +92,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
                            n_tproc_realizations=1000, Colors=None,
                            labels=None,legend_loc=None,leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
-                           freq_xtra=None):
+                           freq_xtra=None, free_spec_min=None):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -216,7 +216,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
                 paramname = pulsar + rn_type +  '_log10_rho_' + str(n)
 
                 # determine if we want to plot a limit to a measured value
-                if np.amin(c.get_param(paramname)<-9):
+                if free_spec_min is not None:
+                    MinVal = free_spec_min
+                elif np.amin(c.get_param(paramname)<-9):
                     MinVal = -10
                 else:
                     MinVal = -9

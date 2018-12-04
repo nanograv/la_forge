@@ -13,11 +13,10 @@ La Forge
         :target: https://la-forge.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-<p align="center">
 .. image:: https://pre00.deviantart.net/ffe1/th/pre/i/2016/322/7/1/geordi_la_forge_star_trek_next_generation_visor_by_sjvernon-daosphq.png
         :target: https://www.deviantart.com/sjvernon/art/Geordi-La-Forge-Star-Trek-Next-Generation-Visor-646311950
         :alt: Visor
-</p>
+
 
 Graphic Credit: Stewart Vernon, via Deviant Art
 
@@ -27,7 +26,7 @@ Not yet available on PyPI, please use
 
 .. code-block:: python
 
-   pip install git+https://github.com/Hazboun6@master
+   pip install git+https://github.com/Hazboun6/la_forge@master
 
 to install or run the `setup.py` script once cloned to your pc.
 

@@ -212,7 +212,7 @@ class Core(object):
         else:
             if os.path.isfile(freq_path):
                 F = np.loadtxt(freq_path)
-            else:
+            elif self.chaindir is not None:
                 try:
                     F = np.loadtxt(self.chaindir + freq_path)
                 except FileNotFoundError:
@@ -222,6 +222,9 @@ class Core(object):
                     err_msg += '\n' + 'See core.set_rn_freqs() docstring '
                     err_msg += 'for additional options.'
                     raise FileNotFoundError(err_msg)
+            else:
+                err_msg = 'No chain directory supplied'
+                raise FileNotFoundError(err_msg)
 
         self.rn_freqs = F
 
@@ -254,13 +257,13 @@ class HyperModelCore(Core):
             Dictionary of parameter lists, corresponding to the parameters in
             each sub-model of the hypermodel.
         """
-        super(HyperModelCore, self).__init__(self, label=label,
+        super().__init__(label=label,
                                              chaindir=chaindir, burn=burn,
                                              verbose=verbose,
                                              fancy_par_names=fancy_par_names,
                                              chain=chain, params=params)
         self.param_dict = param_dict
-
+        #HyperModelCore, self
     def model_core(self,nmodel):
         """
         Return a core that only contains the parameters and samples from a
@@ -271,14 +274,14 @@ class HyperModelCore(Core):
         par_idx = []
         N_idx = self.params.index('nmodel')
         for par in model_pars:
-            par_idx.append(model_pars.index(par))
+            par_idx.append(self.params.index(par))
 
         par_idx = sorted(par_idx)
-        model_chain = self.chain[np.rint(self.chain[:,N_idx])==N, par_idx]
+        model_chain = self.chain[np.rint(self.chain[:,N_idx])==N,:][:,par_idx]
 
         model_core = Core(label=self.label+'_{0}'.format(N), chain=model_chain,
                           params=model_pars, verbose=False)
-
+        
         model_core.set_rn_freqs(freqs=self.rn_freqs)
 
         return model_core

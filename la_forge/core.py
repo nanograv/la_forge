@@ -36,9 +36,17 @@ class Core(object):
         List of strings provided as names to be used when plotting parameters.
         Must be the same length as the parameter list associated with the
         chains.
+
+    chain : array, optional
+        Array that contains samples from an MCMC chain that is samples x param
+        in shape. Loaded from file if dir given as `chaindir`.
+
+    params : list, optional
+        List of parameters that corresponds to the parameters in the chain. Is
+        loaded automatically if in the chain directory given above.
     """
-    def __init__(self, label, chaindir, burn=None, verbose=True,
-                 fancy_par_names=None):
+    def __init__(self, label, chaindir=None, burn=None, verbose=True,
+                 fancy_par_names=None, chain=None, params=None):
         """
 
         """
@@ -46,21 +54,33 @@ class Core(object):
         self.chaindir = chaindir
         self.fancy_par_names = fancy_par_names
 
-        if os.path.isfile(chaindir + '/chain.fits'):
-            myfile = fits.open(chaindir + '/chain.fits')
-            table = Table(myfile[1].data)
-            self.params = table.colnames
-            self.chain = np.array([table[p] for p in self.params]).T
-        else:
-            if os.path.isfile(chaindir + '/pars.txt'):
-                self.params = list(np.loadtxt(chaindir + '/pars.txt',
-                                              dtype='str'))
-            elif os.path.isfile(chaindir + '/pars.npy'):
-                self.params = list(np.load(chaindir + '/pars.npy'))
-            elif os.path.isfile(chaindir + '/params.txt'):
-                self.params = list(np.loadtxt(chaindir + '/params.txt',
-                                              dtype='str'))
-            self.chain = np.loadtxt(chaindir + '/chain_1.txt')
+        if chain is None:
+            if os.path.isfile(chaindir + '/chain.fits'):
+                myfile = fits.open(chaindir + '/chain.fits')
+                table = Table(myfile[1].data)
+                self.params = table.colnames
+                self.chain = np.array([table[p] for p in self.params]).T
+            else:
+                if os.path.isfile(chaindir + '/pars.txt'):
+                    self.params = list(np.loadtxt(chaindir + '/pars.txt',
+                                                  dtype='str'))
+                elif os.path.isfile(chaindir + '/pars.npy'):
+                    self.params = list(np.load(chaindir + '/pars.npy'))
+                elif os.path.isfile(chaindir + '/params.txt'):
+                    self.params = list(np.loadtxt(chaindir + '/params.txt',
+                                                  dtype='str'))
+                elif params is not None:
+                    self.params = params
+                else:
+                    raise ValueError('Must set a parameter list if '
+                                     'none provided in directory.')
+
+                self.chain = np.loadtxt(chaindir + '/chain_1.txt')
+        elif chain is not None and params is not None:
+            self.chain = chain
+            self.params = params
+        elif chain is not None and params is None:
+            raise ValueError('Must declare parameters with chain.')
 
         if burn is None:
             self.set_burn(int(0.25*self.chain.shape[0]))
@@ -192,7 +212,7 @@ class Core(object):
         else:
             if os.path.isfile(freq_path):
                 F = np.loadtxt(freq_path)
-            else:
+            elif self.chaindir is not None:
                 try:
                     F = np.loadtxt(self.chaindir + freq_path)
                 except FileNotFoundError:
@@ -202,6 +222,9 @@ class Core(object):
                     err_msg += '\n' + 'See core.set_rn_freqs() docstring '
                     err_msg += 'for additional options.'
                     raise FileNotFoundError(err_msg)
+            else:
+                err_msg = 'No chain directory supplied'
+                raise FileNotFoundError(err_msg)
 
         self.rn_freqs = F
 
@@ -216,3 +239,48 @@ class Core(object):
             raise ValueError(err_msg)
 
         self.fancy_par_names = names_list
+
+##### Methods to act on Core objects
+
+class HyperModelCore(Core):
+    """
+    A class to make cores for the chains made by the enterprise_extensions
+    HyperModel framework.
+    """
+    def __init__(self, label, param_dict, chaindir=None, burn=None,
+                 verbose=True, fancy_par_names=None, chain=None, params=None):
+        """
+        Parameters
+        ----------
+
+        param_dict : dict
+            Dictionary of parameter lists, corresponding to the parameters in
+            each sub-model of the hypermodel.
+        """
+        super().__init__(label=label,
+                                             chaindir=chaindir, burn=burn,
+                                             verbose=verbose,
+                                             fancy_par_names=fancy_par_names,
+                                             chain=chain, params=params)
+        self.param_dict = param_dict
+        #HyperModelCore, self
+    def model_core(self,nmodel):
+        """
+        Return a core that only contains the parameters and samples from a
+        single HyperModel model.
+        """
+        N = nmodel
+        model_pars = self.param_dict[N]
+        par_idx = []
+        N_idx = self.params.index('nmodel')
+        for par in model_pars:
+            par_idx.append(self.params.index(par))
+
+        model_chain = self.chain[np.rint(self.chain[:,N_idx])==N,:][:,par_idx]
+
+        model_core = Core(label=self.label+'_{0}'.format(N), chain=model_chain,
+                          params=model_pars, verbose=False)
+
+        model_core.set_rn_freqs(freqs=self.rn_freqs)
+
+        return model_core

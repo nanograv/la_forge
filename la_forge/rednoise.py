@@ -277,9 +277,12 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
 
             sorted_data = c.chain[c.chain[:,lnlike_idx].argsort()[::-1]]
 
+            amp_par = pulsar+rn_type+'_log10_A'
+            gam_par = pulsar+rn_type+'_gamma'
+
             for n in range(n_tproc_realizations):
-                log10_A = sorted_data[n,c.params.index(pulsar + '_log10_A')]
-                gamma = sorted_data[n,c.params.index(pulsar + '_gamma')]
+                log10_A = sorted_data[n,c.params.index(amp_par)]
+                gamma = sorted_data[n,c.params.index(gam_par)]
 
                 alphas = np.array([sorted_data[n,c.params.index('{0}{1}_alphas_{2}'.format(pulsar,rn_type,i))] for i in range(30)])
 
@@ -287,7 +290,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
 
                 rho1 = np.array([ rho[i]*alphas[i] for i in range(nfreqs) ])
 
-                axs[0].plot(f, np.log10(rho1), color=Color, lw=1., ls='-',
+                axs[0].plot(F, np.log10(rho1), color=Color, lw=1., ls='-',
                             zorder=4, alpha=0.01)
 
             if plot_2d_hist:
@@ -341,7 +344,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
                                 ls='-', zorder=6, alpha=0.03)
 
 
-            log10_A, gamma = utils.get_rn_noise_params_2d_mlv(c, pulsar)
+            log10_A, gamma = utils.get_params_2d_mlv(c, amp_par, gam_par)
+            #get_rn_noise_params_2d_mlv(c, pulsar)
 
             if verbose:
                 print('Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))

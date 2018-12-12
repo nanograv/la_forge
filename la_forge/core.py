@@ -82,6 +82,12 @@ class Core(object):
         elif chain is not None and params is None:
             raise ValueError('Must declare parameters with chain.')
 
+        if self.chain.shape[1] > len(self.params):
+            self.params.extend(['lnlike'])
+            print('Appending PTMCMCSampler sampling parameters to end of'
+                  ' parameter list. If unwanted please provided a parameter'
+                  ' list.')
+
         if burn is None:
             self.set_burn(int(0.25*self.chain.shape[0]))
             if verbose:
@@ -264,6 +270,7 @@ class HyperModelCore(Core):
                                              chain=chain, params=params)
         self.param_dict = param_dict
         #HyperModelCore, self
+
     def model_core(self,nmodel):
         """
         Return a core that only contains the parameters and samples from a

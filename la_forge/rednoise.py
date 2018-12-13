@@ -232,7 +232,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
 
             plot_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
                           alpha_parname_root=par_root, Color=Color,
-                          n_tproc_realizations=n_tproc_realizations,
+                          n_realizations=n_tproc_realizations,
                           Tspan=Tspan)
 
             if plot_2d_hist:
@@ -256,7 +256,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
             nfreq_par = pulsar + rn_type +  '_nfreq'
             plot_adapt_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
                                 alpha_par=alpha_par, nfreq_par=nfreq_par,
-                                n_adpt_tproc_realizations=100, Color=Color,
+                                n_realizations=100, Color=Color,
                                 Tspan=Tspan)
 
             if plot_2d_hist:
@@ -284,7 +284,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
 
             plot_powerlaw(c, axes[0], amp_par, gam_par, Color=Color,
                           Linestyle=Linestyle, Tspan=None, verbose=verbose,
-                          n_plaw_realizations=n_plaw_realizations)
+                          n_realizations=n_plaw_realizations)
 
             if plot_2d_hist:
                 corner.hist2d(c.get_param(gam_par, to_burn=True),
@@ -350,10 +350,44 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
     plt.close()
 
 
-#### Red Noise Plotting Commands
+########## Red Noise Plotting Commands #########################
 
 def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
-                  Linestyle='-', n_plaw_realizations=0, Tspan=None):
+                  Linestyle='-', n_realizations=0, Tspan=None):
+    """
+    Plots a power law line from the given parmeters in units of residual
+    time.
+
+    Parameters
+    ----------
+
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+
+    amp_par : str
+        Name of red noise powerlaw amplitude parameter.
+
+    gam_par : str
+        Name of red noise powerlaw spectral index parameter (gamma).
+
+    verbose : bool, optional
+
+    n_realizations : int, optional
+        Number of realizations to plot.
+
+    Color : list, optional
+        Color to make the plot.
+
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
     F , nfreqs = get_rn_freqs(core)
 
     if Tspan is None:
@@ -361,7 +395,7 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
     else:
         T = Tspan
 
-    if n_plaw_realizations>0:
+    if n_realizations>0:
         # sort data in descending order of lnlike
         if 'lnlike' in core.params:
             lnlike_idx = core.params.index('lnlike')
@@ -369,11 +403,11 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
             lnlike_idx = -4
 
         sorted_idx = core.chain[:,lnlike_idx].argsort()[::-1]
-        sorted_idx = sorted_idx[sorted_idx > core.burn][:n_plaw_realizations]
+        sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
 
         sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
         sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
-        for idx in range(n_plaw_realizations):
+        for idx in range(n_realizations):
             rho = utils.compute_rho(sorted_Amp[idx],
                                     sorted_gam[idx], F, T)
             axis.plot(F, np.log10(rho), color=Color, lw=0.4,
@@ -392,9 +426,47 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
 
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
 
-def plot_free_spec(core, axis, Tspan=None, parname_root=None, prior_min=None,
-                   Color='k', Fillstyle='full',verbose=True):
+def plot_free_spec(core, axis, parname_root, prior_min=None,
+                   Color='k', Fillstyle='full', verbose=True, Tspan=None):
+    """
+    Plots red noise free spectral parmeters in units of residual time.
+    Determines whether the posteriors should be considered as a fit a parameter
+    or as upper limits of the given parameter and plots accordingly.
 
+    Parameters
+    ----------
+
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+
+    parname_root : str
+        Name of red noise free spectral coefficient parameters.
+
+    prior_min : float
+        Minimum value for uniform or log-uniform prior used in search over free
+        spectral coefficients.
+
+    verbose : bool, optional
+
+    n_realizations : int, optional
+        Number of realizations to plot.
+
+    Color : str, optional
+        Color of the free spectral coefficient markers.
+
+    Fillstyle : str, optional
+        Fillstyle for the free spectral coefficient markers.
+
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
     F , nfreqs = get_rn_freqs(core)
 
     if Tspan is None:
@@ -452,8 +524,44 @@ def plot_free_spec(core, axis, Tspan=None, parname_root=None, prior_min=None,
 
 
 def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,
-                  Color='k', n_tproc_realizations=100, Tspan=None):
+                  Color='k', n_realizations=100, Tspan=None):
+    """
+    Plots a power law line from the given parmeters in units of residual
+    time.
 
+    Parameters
+    ----------
+
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+
+    alpha_parname_root : str
+        Root of the t-process coefficient names,
+        i.e. for J1713+0747_red_noise_alphas_0 give:
+        'J1713+0747_red_noise_alphas'.
+
+    amp_par : str
+        Name of red noise powerlaw amplitude parameter.
+
+    gam_par : str
+        Name of red noise powerlaw spectral index parameter (gamma).
+
+    n_realizations : int, optional
+        Number of realizations to plot.
+
+    Color : list, optional
+        Color to make the plot.
+
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
     F , nfreqs = get_rn_freqs(core)
 
     if Tspan is None:
@@ -474,7 +582,7 @@ def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,
     alpha_idxs = [core.params.index(alpha_parname_root+'_{0}'.format(i))
                   for i in range(30)]
 
-    for n in range(n_tproc_realizations):
+    for n in range(n_realizations):
         log10_A = sorted_data[n,amp_idx]
         gamma = sorted_data[n,gam_idx]
 
@@ -488,7 +596,7 @@ def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,
                   zorder=4, alpha=0.01)
 
 def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
-                        Color='k', n_adpt_tproc_realizations=100, Tspan=None):
+                        Color='k', n_realizations=100, Tspan=None):
 
     F , nfreqs = get_rn_freqs(core)
 
@@ -510,10 +618,7 @@ def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
     alpha_idx = core.params.index(alpha_par)
     nfreq_idx = core.params.index(nfreq_par)
 
-    # alpha_model = np.ones_like(f)
-    # alpha_model[2*int(np.rint(nfreq))] = alphas_adapt
-    # alpha_model[2*int(np.rint(nfreq))+1] = alphas_adapt
-    for n in range(n_adpt_tproc_realizations):
+    for n in range(n_realizations):
         log10_A = sorted_data[n,amp_idx]
         gamma = sorted_data[n,gam_idx]
         alpha = sorted_data[n,alpha_idx]
@@ -522,7 +627,6 @@ def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
         rho = utils.compute_rho(log10_A, gamma, F, T)
         f_idx = int(np.rint(nfreq))
         rho[f_idx] = rho[f_idx] * alpha
-        # rho1 = np.array([ rho[i]*alphas[i] for i in range(nfreqs) ])
 
-        axis.plot(F, np.log10(rho), color=Color, lw=1., ls='-',
-                  zorder=4, alpha=0.01)
+        axis.plot(F, np.log10(rho), color=Color, lw=1., ls='-', zorder=4,
+                  alpha=0.01)

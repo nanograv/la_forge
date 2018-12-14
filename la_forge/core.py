@@ -105,14 +105,11 @@ class Core(object):
             self.set_fancy_par_names(fancy_par_names)
 
         self.rn_freqs = None
-        try:
-            self.set_rn_freqs()
-        except FileNotFoundError:
-            if verbose:
-                print('No red noise frequencies set. Please use '
-                      'core.set_rn_freqs() to set, if needed.')
-            else:
-                pass
+        if verbose:
+            print('Red noise frequencies must be set before plotting most red '
+                  'noise figures. Please use core.set_rn_freqs() to set, if '
+                  'needed.')
+
 
 
     def get_param(self, param, to_burn=True):
@@ -264,10 +261,10 @@ class HyperModelCore(Core):
             each sub-model of the hypermodel.
         """
         super().__init__(label=label,
-                                             chaindir=chaindir, burn=burn,
-                                             verbose=verbose,
-                                             fancy_par_names=fancy_par_names,
-                                             chain=chain, params=params)
+                         chaindir=chaindir, burn=burn,
+                         verbose=verbose,
+                         fancy_par_names=fancy_par_names,
+                         chain=chain, params=params)
         self.param_dict = param_dict
         #HyperModelCore, self
 

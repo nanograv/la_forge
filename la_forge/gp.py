@@ -9,7 +9,40 @@ import corner
 from . import utils
 from .core import Core
 
+import scipy.sparse as sps
+import scipy.linalg as sl
 
+import logging
+
+logging.basicConfig(format='%(levelname)s: %(name)s: %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+##### Either import SKS Sparse Library or use Scipy version defined below.
+try:
+    from sksparse.cholmod import cholesky
+except ImportError:
+    msg = 'No sksparse library. Using scipy instead!'
+    logger.warning(msg)
+
+    class cholesky(object):
+
+        def __init__(self, x):
+            if sps.issparse(x):
+                x = x.toarray()
+            self.cf = sl.cho_factor(x)
+
+        def __call__(self, other):
+            return sl.cho_solve(self.cf, other)
+
+        def logdet(self):
+            return np.sum(2 * np.log(np.diag(self.cf[0])))
+
+        def inv(self):
+            return sl.cho_solve(self.cf, np.eye(len(self.cf[0])))
+
+###### Constants #######
+DM_K = float(2.41e-16)
 
 class Signal_Reconstruction():
 
@@ -68,6 +101,9 @@ class Signal_Reconstruction():
                     nb = basis.shape[1]
                     #print(sig.signal_name,sig.signal_type,sig.signal_id,nb)
                     #if (sig.signal_type == 'basis' and 'gw' not in sig.name):
+
+                    # This was because svd timing bases weren't named orginally.
+                    # Maybe no longer needed.
                     if sig.signal_id=='':
                         ky = 'timing_model'
                     else:
@@ -76,14 +112,36 @@ class Signal_Reconstruction():
                     if pname in p_list:
                         self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
                         if sig.signal_type == 'common basis':
-                            self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
+                            self.common_gp_idx[pname][ky] = np.arange(Ntot,
+                                                                      nb+Ntot)
 
                     ntot += nb
                     Ntot += nb
         self.p_list = p_list
         self.p_idx = p_idx
 
-    def reconstruct_signal(self, idx=None, comp ='red', det_signal=True, mle=False):
+    def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=True,
+                           mle=False, idx=None):
+        """
+        Parameters
+        ----------
+        gp_type : str, {'achrom_rn','gw','DM','FD','all'}
+            Type of gaussian process signal to be reconstructed.
+
+        det_signal : bool
+            Whether to include the deterministic signals in the reconstruction.
+
+        mle : bool
+            Whether to use the maximum likelihood value for the reconstruction.
+
+        idx : int, optional
+            Index of the chain array to use.
+
+        Returns
+        -------
+        wave : array
+            A reconstruction of a single gaussian process signal realization.
+        """
 
         if idx is None:
             idx = np.random.randint(self.burn, self.chain.shape[0])
@@ -97,10 +155,11 @@ class Signal_Reconstruction():
 
         TNrs, TNTs, phiinvs, Ts = self._get_matrices(params=params)
 
-        for (p_ct, psrname, d, TNT, phiinv, T) in zip(self.p_idx, self.p_list, TNrs, TNTs, phiinvs, Ts):
+        for (p_ct, psrname, d, TNT, phiinv, T) in zip(self.p_idx, self.p_list,
+                                                      TNrs, TNTs, phiinvs, Ts):
             wave[psrname] = 0
 
-            # deterministic signal part
+            # Add in deterministic signal if desired.
             if det_signal:
                 wave[psrname] += self.pta.get_delay(params=params)[p_ct]
 
@@ -112,8 +171,8 @@ class Signal_Reconstruction():
             # Red noise pieces
             if comp == 'DM':
                 idx = self.gp_idx[psrname]['dm_gp']
-                wave[psrname] += np.dot(T[:,idx], b[idx]) * (self.psrs[p_ct].freqs**2 * const.DM_K * 1e12)
-            elif comp == 'red':
+                wave[psrname] += np.dot(T[:,idx], b[idx]) * (self.psrs[p_ct].freqs**2 * DM_K * 1e12)
+            elif comp == 'achrom_rn':
                 idx = self.gp_idx[psrname]['red_noise']
                 wave[psrname] += np.dot(T[:,idx], b[idx])
             elif comp == 'gw':
@@ -137,8 +196,6 @@ class Signal_Reconstruction():
                 except IndexError:
                     raise IndexError('Index is out of range. '
                                      'Maybe the basis for this is shared.')
-
-
         return wave
 
     def _get_matrices(self, params):
@@ -197,7 +254,8 @@ class Signal_Reconstruction():
         return mn + np.dot(Li,gp)
 
     def sample_params(self, index):
-        return {par: self.chain[index, ct] for ct, par in enumerate(self.pta.param_names)}
+        return {par: self.chain[index, ct] for ct, par
+                in enumerate(self.pta.param_names)}
 
     def sample_posterior(self, samp_idx, array_params=['alphas','rho']):
         param_names = self.pta.param_names
@@ -211,8 +269,10 @@ class Signal_Reconstruction():
                 mask &= [array_str not in par for par in param_names]
                 if any([array_str in par for par in param_names]):
                     array_par_name = [par for par in param_names
-                                      if array_str+'_0' in par][0].replace('_0','')
-                    array_idxs = np.where([array_str in par for par in param_names])
+                                      if array_str+'_0'
+                                      in par][0].replace('_0','')
+                    array_idxs = np.where([array_str in par
+                                           for par in param_names])
                     par_array = self.chain[samp_idx, array_idxs]
                     array_par_dict.update({array_par_name:par_array})
 

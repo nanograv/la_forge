@@ -23,7 +23,8 @@ try:
     from sksparse.cholmod import cholesky
 except ImportError:
     msg = 'No sksparse library. Using scipy instead!'
-    logger.warning(msg)
+    # logger.warning(msg)
+    print(msg)
 
     class cholesky(object):
 
@@ -46,13 +47,23 @@ DM_K = float(2.41e-16)
 
 class Signal_Reconstruction():
 
-    def __init__(self, psrs, pta, chain, burn=None, p_list='all'):
+    def __init__(self, psrs, pta, chain=None, burn=None,
+                 p_list='all',core=None):
+
+        if not isinstance(psrs,list):
+            psrs = [psrs]
 
         self.psrs = psrs
         self.pta = pta
-        self.chain = chain
         self.p_names = [psrs[ii].name for ii in range(len(psrs))]
 
+        if chain is None and core is None:
+            raise ValueError('Must provide a chain or a la_forge.Core object.')
+        if chain is None and core is not None:
+            chain = core.chain
+            burn = core.burn
+
+        self.chain = chain
         if burn is None:
             self.burn = int(0.25*chain.shape[0])
         else:
@@ -165,33 +176,33 @@ class Signal_Reconstruction():
 
             b = self._get_b(d, TNT, phiinv)
 
-            if comp in self.common_gp_idx[psrname].keys():
-                B = self._get_b_common(comp, TNrs, TNTs,params)
+            if gp_type in self.common_gp_idx[psrname].keys():
+                B = self._get_b_common(gp_type, TNrs, TNTs,params)
 
             # Red noise pieces
-            if comp == 'DM':
+            if gp_type == 'DM':
                 idx = self.gp_idx[psrname]['dm_gp']
                 wave[psrname] += np.dot(T[:,idx], b[idx]) * (self.psrs[p_ct].freqs**2 * DM_K * 1e12)
-            elif comp == 'achrom_rn':
+            elif gp_type == 'achrom_rn':
                 idx = self.gp_idx[psrname]['red_noise']
                 wave[psrname] += np.dot(T[:,idx], b[idx])
-            elif comp == 'gw':
+            elif gp_type == 'gw':
                 idx = self.gp_idx[psrname]['red_noise_gw']
                 wave[psrname] += np.dot(T[:,idx], b[idx])
-            elif comp == 'FD':
+            elif gp_type == 'FD':
                 idx = self.gp_idx[psrname]['FD']
                 wave[psrname] += np.dot(T[:,idx], b[idx])
-            elif comp == 'all':
+            elif gp_type == 'all':
                 wave[psrname] += np.dot(T, b)
-            elif comp in self.gp_idx[psrname].keys():
+            elif gp_type in self.gp_idx[psrname].keys():
 
                 try:
-                    if comp in self.common_gp_idx[psrname].keys():
-                        idx = self.gp_idx[psrname][comp]
-                        cidx = self.common_gp_idx[psrname][comp]
+                    if gp_type in self.common_gp_idx[psrname].keys():
+                        idx = self.gp_idx[psrname][gp_type]
+                        cidx = self.common_gp_idx[psrname][gp_type]
                         wave[psrname] += np.dot(T[:,idx], B[cidx])
                     else:
-                        idx = self.gp_idx[psrname][comp]
+                        idx = self.gp_idx[psrname][gp_type]
                         wave[psrname] += np.dot(T[:,idx], b[idx])
                 except IndexError:
                     raise IndexError('Index is out of range. '
@@ -234,7 +245,7 @@ class Signal_Reconstruction():
 
         return mn + np.dot(Li, np.random.randn(Li.shape[0]))
 
-    def _get_b_common(self, comp, TNrs, TNTs, params):
+    def _get_b_common(self, gp_type, TNrs, TNTs, params):
         phiinv = self.pta.get_phiinv(params, logdet=False)#, method='partition')
         Sigma = sps.block_diag(TNTs,'csc') + sps.csc_matrix(phiinv)
         TNr = np.concatenate(TNrs)
@@ -244,11 +255,11 @@ class Signal_Reconstruction():
         Li = sps.linalg.inv(ch.L()).todense()
 
         self.gp = np.random.randn(mn.shape[0])
-        L = self.common_gp_idx[self.p_list[0]][comp].shape[0]
+        L = self.common_gp_idx[self.p_list[0]][gp_type].shape[0]
         common_gp = np.random.randn(L)
 
         for psrname in self.p_list:
-            idxs = self.common_gp_idx[psrname][comp]
+            idxs = self.common_gp_idx[psrname][gp_type]
             self.gp[idxs] = common_gp
 
         return mn + np.dot(Li,gp)

@@ -110,10 +110,10 @@ def get_params_2d_mlv(core, par1, par2):
 def get_rn_noise_params_2d_mlv(core, pulsar):
     """Convenience function to find 2d rednoise maximum likelihood values.
     """
-    rn_si = pulsar + '_gamma'
     rn_amp = pulsar + '_log10_A'
+    rn_si = pulsar + '_gamma'
 
-    return get_params_2d_mlv(rn_si,rn_amp)
+    return get_params_2d_mlv(core,rn_amp,rn_si)
 
 def get_Tspan(pulsar, datadir):
     """Returns timespan of a pulsars dataset by loading the pulsar as an

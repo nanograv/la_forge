@@ -4,13 +4,21 @@ from __future__ import division, print_function
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
-import sys
-import glob
-
 import corner
+
 from . import utils
 from .core import Core
 
+__all__ = ['determine_if_limit',
+           'get_rn_freqs',
+           'get_Tspan',
+           'plot_rednoise_spectrum',
+           'plot_powerlaw',
+           'plot_tprocess',
+           'plot_free_spec',
+           ]
+secperyr = 365.25*24*3600
+fyr = 1./secperyr
 
 def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     """
@@ -22,8 +30,8 @@ def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     vals :  array or list
 
     threshold: float
-        Threshold above `minval` for determining whether to count as twosided
-        interval.
+        Threshold above `minval` for determining whether to count as
+        twosided interval.
 
     minval: float
         Minimum possible value for posterior.
@@ -38,8 +46,20 @@ def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     else:
         return True
 
+def get_rn_freqs(core):
+    """
+    Get red noise frequency array from a core, with error message if noise
+    array has not been included.
+    """
+    if core.rn_freqs is None:
+        raise ValueError('Please set red noise frequency array in '
+                         ' the core named {0}.'.format(core.label))
+    else:
+        return core.rn_freqs, core.rn_freqs.size
 
-def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
+
+def get_Tspan(pulsar, filepath=None, fourier_components=None,
+              datadir=None):
     """
     Function for getting timespan of a set of pulsar dataself.
 
@@ -49,16 +69,16 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
     pulsar : str
 
     filepath : str
-        Filepath to a `txt` file with pulsar name and timespan in two columns.
-        If supplied this file is used to return the timespan.
+        Filepath to a `txt` file with pulsar name and timespan in two
+        columns. If supplied this file is used to return the timespan.
 
     fourier_components : list or array
         Frequencies used in gaussian process modeling. If given
         `1/numpy.amin(fourier_components)` is retruned as timespan.
 
     datadir : str
-        Directory with pulsar data (assumed the same for `tim` and `par` files.)
-        Calls the `utils.get_Tspan()` method which loads an
+        Directory with pulsar data (assumed the same for `tim` and `par`
+        files.) Calls the `utils.get_Tspan()` method which loads an
         `enterprise.Pulsar()` and extracts the timespan.
 
     """
@@ -76,10 +96,14 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None, datadir=None):
 
 
 
-def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
-                           show_figure=False, rn_type='', plot_2d_hist=True,
-                           verbose=True, Tspan=None, partimdir=None,
-                           title_suffix='', freq_yr=1, plotpath = None):
+def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
+                           plot_2d_hist=True, verbose=True, Tspan=None,
+                           title_suffix='', freq_yr=1, plotpath = None,
+                           cmap='gist_rainbow', n_plaw_realizations=0,
+                           n_tproc_realizations=1000, Colors=None,
+                           labels=None,legend_loc=None,leg_alpha=1.0,
+                           Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
+                           freq_xtra=None, free_spec_min=None):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -90,20 +114,19 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
     pulsar : str
 
     cores : list
-        List of `la_forge.core.Core()` objects which conatin the posteriors for
-        the relevant red noise parameters to be plotted.
+        List of `la_forge.core.Core()` objects which contain the posteriors
+        for the relevant red noise parameters to be plotted.
 
-    nfreqs : int, optional
-        Number of frequencies used for red noise gaussian process.
-
-    chaindir : dict, optional
-        Dictionary of chain directories. Used for acquirinf fourier components
-        when set of frequencies is defined by user.
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
 
     show_figure : bool
 
-    rn_type : str {'','_dm_gp','_chrom_gp'}
-        String to choose which type of red noise parameters are used in plots.
+    rn_type : str {'','_dm_gp','_chrom_gp','_red_noise'}
+        String to choose which type of red noise parameters are used in
+        plots.
 
     plot_2d_hist : bool, optional
         Whether to include two dimensional histogram of powerlaw red noise
@@ -111,199 +134,214 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
     verbose : bool, optional
 
-    Tspan : float, optional
-        Timespan of the data set. Used for calculating frequencies. Linear
-        array is calculated as `[1/Tspan, ... ,nfreqs/Tspan]`.
-
-    partimdir : str, optional
-        Common directory for pulsar `tim` and `par` files. Needed if no other
-        source of dataset Tspan is provided.
-
     title_suffix : str, optional
         Added to title of red noise plot as:
         'Red Noise Spectrum: ' + pulsar + ' ' + title_suffix
 
     freq_yr : int , optional
         Number of 1/year harmonics to include in plot.
+
+    plotpath : str, optional
+        Path and file name to which plot will be saved.
+
+    cmap : str, optional
+        Color map from which to cycle plot colrs, if not given in Colors
+        kwarg.
+
+    n_plaw_realizations : int, optional
+        Number of powerlaw realizations to plot.
+
+    n_tproc_realizations : int, optional
+        Number of T-process realizations to plot.
+
+    Colors : list, optional
+        List of colors to cycle through in plots.
+
+    labels : list, optional
+        Labels of various plots, for legend.
+
+    legend_loc : tuple or str, optional
+        Legend location with respect to Bbox_anchor.
+
+    leg_alpha : float, optional
+        Opacity of legend background.
+
+    Bbox_anchor : tuple, optional
+        This is the bbox_to_anchor value for the legend.
+
     """
 
-    secperyr = 365.25*24*3600
-    fyr = 1./secperyr
-
-
-
     if plot_2d_hist:
-        fig, axs = plt.subplots(1, 2, figsize=(12,4))
+        fig, axes = plt.subplots(1, 2, figsize=(12,4))
     else:
-        fig, axs = plt.subplots(1, 1, figsize=(6,4))
+        axes = []
+        fig, ax = plt.subplots(1, 1, figsize=(6,4))
+        axes.append(ax)
 
     ax1_ylim_pl = None
     ax1_ylim_tp = None
 
-    for c in cores:
+    free_spec_ct = 0
+    tproc_ct = 0
+    tproc_adapt_ct = 0
+    plaw_ct = 0
+    color_idx = 0
+    lines = []
+    if labels is None:
+        make_labels = True
+        labels = []
+    else:
+        make_labels = False
 
+    if Colors is None:
+        cm = plt.get_cmap(cmap)
+        NUM_COLORS = len(cores)
+        Colors = cm(np.arange(NUM_COLORS)/NUM_COLORS)
+
+    amp_par = pulsar+rn_type+'_log10_A'
+    gam_par = pulsar+rn_type+'_gamma'
+
+    for ii, c in enumerate(cores):
+
+        ###Free Spectral Plotting
         if pulsar + rn_type +  '_log10_rho_0' in c.params:
-            if os.path.isfile(chaindir['free_spec_chaindir'] + '/fourier_components.txt'):
-                F = np.loadtxt(chaindir['free_spec_chaindir'] + '/fourier_components.txt')
-                if Tspan is None:
-                    T = get_Tspan(pulsar, fourier_components=F,
-                                  datadir=partimdir)
-                else:
-                    T = Tspan
+            Color = Colors[color_idx]
 
+            if free_spec_ct==1:
+                Fillstyle='none'
             else:
-                if Tspan is None:
-                    T = get_Tspan(pulsar, datadir=partimdir)
-                                  # filepath = chaindir['free_spec_chaindir'])
-                else:
-                    T = Tspan
-                F = None
+                Fillstyle = 'full'
 
-            if verbose:
-                print('Tspan = {0:.1f} yrs   1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
+            par_root = pulsar + rn_type +  '_log10_rho'
 
-            f1, median, minval, maxval = [], [], [], []
-            f2, ul = [], []
+            plot_free_spec(c, axes[0], Tspan=Tspan, parname_root=par_root,
+                           prior_min=None, Color=Color, Fillstyle=Fillstyle,
+                           verbose=verbose)
 
-            for n in range(nfreqs):
-                paramname = pulsar + rn_type +  '_log10_rho_' + str(n)
+            lines.append(plt.Line2D([0], [0], color=Color, linestyle='None',
+                         marker='o', fillstyle=Fillstyle))
 
-                # determine if we want to plot a limit to a measured value
-                if determine_if_limit(c.get_param(paramname)[c.burn:], threshold=0.1, minval=-10):
-                    if F is None:
-                        f2.append((n+1)/T)
-                    else:
-                        f2.append(F[n])
-                    x = c.get_param_confint(paramname, onesided=True, interval=95)[0]
-                    ul.append(x)
-                else:
-                    if F is None:
-                        f1.append((n+1)/T)
-                    else:
-                        f1.append(F[n])
-                    median.append(c.get_param_median(paramname))
-                    x,y = c.get_param_confint(paramname, onesided=False, interval=95)
-                    minval.append(x)
-                    maxval.append(y)
+            if make_labels is True: labels.append('Free Spectral')
+            free_spec_ct += 1
+            color_idx += 1
 
-            f1 = np.array(f1)
-            median = np.array(median)
-            minval = np.array(minval)
-            maxval = np.array(maxval)
-            f2 = np.array(f2)
-            ul = np.array(ul)
-            axs[0].errorbar(f1, median, yerr=[ median-minval, maxval-median ], fmt='o', color='C0', zorder=8)
-            axs[0].errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o', color='C0', zorder=8)
-
+        ### T-Process Plotting
         elif pulsar + rn_type + '_alphas_0' in c.params:
-            if os.path.isfile(chaindir['tproc_chaindir'] + '/fourier_components.txt'):
-                F = np.loadtxt(chaindir['tproc_chaindir'] + '/fourier_components.txt')
-                if Tspan is None:
-                    T = get_Tspan(pulsar, fourier_components=F,
-                                  datadir=partimdir)
-                else:
-                    T = Tspan
-            else:
-                if Tspan is None:
-                    T = get_Tspan(pulsar, datadir=partimdir,
-                                  filepath = chaindir['free_spec_chaindir'])
-                else:
-                    T = Tspan
+            Color = Colors[color_idx]
+            par_root = pulsar + rn_type +  '_alphas'
 
-                F = None
-
-            # sort data in descending order of lnlike
-            if 'lnlike' in c.params:
-                lnlike_idx = c.params.index('lnlike')
-            else:
-                lnlike_idx = -4
-
-            sorted_data = c.chain[c.chain[:,lnlike_idx].argsort()[::-1]]
-
-            nlines = 1000    # number of t-process lines to draw
-            for n in range(nlines):
-                log10_A = sorted_data[n,c.params.index(pulsar + '_log10_A')]
-                gamma = sorted_data[n,c.params.index(pulsar + '_gamma')]
-
-                alphas = np.array([sorted_data[n,c.params.index('{0}{1}_alphas_{2}'.format(pulsar,rn_type,i))] for i in range(30)])
-
-                if F is None:
-                    f = np.array([(i+1)/T for i in range(30)])
-                else:
-                    f = F
-
-                rho = utils.compute_rho(log10_A, gamma, f, T)
-
-                rho1 = np.array([ rho[i]*alphas[i] for i in range(30) ])
-
-                axs[0].plot(f, np.log10(rho1), color='C2', lw=1., ls='-', zorder=4, alpha=0.01)
+            plot_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
+                          alpha_parname_root=par_root, Color=Color,
+                          n_realizations=n_tproc_realizations,
+                          Tspan=Tspan)
 
             if plot_2d_hist:
-                corner.hist2d(c.get_param(pulsar+rn_type+'_gamma')[c.burn:],
-                              c.get_param(pulsar+rn_type+'_log10_A')[c.burn:],
-                              bins=20, ax=axs[1], plot_datapoints=False,
+                corner.hist2d(c.get_param(gam_par)[c.burn:],
+                              c.get_param(amp_par)[c.burn:],
+                              bins=20, ax=axes[1], plot_datapoints=False,
                               plot_density=False, plot_contours=True,
-                              no_fill_contours=True, color='C2')
-                ax1_ylim_tp = axs[1].get_ylim()
+                              no_fill_contours=True, color=Color)
+                ax1_ylim_tp = axes[1].get_ylim()
 
+            # Track lines and labels for legend
+            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
+            if make_labels is True: labels.append('T-Process')
+            tproc_ct += 1
+            color_idx += 1
+
+        ### Adaptive T-Process Plotting
+        elif pulsar + rn_type + '_alphas_adapt_0' in c.params:
+            Color = Colors[color_idx]
+            alpha_par = pulsar + rn_type +  '_alphas_adapt_0'
+            nfreq_par = pulsar + rn_type +  '_nfreq'
+            plot_adapt_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
+                                alpha_par=alpha_par, nfreq_par=nfreq_par,
+                                n_realizations=100, Color=Color,
+                                Tspan=Tspan)
+
+            if plot_2d_hist:
+                corner.hist2d(c.get_param(gam_par)[c.burn:],
+                              c.get_param(amp_par)[c.burn:],
+                              bins=20, ax=axes[1], plot_datapoints=False,
+                              plot_density=False, plot_contours=True,
+                              no_fill_contours=True, color=Color)
+                ax1_ylim_tp = axes[1].get_ylim()
+
+            # Track lines and labels for legend
+            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
+            if make_labels is True: labels.append('Adaptive T-Process')
+            tproc_adapt_ct += 1
+            color_idx += 1
+
+        ### Powerlaw Plotting
         else:
-            if Tspan is None:
-                T = get_Tspan(pulsar, datadir=partimdir)
-                              # filepath = chaindir['plaw_chaindir'])
+            if plaw_ct==1:
+                Linestyle = '-'
             else:
-                T = Tspan
+                Linestyle = '-'
 
-            log10_A, gamma = utils.get_rn_noise_params_2d_mlv(c, pulsar)
+            Color = Colors[color_idx]
 
-            if verbose:
-                print('Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
-                print('Red noise parameters: log10_A = {0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))
+            plot_powerlaw(c, axes[0], amp_par, gam_par, Color=Color,
+                          Linestyle=Linestyle, Tspan=None, verbose=verbose,
+                          n_realizations=n_plaw_realizations)
 
-            f = np.array([(i+1)/T for i in range(30)])
-            rho = utils.compute_rho(log10_A, gamma, f, T)
-
-            axs[0].plot(f, np.log10(rho), color='C1', lw=1.5, ls='-', zorder=6)
             if plot_2d_hist:
-                corner.hist2d(c.get_param(pulsar+rn_type+'_gamma')[c.burn:],
-                              c.get_param(pulsar+rn_type+'_log10_A')[c.burn:],
-                              bins=20, ax=axs[1], plot_datapoints=False,
+                corner.hist2d(c.get_param(gam_par, to_burn=True),
+                              c.get_param(amp_par, to_burn=True),
+                              bins=20, ax=axes[1], plot_datapoints=False,
                               plot_density=False, plot_contours=True,
-                              no_fill_contours=True, color='C1')
-                ax1_ylim_pl = axs[1].get_ylim()
-#            axs[1].hist2d(c.get_param(pulsar + '_gamma')[c.burn:],
-#                          c.get_param(pulsar + '_log10_A')[c.burn:],
-#                          bins=50, normed=True)
-#            axs[1].plot(gamma, log10_A, marker='x', markersize=10, color='k')
+                              no_fill_contours=True, color=Color)
+                ax1_ylim_pl = axes[1].get_ylim()
+
+            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2,
+                                    linestyle=Linestyle))
+            if make_labels is True: labels.append('Power Law')
+
+            plaw_ct += 1
+            color_idx += 1
 
     if isinstance(freq_yr, int):
         for ln in [ii+1. for ii in range(freq_yr)]:
-            axs[0].axvline(ln/secperyr, color='0.3', ls='--')
+            axes[0].axvline(ln/secperyr, color='0.3', ls='--')
     elif freq_yr is None:
         pass
 
-    # axs[0].axvline(3./secperyr, color='0.3', ls='--')
+    if freq_xtra is not None:
+        if isinstance(freq_xtra, float):
+            axes[0].axvline(freq_xtra, color='0.3', ls='--')
+        elif isinstance(freq_xtra,list) or isinstance(freq_xtra,array):
+            for xfreq in freq_xtra:
+                axes[0].axvline(xfreq, color='0.3', ls='--')
 
-    axs[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
-    axs[0].set_ylabel('log10 RMS (s)')
-    axs[0].set_xlabel('Frequency (Hz)')
-    axs[0].grid(which='both', ls='--')
-    axs[0].set_xscale('log')
-    axs[0].set_ylim((-10,-4))
+    axes[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
+    axes[0].set_ylabel('log10 RMS (s)')
+    axes[0].set_xlabel('Frequency (Hz)')
+    axes[0].grid(which='both', ls='--')
+    axes[0].set_xscale('log')
+    axes[0].set_ylim((-10,-4))
     if plot_2d_hist:
-        axs[1].set_title('Red Noise Amplitude Posterior: ' + pulsar)
-        axs[1].set_xlabel(pulsar + '_gamma')
-        axs[1].set_ylabel(pulsar + '_log10_A')
-        axs[1].set_xlim((0,7))
+        axes[1].set_title('Red Noise Amplitude Posterior: ' + pulsar)
+        axes[1].set_xlabel(pulsar + '_gamma')
+        axes[1].set_ylabel(pulsar + '_log10_A')
+        axes[1].set_xlim((0,7))
         if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
             ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
             ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
-            axs[1].set_ylim((ymin,ymax))
+            axes[1].set_ylim((ymin,ymax))
+
+        if legend_loc is None: legend_loc=(-0.45,-0.15)
+    else:
+        if legend_loc is None: legend_loc=(-0.15,-0.15)
+
+    leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
+                   bbox_to_anchor=Bbox_anchor, ncol=len(labels))
+    leg.get_frame().set_alpha(leg_alpha)
 
     plt.tight_layout()
 
-
     if plotpath is not None:
-        plt.savefig(plotpath, bbox_inches='tight')
+        plt.savefig(plotpath,additional_artists=[leg], bbox_inches='tight')
         print('Figure saved to ' + plotpath)
 
     if show_figure:
@@ -311,111 +349,284 @@ def plot_rednoise_spectrum(pulsar, cores, nfreqs=30, chaindir=None,
 
     plt.close()
 
-######### Retrieving Red Noise Process Realizations ########
 
-def get_process_timeseries(pta, psr, chain, burn, comp='DM',
-                           mle=False, model=0):
-        """
-        Construct a time series realization of various constrained processes.
+########## Red Noise Plotting Commands #########################
 
-        Parameters
-        ----------
-        psr :
-            enterprise pulsar object
+def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
+                  Linestyle='-', n_realizations=0, Tspan=None):
+    """
+    Plots a power law line from the given parmeters in units of residual
+    time.
 
-        chain : array
-            MCMC chain from sampling all models
+    Parameters
+    ----------
 
-        burn : int
-            Desired number of initial samples to discard
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
 
-        comp : str, {'DM', 'red', 'FD', 'all'}
-            Which process to reconstruct?
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
 
-        mle : bool
-            Create time series from ML of GP hyper-parameters?
+    amp_par : str
+        Name of red noise powerlaw amplitude parameter.
 
-        model : int
-            Which sub-model within the super-model to reconstruct from?
+    gam_par : str
+        Name of red noise powerlaw spectral index parameter (gamma).
 
-        Returns
-        -------
-        ret : array
-            Time-series of the reconstructed process.
-        """
+    verbose : bool, optional
 
-        wave = 0
-        pta = self.models[model]
-        model_chain = chain[np.rint(chain[:,-5])==model,:]
+    n_realizations : int, optional
+        Number of realizations to plot.
 
-        # get parameter dictionary
-        if mle:
-            ind = np.argmax(model_chain[:, -4])
+    Color : list, optional
+        Color to make the plot.
+
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
+    F , nfreqs = get_rn_freqs(core)
+
+    if Tspan is None:
+        T = 1/np.amin(F)
+    else:
+        T = Tspan
+
+    if n_realizations>0:
+        # sort data in descending order of lnlike
+        if 'lnlike' in core.params:
+            lnlike_idx = core.params.index('lnlike')
         else:
-            ind = np.random.randint(burn, model_chain.shape[0])
-        params = {par: model_chain[ind, ct]
-                  for ct, par in enumerate(self.param_names)
-                  if par in pta.param_names}
+            lnlike_idx = -4
 
-        # deterministic signal part
-        wave += pta.get_delay(params=params)[0]
+        sorted_idx = core.chain[:,lnlike_idx].argsort()[::-1]
+        sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
 
-        # get linear parameters
-        Nvec = pta.get_ndiag(params)[0]
-        phiinv = pta.get_phiinv(params, logdet=False)[0]
-        T = pta.get_basis(params)[0]
+        sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
+        sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
+        for idx in range(n_realizations):
+            rho = utils.compute_rho(sorted_Amp[idx],
+                                    sorted_gam[idx], F, T)
+            axis.plot(F, np.log10(rho), color=Color, lw=0.4,
+                        ls='-', zorder=6, alpha=0.03)
 
-        d = pta.get_TNr(params)[0]
-        TNT = pta.get_TNT(params)[0]
 
-        # Red noise piece
-        Sigma = TNT + (np.diag(phiinv) if phiinv.ndim == 1 else phiinv)
+    log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
 
-        try:
-            u, s, _ = sl.svd(Sigma)
-            mn = np.dot(u, np.dot(u.T, d)/s)
-            Li = u * np.sqrt(1/s)
-        except np.linalg.LinAlgError:
+    if verbose:
+        print('Plotting Powerlaw RN Params:'
+              'Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
+        print('Red noise parameters: log10_A = '
+              '{0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))
 
-            Q, R = sl.qr(Sigma)
-            Sigi = sl.solve(R, Q.T)
-            mn = np.dot(Sigi, d)
-            u, s, _ = sl.svd(Sigi)
-            Li = u * np.sqrt(1/s)
+    rho = utils.compute_rho(log10_A, gamma, F, T)
 
-        b = mn + np.dot(Li, np.random.randn(Li.shape[0]))
+    axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
 
-        # find basis indices
-        pardict = {}
-        for sc in pta._signalcollections:
-            ntot = 0
-            for sig in sc._signals:
-                if sig.signal_type == 'basis':
-                    basis = sig.get_basis(params=params)
-                    nb = basis.shape[1]
-                    pardict[sig.signal_name] = np.arange(ntot, nb+ntot)
-                    ntot += nb
+def plot_free_spec(core, axis, parname_root, prior_min=None,
+                   Color='k', Fillstyle='full', verbose=True, Tspan=None):
+    """
+    Plots red noise free spectral parmeters in units of residual time.
+    Determines whether the posteriors should be considered as a fit a parameter
+    or as upper limits of the given parameter and plots accordingly.
 
-        # DM quadratic + GP
-        if comp == 'DM':
-            idx = pardict['dm_gp']
-            wave += np.dot(T[:,idx], b[idx])
-            ret = wave * (psr.freqs**2 * const.DM_K * 1e12)
-        elif comp == 'red':
-            idx = pardict['red noise']
-            wave += np.dot(T[:,idx], b[idx])
-            ret = wave
-        elif comp == 'FD':
-            idx = pardict['FD']
-            wave += np.dot(T[:,idx], b[idx])
-            ret = wave
-        elif comp == 'all':
-            wave += np.dot(T, b)
-            ret = wave
+    Parameters
+    ----------
+
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+
+    parname_root : str
+        Name of red noise free spectral coefficient parameters.
+
+    prior_min : float
+        Minimum value for uniform or log-uniform prior used in search over free
+        spectral coefficients.
+
+    verbose : bool, optional
+
+    n_realizations : int, optional
+        Number of realizations to plot.
+
+    Color : str, optional
+        Color of the free spectral coefficient markers.
+
+    Fillstyle : str, optional
+        Fillstyle for the free spectral coefficient markers.
+
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
+    F , nfreqs = get_rn_freqs(core)
+
+    if Tspan is None:
+        T = 1/np.amin(F)
+    else:
+        T = Tspan
+
+    if verbose:
+        print('Plotting Free Spectral RN Params:'
+              'Tspan = {0:.1f} yrs   f_min = {1:.1e}'.format(T/secperyr, 1./T))
+
+    f1, median, minval, maxval = [], [], [], []
+    f2, ul = [], []
+
+    # Find smallest sample for setting upper limit check.
+    min_sample = np.amin([core.get_param(parname_root + '_' + str(n)).min()
+                          for n in range(nfreqs)])
+    if prior_min is not None:
+        MinVal = prior_min
+    elif min_sample < -9:
+        MinVal = -10
+    else:
+        MinVal = -9
+
+    for n in range(nfreqs):
+        param_nm = parname_root +  '_' + str(n)
+
+        # Sort whether posteriors meet criterion to be an upper limit or conf int.
+        if determine_if_limit(core.get_param(param_nm)[core.burn:],
+                              threshold=0.1, minval=MinVal):
+            f2.append(F[n])
+            x = core.get_param_confint(param_nm, onesided=True, interval=95)
+            ul.append(x)
         else:
-            ret = wave
+            f1.append(F[n])
+            median.append(core.get_param_median(param_nm))
+            x,y = core.get_param_confint(param_nm, onesided=False, interval=95)
+            minval.append(x)
+            maxval.append(y)
 
-        return ret
+    #Make lists into numpy arrays
+    f1 = np.array(f1)
+    median = np.array(median)
+    minval = np.array(minval)
+    maxval = np.array(maxval)
+    f2 = np.array(f2)
+    ul = np.array(ul)
 
-def get_hypermodel_process_timeseries(hypermodel, psr, chain, burn, comp='DM',
-                           mle=False, model=0):
+    #Plot two kinds of points and append to given axis.
+    axis.errorbar(f1, median, fmt='o', color=Color, zorder=8,
+                  yerr=[median-minval, maxval-median],
+                  fillstyle = Fillstyle)#'C0'
+    axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
+                  color=Color, zorder=8, fillstyle=Fillstyle)
+
+
+def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,
+                  Color='k', n_realizations=100, Tspan=None):
+    """
+    Plots a power law line from the given parmeters in units of residual
+    time.
+
+    Parameters
+    ----------
+
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+
+    alpha_parname_root : str
+        Root of the t-process coefficient names,
+        i.e. for J1713+0747_red_noise_alphas_0 give:
+        'J1713+0747_red_noise_alphas'.
+
+    amp_par : str
+        Name of red noise powerlaw amplitude parameter.
+
+    gam_par : str
+        Name of red noise powerlaw spectral index parameter (gamma).
+
+    n_realizations : int, optional
+        Number of realizations to plot.
+
+    Color : list, optional
+        Color to make the plot.
+
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
+    F , nfreqs = get_rn_freqs(core)
+
+    if Tspan is None:
+        T = 1/np.amin(F)
+    else:
+        T = Tspan
+
+    # sort data in descending order of lnlike
+    if 'lnlike' in core.params:
+        lnlike_idx = core.params.index('lnlike')
+    else:
+        lnlike_idx = -4
+
+    sorted_data = core.chain[core.chain[:,lnlike_idx].argsort()[::-1]]
+
+    amp_idx = core.params.index(amp_par)
+    gam_idx = core.params.index(gam_par)
+    alpha_idxs = [core.params.index(alpha_parname_root+'_{0}'.format(i))
+                  for i in range(30)]
+
+    for n in range(n_realizations):
+        log10_A = sorted_data[n,amp_idx]
+        gamma = sorted_data[n,gam_idx]
+
+        alphas = sorted_data[n,alpha_idxs]
+
+        rho = utils.compute_rho(log10_A, gamma, F, T)
+
+        rho1 = np.array([ rho[i]*alphas[i] for i in range(nfreqs) ])
+
+        axis.plot(F, np.log10(rho1), color=Color, lw=1., ls='-',
+                  zorder=4, alpha=0.01)
+
+def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
+                        Color='k', n_realizations=100, Tspan=None):
+
+    F , nfreqs = get_rn_freqs(core)
+
+    if Tspan is None:
+        T = 1/np.amin(F)
+    else:
+        T = Tspan
+
+    # sort data in descending order of lnlike
+    if 'lnlike' in core.params:
+        lnlike_idx = core.params.index('lnlike')
+    else:
+        lnlike_idx = -4
+
+    sorted_data = core.chain[core.chain[:,lnlike_idx].argsort()[::-1]]
+
+    amp_idx = core.params.index(amp_par)
+    gam_idx = core.params.index(gam_par)
+    alpha_idx = core.params.index(alpha_par)
+    nfreq_idx = core.params.index(nfreq_par)
+
+    for n in range(n_realizations):
+        log10_A = sorted_data[n,amp_idx]
+        gamma = sorted_data[n,gam_idx]
+        alpha = sorted_data[n,alpha_idx]
+        nfreq = sorted_data[n,nfreq_idx]
+
+        rho = utils.compute_rho(log10_A, gamma, F, T)
+        f_idx = int(np.rint(nfreq))
+        rho[f_idx] = rho[f_idx] * alpha
+
+        axis.plot(F, np.log10(rho), color=Color, lw=1., ls='-', zorder=4,
+                  alpha=0.01)

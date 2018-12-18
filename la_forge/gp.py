@@ -229,8 +229,7 @@ class Signal_Reconstruction():
             # Red noise pieces
             if gp_type == 'DM':
                 idx = self.gp_idx[psrname]['dm_gp']
-                wave[psrname] += np.dot(T[:,idx], b[idx]) \\
-                                 * (self.psrs[p_ct].freqs**2 * DM_K * 1e12)
+                wave[psrname] += np.dot(T[:,idx], b[idx]) * (self.psrs[p_ct].freqs**2 * DM_K * 1e12)
             elif gp_type == 'achrom_rn':
                 idx = self.gp_idx[psrname]['red_noise']
                 wave[psrname] += np.dot(T[:,idx], b[idx])

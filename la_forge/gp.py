@@ -152,27 +152,27 @@ class Signal_Reconstruction():
 
             # The following fixes the indices for overlapping frequencies
             # Enterprise reuses bases if they are the same.
-            idx_lists = list(self.gp_idx[pname].values())
-            idx_list.extend(list(self.common_gp_idx[pname].values()))
-            if any([np.amax(n) >= phi_dim for n in idx_lists]):
-                freq_list = list(self.gp_freqs[pname].values())
-                L = len(freq_list)
-                if L > len(set(freq_list)):
-                    nequals = len(freq_list)-len(set(freq_list))+1
-                    freq_kys = list(self.gp_freqs[pname].keys())
-                    equals = []
-                    for ii, f in enumerate(freq_list[:-1]):
-                        idxs = [jj+ii for jj in range(L-ii)]
-                        idxs.remove(ii)
-                        print(ii,idxs)
-                        short_list = list(np.array(freq_list)[idxs])
-                        for kk, f2 in enumerate(short_list):
-                            if f==f2:
-                                eq_idx = idxs[kk]
-                                equals.append((ii,eq_idx))
-
-                else:
-                    pass
+            # idx_lists = list(self.gp_idx[pname].values())
+            # idx_list.extend(list(self.common_gp_idx[pname].values()))
+            # if any([np.amax(n) >= phi_dim for n in idx_lists]):
+            #     freq_list = list(self.gp_freqs[pname].values())
+            #     L = len(freq_list)
+            #     if L > len(set(freq_list)):
+            #         nequals = len(freq_list)-len(set(freq_list))+1
+            #         freq_kys = list(self.gp_freqs[pname].keys())
+            #         equals = []
+            #         for ii, f in enumerate(freq_list[:-1]):
+            #             idxs = [jj+ii for jj in range(L-ii)]
+            #             idxs.remove(ii)
+            #             print(ii,idxs)
+            #             short_list = list(np.array(freq_list)[idxs])
+            #             for kk, f2 in enumerate(short_list):
+            #                 if f==f2:
+            #                     eq_idx = idxs[kk]
+            #                     equals.append((ii,eq_idx))
+            #
+            #     else:
+            #         pass
 
         self.p_list = p_list
         self.p_idx = p_idx

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os.path
 import corner
+from collections import OrderedDict
 
 from . import utils
 from .core import Core
@@ -79,11 +80,11 @@ class Signal_Reconstruction():
             p_idx = np.arange(len(self.p_names))
 
         else:
-            if isinstance(p_list,str):
+            if isinstance(p_list,(str,basestring)):
                 p_idx = [self.p_names.index(p_list)]
                 p_list = [p_list]
 
-            elif isinstance(p_list[0],str):
+            elif isinstance(p_list[0],(str,basestring)):
                 p_idx = [self.p_names.index(p) for p in p_list]
 
             elif isinstance(p_list[0],int):
@@ -91,8 +92,9 @@ class Signal_Reconstruction():
                 p_list = self.p_names
 
         # find basis indices
-        self.gp_idx = {}
-        self.common_gp_idx = {}
+        self.gp_idx = OrderedDict()
+        self.common_gp_idx = OrderedDict()
+        self.gp_freqs = OrderedDict()
         Ntot = 0
         for idx, pname in enumerate(self.p_names):
             sc = self.pta._signalcollections[idx]
@@ -102,34 +104,90 @@ class Signal_Reconstruction():
             else:
                 raise KeyError('Pulsar name from signal collection does '
                                'not match name from provided list.')
-
-            self.gp_idx[pname] = {}
-            self.common_gp_idx[pname] = {}
+            phi_dim = sc.get_phi(params=self.mle_params).shape[0]
+            self.gp_idx[pname] = OrderedDict()
+            self.common_gp_idx[pname] = OrderedDict()
+            self.gp_freqs[pname] = OrderedDict()
             ntot = 0
+            all_freqs = []
             for sig in sc._signals:
                 if sig.signal_type in ['basis','common basis']:
                     basis = sig.get_basis(params=self.mle_params)
                     nb = basis.shape[1]
+                    sig._construct_basis()
+                    freqs = np.array(sig._labels[''])[::2]
+
                     #print(sig.signal_name,sig.signal_type,sig.signal_id,nb)
                     #if (sig.signal_type == 'basis' and 'gw' not in sig.name):
 
-                    # This was because svd timing bases weren't named orginally.
+                    # This was because svd timing bases weren't named originally.
                     # Maybe no longer needed.
                     if sig.signal_id=='':
                         ky = 'timing_model'
                     else:
                         ky = sig.signal_id
 
+                    self.gp_freqs[pname][ky] = freqs
                     if pname in p_list:
-                        self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
-                        if sig.signal_type == 'common basis':
-                            self.common_gp_idx[pname][ky] = np.arange(Ntot,
-                                                                      nb+Ntot)
+                        if len(all_freqs)==0:
+                            self.gp_idx[pname][ky] = np.arange(0, nb)
+                            all_freqs.append(list(freqs))
+                        else:
+                            if freqs in all_freqs:
+                                f_idx = all_freqs.index(freqs)
+                                f_key = list(self.gp_idx[pname].keys())[f_idx]
+                                self.gp_idx[pname][ky] = self.gp_idx[pname][f_key]
+                                if sig.signal_type == 'common basis':
+                                    self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
 
-                    ntot += nb
+                            else:
+                                self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
+                                if sig.signal_type == 'common basis':
+                                    self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
+
+                                all_freqs.append(freqs)
+                                ntot += nb
+
                     Ntot += nb
+
+            # The following fixes the indices for overlapping frequencies
+            # Enterprise reuses bases if they are the same.
+            idx_lists = list(self.gp_idx[pname].values())
+            idx_list.extend(list(self.common_gp_idx[pname].values()))
+            if any([np.amax(n) >= phi_dim for n in idx_lists]):
+                freq_list = list(self.gp_freqs[pname].values())
+                L = len(freq_list)
+                if L > len(set(freq_list)):
+                    nequals = len(freq_list)-len(set(freq_list))+1
+                    freq_kys = list(self.gp_freqs[pname].keys())
+                    equals = []
+                    for ii, f in enumerate(freq_list[:-1]):
+                        idxs = [jj+ii for jj in range(L-ii)]
+                        idxs.remove(ii)
+                        print(ii,idxs)
+                        short_list = list(np.array(freq_list)[idxs])
+                        for kk, f2 in enumerate(short_list):
+                            if f==f2:
+                                eq_idx = idxs[kk]
+                                equals.append((ii,eq_idx))
+
+                else:
+                    pass
+
         self.p_list = p_list
         self.p_idx = p_idx
+        self.gp_types = list(self.gp_idx[psrname].keys())
+    """
+    def _get_freqs(self,psrs):
+        """ #Hackish way to get frequency vector.
+        """
+        for sig in self.pta._signalcollections[0]._signals:
+            if sig.signal_name == 'red noise':
+                sig._construct_basis()
+                freqs = np.array(sig._labels[''])
+                break #Will have to change this to keep all the different red noise freqs.
+        return freqs
+    """
 
     def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=True,
                            mle=False, idx=None):
@@ -182,19 +240,25 @@ class Signal_Reconstruction():
             # Red noise pieces
             if gp_type == 'DM':
                 idx = self.gp_idx[psrname]['dm_gp']
-                wave[psrname] += np.dot(T[:,idx], b[idx]) * (self.psrs[p_ct].freqs**2 * DM_K * 1e12)
+                wave[psrname] += np.dot(T[:,idx], b[idx]) \\
+                                 * (self.psrs[p_ct].freqs**2 * DM_K * 1e12)
             elif gp_type == 'achrom_rn':
                 idx = self.gp_idx[psrname]['red_noise']
-                wave[psrname] += np.dot(T[:,idx], b[idx])
-            elif gp_type == 'gw':
-                idx = self.gp_idx[psrname]['red_noise_gw']
                 wave[psrname] += np.dot(T[:,idx], b[idx])
             elif gp_type == 'FD':
                 idx = self.gp_idx[psrname]['FD']
                 wave[psrname] += np.dot(T[:,idx], b[idx])
             elif gp_type == 'all':
                 wave[psrname] += np.dot(T, b)
-            elif gp_type in self.gp_idx[psrname].keys():
+            elif gp_type == 'gw':
+                gw_sig = [sig for sig
+                          in self.pta._signalcollections[p_ct]._signals
+                          if sig.signal_id=='red_noise_gw'][0]
+                phiinv = gw_sig.get_phiinv(params=params)
+                idx = self.gp_idx[psrname]['red_noise_gw']
+                b = self._get_b(d[idx], TNT[idx,idx], phiinv)
+                wave[psrname] += np.dot(T[:,idx], b[idx])
+            elif gp_type in self.gp_types:
 
                 try:
                     if gp_type in self.common_gp_idx[psrname].keys():
@@ -212,7 +276,7 @@ class Signal_Reconstruction():
     def _get_matrices(self, params):
         TNrs = self.pta.get_TNr(params)
         TNTs = self.pta.get_TNT(params)
-        phiinvs = self.pta.get_phiinv(params, logdet=False)#, method = 'partition')
+        phiinvs = self.pta.get_phiinv(params, logdet=False)#,method='partition')
         Ts = self.pta.get_basis(params)
 
         #The following takes care of common, correlated signals.
@@ -309,3 +373,12 @@ class Signal_Reconstruction():
 
     def _make_sigma(self, TNTs, phiinv):
         return sl.block_diag(*TNTs) + phiinv
+
+    def _get_freqs(self,psrs):
+        """ Hackish way to get frequency vector."""
+        for sig in self.pta._signalcollections[0]._signals:
+            if sig.signal_name == 'red noise':
+                sig._construct_basis()
+                freqs = np.array(sig._labels[''])
+                break #Will have to change this to keep all the different red noise freqs.
+        return freqs

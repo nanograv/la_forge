@@ -115,7 +115,7 @@ class Signal_Reconstruction():
                     basis = sig.get_basis(params=self.mle_params)
                     nb = basis.shape[1]
                     sig._construct_basis()
-                    freqs = np.array(sig._labels[''])[::2]
+                    freqs = list(np.array(sig._labels[''])[::2])
 
                     #print(sig.signal_name,sig.signal_type,sig.signal_id,nb)
                     #if (sig.signal_type == 'basis' and 'gw' not in sig.name):

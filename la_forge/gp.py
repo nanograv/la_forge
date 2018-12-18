@@ -177,17 +177,6 @@ class Signal_Reconstruction():
         self.p_list = p_list
         self.p_idx = p_idx
         self.gp_types = list(self.gp_idx[psrname].keys())
-    """
-    def _get_freqs(self,psrs):
-        """ #Hackish way to get frequency vector.
-        """
-        for sig in self.pta._signalcollections[0]._signals:
-            if sig.signal_name == 'red noise':
-                sig._construct_basis()
-                freqs = np.array(sig._labels[''])
-                break #Will have to change this to keep all the different red noise freqs.
-        return freqs
-    """
 
     def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=True,
                            mle=False, idx=None):

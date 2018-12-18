@@ -176,7 +176,7 @@ class Signal_Reconstruction():
 
         self.p_list = p_list
         self.p_idx = p_idx
-        self.gp_types = list(self.gp_idx[psrname].keys())
+        # self.gp_types = list(self.gp_idx[psrname].keys())
 
     def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=True,
                            mle=False, idx=None):
@@ -246,7 +246,7 @@ class Signal_Reconstruction():
                 idx = self.gp_idx[psrname]['red_noise_gw']
                 b = self._get_b(d[idx], TNT[idx,idx], phiinv)
                 wave[psrname] += np.dot(T[:,idx], b[idx])
-            elif gp_type in self.gp_types:
+            elif gp_type in self.gp_idx[psrname].keys():#self.gp_types:
 
                 try:
                     if gp_type in self.common_gp_idx[psrname].keys():

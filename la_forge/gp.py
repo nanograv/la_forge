@@ -127,16 +127,20 @@ class Signal_Reconstruction():
                     else:
                         ky = sig.signal_id
 
+                    if ky not in self.gp_types: self.gp_types.append(ky)
                     self.gp_freqs[pname][ky] = freqs
                     if pname in p_list:
+                        #Maybe a way to get rid of this first one
                         if len(all_freqs)==0:
-                            self.gp_idx[pname][ky] = np.arange(0, nb)
+                            self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
                             all_freqs.append(list(freqs))
+                            ntot += nb
                         else:
                             if freqs in all_freqs:
                                 f_idx = all_freqs.index(freqs)
                                 f_key = list(self.gp_idx[pname].keys())[f_idx]
                                 self.gp_idx[pname][ky] = self.gp_idx[pname][f_key]
+                                # TODO Fix the common signal idx collector!!!
                                 if sig.signal_type == 'common basis':
                                     self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
 
@@ -150,33 +154,8 @@ class Signal_Reconstruction():
 
                     Ntot += nb
 
-            # The following fixes the indices for overlapping frequencies
-            # Enterprise reuses bases if they are the same.
-            # idx_lists = list(self.gp_idx[pname].values())
-            # idx_list.extend(list(self.common_gp_idx[pname].values()))
-            # if any([np.amax(n) >= phi_dim for n in idx_lists]):
-            #     freq_list = list(self.gp_freqs[pname].values())
-            #     L = len(freq_list)
-            #     if L > len(set(freq_list)):
-            #         nequals = len(freq_list)-len(set(freq_list))+1
-            #         freq_kys = list(self.gp_freqs[pname].keys())
-            #         equals = []
-            #         for ii, f in enumerate(freq_list[:-1]):
-            #             idxs = [jj+ii for jj in range(L-ii)]
-            #             idxs.remove(ii)
-            #             print(ii,idxs)
-            #             short_list = list(np.array(freq_list)[idxs])
-            #             for kk, f2 in enumerate(short_list):
-            #                 if f==f2:
-            #                     eq_idx = idxs[kk]
-            #                     equals.append((ii,eq_idx))
-            #
-            #     else:
-            #         pass
-
         self.p_list = p_list
         self.p_idx = p_idx
-        # self.gp_types = list(self.gp_idx[psrname].keys())
 
     def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=True,
                            mle=False, idx=None):
@@ -239,14 +218,15 @@ class Signal_Reconstruction():
             elif gp_type == 'all':
                 wave[psrname] += np.dot(T, b)
             elif gp_type == 'gw':
-                gw_sig = [sig for sig
-                          in self.pta._signalcollections[p_ct]._signals
-                          if sig.signal_id=='red_noise_gw'][0]
-                phiinv = gw_sig.get_phiinv(params=params)
+                gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
+                # [sig for sig
+                #           in self.pta._signalcollections[p_ct]._signals
+                #           if sig.signal_id=='red_noise_gw'][0]
+                phiinv_gw = gw_sig.get_phiinv(params=params)
                 idx = self.gp_idx[psrname]['red_noise_gw']
-                b = self._get_b(d[idx], TNT[idx,idx], phiinv)
+                b = self._get_b(d[idx], TNT[idx,idx], phiinv_gw)
                 wave[psrname] += np.dot(T[:,idx], b[idx])
-            elif gp_type in self.gp_idx[psrname].keys():#self.gp_types:
+            elif gp_type in self.gp_types:
 
                 try:
                     if gp_type in self.common_gp_idx[psrname].keys():
@@ -259,6 +239,12 @@ class Signal_Reconstruction():
                 except IndexError:
                     raise IndexError('Index is out of range. '
                                      'Maybe the basis for this is shared.')
+            else:
+                err_msg = '{0} is not an available gp_type. '.format(gp_type)
+                err_msg += 'Available gp_types '
+                err_msg += 'include {0}'.format(self.gp_types)
+                raise ValueError(err_msg)
+
         return wave
 
     def _get_matrices(self, params):
@@ -361,12 +347,3 @@ class Signal_Reconstruction():
 
     def _make_sigma(self, TNTs, phiinv):
         return sl.block_diag(*TNTs) + phiinv
-
-    def _get_freqs(self,psrs):
-        """ Hackish way to get frequency vector."""
-        for sig in self.pta._signalcollections[0]._signals:
-            if sig.signal_name == 'red noise':
-                sig._construct_basis()
-                freqs = np.array(sig._labels[''])
-                break #Will have to change this to keep all the different red noise freqs.
-        return freqs

@@ -71,7 +71,7 @@ class Signal_Reconstruction():
             self.burn = burn
 
         self.mle_ind = np.argmax(chain[:, -4])
-        self.mle_params = self.sample_params(self.mle_ind)
+        self.mle_params = self.sample_posterior(self.mle_ind)
 
         ret = {}
 

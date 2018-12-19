@@ -110,6 +110,7 @@ class Signal_Reconstruction():
             self.gp_freqs[pname] = OrderedDict()
             ntot = 0
             all_freqs = []
+            self.gp_types = []
             for sig in sc._signals:
                 if sig.signal_type in ['basis','common basis']:
                     basis = sig.get_basis(params=self.mle_params)

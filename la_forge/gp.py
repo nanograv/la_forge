@@ -131,33 +131,28 @@ class Signal_Reconstruction():
                     self.gp_freqs[pname][ky] = freqs
                     if pname in p_list:
                         #Maybe a way to get rid of this first one
-                        if len(all_freqs)==0:
-                            self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
-                            all_freqs.append(list(freqs))
-                            ntot += nb
+                        if freqs in all_freqs:
+                            f_idx = all_freqs.index(freqs)
+                            f_key = list(self.gp_idx[pname].keys())[f_idx]
+                            self.gp_idx[pname][ky] = self.gp_idx[pname][f_key]
+                            # TODO Fix the common signal idx collector!!!
+                            if sig.signal_type == 'common basis':
+                                self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
+
                         else:
-                            if freqs in all_freqs:
-                                f_idx = all_freqs.index(freqs)
-                                f_key = list(self.gp_idx[pname].keys())[f_idx]
-                                self.gp_idx[pname][ky] = self.gp_idx[pname][f_key]
-                                # TODO Fix the common signal idx collector!!!
-                                if sig.signal_type == 'common basis':
-                                    self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
+                            self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
+                            if sig.signal_type == 'common basis':
+                                self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
 
-                            else:
-                                self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
-                                if sig.signal_type == 'common basis':
-                                    self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
-
-                                all_freqs.append(freqs)
-                                ntot += nb
+                            all_freqs.append(freqs)
+                            ntot += nb
 
                     Ntot += nb
 
         self.p_list = p_list
         self.p_idx = p_idx
 
-    def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=True,
+    def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=False,
                            mle=False, idx=None):
         """
         Parameters

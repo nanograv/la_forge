@@ -247,7 +247,7 @@ class Signal_Reconstruction():
                 phiinv_gw = gw_sig.get_phiinv(params=params)
                 idx = self.gp_idx[psrname]['red_noise_gw']
                 b = self._get_b(d[idx], TNT[idx,idx], phiinv_gw)
-                wave[psrname] += np.dot(T[:,idx], b[idx])
+                wave[psrname] += np.dot(T[:,idx], b)
             elif gp_type in self.gp_types:
 
                 try:

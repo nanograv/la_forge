@@ -148,9 +148,11 @@ class Signal_Reconstruction():
                         self.gp_freqs[pname][ky] = freqs
 
                         if shared_bases:
-                            basis = basis.tolist()
-                            if basis in all_bases:
-                                b_idx = all_bases.index(basis)
+                            # basis = basis.tolist()
+                            check = [np.array_equal(basis,M) for M in all_bases]
+                            if any(check):
+                                b_idx = check.index(True)
+                                # b_idx = all_bases.index(basis)
                                 b_key = list(self.gp_idx[pname].keys())[b_idx]
                                 self.gp_idx[pname][ky] = self.gp_idx[pname][b_key]
                                 # TODO Fix the common signal idx collector!!!
@@ -162,7 +164,7 @@ class Signal_Reconstruction():
                                 if sig.signal_type == 'common basis':
                                     self.common_gp_idx[pname][ky] = np.arange(Ntot+ntot, nb+Ntot+ntot)
 
-                                all_bases.append(list(basis))
+                                all_bases.append(basis)
                                 ntot += nb
                         else:
                             self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)

@@ -148,7 +148,7 @@ class Signal_Reconstruction():
                         self.gp_freqs[pname][ky] = freqs
 
                         if shared_bases:
-                            basis = list(basis)
+                            basis = basis.tolist()
                             if basis in all_bases:
                                 b_idx = all_bases.index(basis)
                                 b_key = list(self.gp_idx[pname].keys())[b_idx]
@@ -313,7 +313,7 @@ class Signal_Reconstruction():
             phisparse = sps.csc_matrix(phi)
             conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
             phisparse += sps.block_diag(conditioner,'csc')
-            # phisparse += eps * sps.eye(phisparse.shape[0])
+            # phisparse += eps * sps.identity(phisparse.shape[0])
             cf = cholesky(phisparse)
             phiinv = cf.inv()
         else:

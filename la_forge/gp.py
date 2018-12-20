@@ -98,63 +98,85 @@ class Signal_Reconstruction():
         Ntot = 0
         for idx, pname in enumerate(self.p_names):
             sc = self.pta._signalcollections[idx]
-
             if sc.psrname==pname:
                 pass
             else:
                 raise KeyError('Pulsar name from signal collection does '
                                'not match name from provided list.')
+
             phi_dim = sc.get_phi(params=self.mle_params).shape[0]
-            self.gp_idx[pname] = OrderedDict()
-            self.common_gp_idx[pname] = OrderedDict()
-            self.gp_freqs[pname] = OrderedDict()
-            ntot = 0
-            all_freqs = []
-            self.gp_types = []
-            for sig in sc._signals:
-                if sig.signal_type in ['basis','common basis']:
-                    basis = sig.get_basis(params=self.mle_params)
-                    nb = basis.shape[1]
-                    sig._construct_basis()
-                    freqs = list(np.array(sig._labels[''])[::2])
+            if pname not in p_list:
+                pass
+            else:
+                self.gp_idx[pname] = OrderedDict()
+                self.common_gp_idx[pname] = OrderedDict()
+                self.gp_freqs[pname] = OrderedDict()
+                self.gp_types = []
+                ntot = 0
+                # all_freqs = []
+                all_bases = []
+                basis_signals = [sig for sig in sc._signals
+                                 if sig.signal_type
+                                 in ['basis','common basis']]
 
-                    #print(sig.signal_name,sig.signal_type,sig.signal_id,nb)
-                    #if (sig.signal_type == 'basis' and 'gw' not in sig.name):
+                phi_sum = np.sum([sig.get_phi(self.mle_params).shape[0]
+                                  for sig in basis_signals])
+                if phi_dim == phi_sum:
+                    shared_bases=False
+                else:
+                    shared_bases=True
 
-                    # This was because svd timing bases weren't named originally.
-                    # Maybe no longer needed.
-                    if sig.signal_id=='':
-                        ky = 'timing_model'
-                    else:
-                        ky = sig.signal_id
+                for sig in basis_signals:
+                    if sig.signal_type in ['basis','common basis']:
+                        basis = sig.get_basis(params=self.mle_params)
+                        nb = basis.shape[1]
+                        # sig._construct_basis()
+                        if isinstance(sig._labels,dict):
+                            freqs = list(sig._labels[''])[::2]
+                        elif isinstance(sig._labels,(np.ndarray, list)):
+                            freqs = list(sig._labels)[::2]
 
-                    if ky not in self.gp_types: self.gp_types.append(ky)
-                    self.gp_freqs[pname][ky] = freqs
-                    if pname in p_list:
-                        #Maybe a way to get rid of this first one
-                        if freqs in all_freqs:
-                            f_idx = all_freqs.index(freqs)
-                            f_key = list(self.gp_idx[pname].keys())[f_idx]
-                            self.gp_idx[pname][ky] = self.gp_idx[pname][f_key]
-                            # TODO Fix the common signal idx collector!!!
-                            if sig.signal_type == 'common basis':
-                                self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
+                        # This was because svd timing bases weren't named originally.
+                        # Maybe no longer needed.
+                        if sig.signal_id=='':
+                            ky = 'timing_model'
+                        else:
+                            ky = sig.signal_id
 
+                        if ky not in self.gp_types: self.gp_types.append(ky)
+
+                        self.gp_freqs[pname][ky] = freqs
+
+                        if shared_bases:
+                            basis = list(basis)
+                            if basis in all_bases:
+                                b_idx = all_bases.index(basis)
+                                b_key = list(self.gp_idx[pname].keys())[b_idx]
+                                self.gp_idx[pname][ky] = self.gp_idx[pname][b_key]
+                                # TODO Fix the common signal idx collector!!!
+                                if sig.signal_type == 'common basis':
+                                    self.common_gp_idx[pname][ky] = np.arange(Ntot+ntot, nb+Ntot+ntot)
+
+                            else:
+                                self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
+                                if sig.signal_type == 'common basis':
+                                    self.common_gp_idx[pname][ky] = np.arange(Ntot+ntot, nb+Ntot+ntot)
+
+                                all_bases.append(list(basis))
+                                ntot += nb
                         else:
                             self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
                             if sig.signal_type == 'common basis':
-                                self.common_gp_idx[pname][ky] = np.arange(Ntot, nb+Ntot)
+                                self.common_gp_idx[pname][ky] = np.arange(Ntot+ntot, nb+Ntot+ntot)
 
-                            all_freqs.append(freqs)
                             ntot += nb
 
-                    Ntot += nb
-
+            Ntot += phi_dim
         self.p_list = p_list
         self.p_idx = p_idx
 
     def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=False,
-                           mle=False, idx=None):
+                           mle=False, idx=None, condition=False, eps=1e-16):
         """
         Parameters
         ----------
@@ -199,7 +221,8 @@ class Signal_Reconstruction():
             b = self._get_b(d, TNT, phiinv)
 
             if gp_type in self.common_gp_idx[psrname].keys():
-                B = self._get_b_common(gp_type, TNrs, TNTs,params)
+                B = self._get_b_common(gp_type, TNrs, TNTs,params,
+                                       condition=condition,eps=eps)
 
             # Red noise pieces
             if gp_type == 'DM':
@@ -214,6 +237,7 @@ class Signal_Reconstruction():
             elif gp_type == 'all':
                 wave[psrname] += np.dot(T, b)
             elif gp_type == 'gw':
+                #TODO Add common signal capability
                 gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
                 # [sig for sig
                 #           in self.pta._signalcollections[p_ct]._signals
@@ -279,9 +303,25 @@ class Signal_Reconstruction():
 
         return mn + np.dot(Li, np.random.randn(Li.shape[0]))
 
-    def _get_b_common(self, gp_type, TNrs, TNTs, params):
-        phiinv = self.pta.get_phiinv(params, logdet=False)#, method='partition')
-        Sigma = sps.block_diag(TNTs,'csc') + sps.csc_matrix(phiinv)
+    def _get_b_common(self, gp_type, TNrs, TNTs, params,
+                      condition=False, eps=1e-16):
+        if condition:
+            # conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
+            # Sigma += sps.block_diag(conditioner,'csc')
+            # Sigma += eps * sps.eye(phiinv.shape[0])
+            phi = self.pta.get_phi(params)
+            phisparse = sps.csc_matrix(phi)
+            conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
+            phisparse += sps.block_diag(conditioner,'csc')
+            # phisparse += eps * sps.eye(phisparse.shape[0])
+            cf = cholesky(phisparse)
+            phiinv = cf.inv()
+        else:
+            phiinv = sps.csc_matrix(self.pta.get_phiinv(params, logdet=False,
+                                                        method='partition'))
+
+        # Sigma = sps.block_diag(TNTs,'csc') + sps.csc_matrix(phiinv)
+        Sigma = sps.block_diag(TNTs,'csc') + phiinv
         TNr = np.concatenate(TNrs)
 
         ch = cholesky(Sigma)
@@ -296,7 +336,13 @@ class Signal_Reconstruction():
             idxs = self.common_gp_idx[psrname][gp_type]
             self.gp[idxs] = common_gp
 
-        return mn + np.dot(Li,gp)
+        B = mn + np.dot(Li,self.gp)
+        try:
+            B = np.array(B.tolist()[0])
+        except:
+            pass
+
+        return  B
 
     def sample_params(self, index):
         return {par: self.chain[index, ct] for ct, par

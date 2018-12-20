@@ -3,3 +3,4 @@ scipy>=1.0.0
 matplotlib>=2.0.0
 astropy>=2.2
 corner
+six

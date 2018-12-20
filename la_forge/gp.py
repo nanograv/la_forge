@@ -12,7 +12,7 @@ from .core import Core
 
 import scipy.sparse as sps
 import scipy.linalg as sl
-
+import six
 import logging
 
 logging.basicConfig(format='%(levelname)s: %(name)s: %(message)s',
@@ -80,11 +80,11 @@ class Signal_Reconstruction():
             p_idx = np.arange(len(self.p_names))
 
         else:
-            if isinstance(p_list,(str,basestring)):
+            if isinstance(p_list,six.string_types):
                 p_idx = [self.p_names.index(p_list)]
                 p_list = [p_list]
 
-            elif isinstance(p_list[0],(str,basestring)):
+            elif isinstance(p_list[0],six.string_types):
                 p_idx = [self.p_names.index(p) for p in p_list]
 
             elif isinstance(p_list[0],int):

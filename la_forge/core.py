@@ -107,8 +107,8 @@ class Core(object):
         self.rn_freqs = None
         if verbose:
             print('Red noise frequencies must be set before plotting most red '
-                  'noise figures. Please use core.set_rn_freqs() to set, if '
-                  'needed.')
+                  'noise figures.\n'
+                  'Please use core.set_rn_freqs() to set, if needed.')
 
 
 

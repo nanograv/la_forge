@@ -130,7 +130,7 @@ class Signal_Reconstruction():
                     if sig.signal_type in ['basis','common basis']:
                         basis = sig.get_basis(params=self.mle_params)
                         nb = basis.shape[1]
-                        # sig._construct_basis()
+                        sig._construct_basis()
                         if isinstance(sig._labels,dict):
                             freqs = list(sig._labels[''])[::2]
                         elif isinstance(sig._labels,(np.ndarray, list)):
@@ -178,7 +178,8 @@ class Signal_Reconstruction():
         self.p_idx = p_idx
 
     def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=False,
-                           mle=False, idx=None, condition=False, eps=1e-16):
+                           mle=False, idx=None, condition=False, eps=1e-16,
+                           DM_quad=True,DM_timing=False):
         """
         Parameters
         ----------
@@ -228,8 +229,21 @@ class Signal_Reconstruction():
 
             # Red noise pieces
             if gp_type == 'DM':
-                idx = self.gp_idx[psrname]['dm_gp']
-                wave[psrname] += np.dot(T[:,idx], b[idx]) * (self.psrs[p_ct].freqs**2 * DM_K * 1e12)
+                psr = self.psrs[p_ct]
+                if DM_quad:
+                    tm_key = [ky for ky in self.gp_idx[psrname].keys() if 'timing' in ky][0]
+                    dmind = np.array([ct for ct, p in enumerate(psr.fitpars) if 'DM' in p])#[1:]
+                    idx = np.concatenate((self.gp_idx[psrname][tm_key][dmind], self.gp_idx[psrname]['dm_gp']))
+                    wave[psrname] += np.dot(T[:,idx], b[idx]) * (psr.freqs**2 * DM_K * 1e12)
+                elif DM_timing:
+                    tm_key = [ky for ky in self.gp_idx[psrname].keys() if 'timing' in ky][0]
+                    dmind = np.array([ct for ct, p in enumerate(psr.fitpars) if 'DM' in p])[0]
+                    wave[psrname] += np.dot(T[:,dmind], b[dmind]) #* (psr.freqs**2 * DM_K * 1e12)
+                else:
+                    idx = self.gp_idx[psrname]['dm_gp']
+                    wave[psrname] += np.dot(T[:,idx], b[idx]) * (psr.freqs**2 * DM_K * 1e12)
+
+
             elif gp_type == 'achrom_rn':
                 idx = self.gp_idx[psrname]['red_noise']
                 wave[psrname] += np.dot(T[:,idx], b[idx])
@@ -319,8 +333,8 @@ class Signal_Reconstruction():
             cf = cholesky(phisparse)
             phiinv = cf.inv()
         else:
-            phiinv = sps.csc_matrix(self.pta.get_phiinv(params, logdet=False,
-                                                        method='partition'))
+            phiinv = sps.csc_matrix(self.pta.get_phiinv(params, logdet=False))#,
+                                                        #   method='partition'))
 
         # Sigma = sps.block_diag(TNTs,'csc') + sps.csc_matrix(phiinv)
         Sigma = sps.block_diag(TNTs,'csc') + phiinv
@@ -360,10 +374,10 @@ class Signal_Reconstruction():
             array_par_dict = {}
             for array_str in array_params:
                 mask &= [array_str not in par for par in param_names]
-                if any([array_str in par for par in param_names]):
-                    array_par_name = [par for par in param_names
-                                      if array_str+'_0'
-                                      in par][0].replace('_0','')
+                if any([array_str+'_0' in par for par in param_names]):
+                    array_par_name = [par.replace('_0','')
+                                      for par in param_names
+                                      if array_str+'_0'in par][0]
                     array_idxs = np.where([array_str in par
                                            for par in param_names])
                     par_array = self.chain[samp_idx, array_idxs]

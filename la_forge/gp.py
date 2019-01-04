@@ -132,9 +132,17 @@ class Signal_Reconstruction():
                         nb = basis.shape[1]
                         sig._construct_basis()
                         if isinstance(sig._labels,dict):
-                            freqs = list(sig._labels[''])[::2]
+                            try:
+                                freqs = list(sig._labels[''])[::2]
+                            except TypeError:
+                                freqs = sig._labels['']
                         elif isinstance(sig._labels,(np.ndarray, list)):
-                            freqs = list(sig._labels)[::2]
+                            try:
+                                freqs = list(sig._labels)[::2]
+                            except TypeError:
+                                freqs = sig._labels
+
+
 
                         # This was because svd timing bases weren't named originally.
                         # Maybe no longer needed.

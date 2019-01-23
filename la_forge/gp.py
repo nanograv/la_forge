@@ -95,6 +95,8 @@ class Signal_Reconstruction():
         self.gp_idx = OrderedDict()
         self.common_gp_idx = OrderedDict()
         self.gp_freqs = OrderedDict()
+        self.shared_sigs = OrderedDict()
+        self.gp_types = []
         Ntot = 0
         for idx, pname in enumerate(self.p_names):
             sc = self.pta._signalcollections[idx]
@@ -111,7 +113,6 @@ class Signal_Reconstruction():
                 self.gp_idx[pname] = OrderedDict()
                 self.common_gp_idx[pname] = OrderedDict()
                 self.gp_freqs[pname] = OrderedDict()
-                self.gp_types = []
                 ntot = 0
                 # all_freqs = []
                 all_bases = []
@@ -125,6 +126,7 @@ class Signal_Reconstruction():
                     shared_bases=False
                 else:
                     shared_bases=True
+                    self.shared_sigs[pname] = OrderedDict()
 
                 for sig in basis_signals:
                     if sig.signal_type in ['basis','common basis']:
@@ -141,8 +143,6 @@ class Signal_Reconstruction():
                                 freqs = list(sig._labels)[::2]
                             except TypeError:
                                 freqs = sig._labels
-
-
 
                         # This was because svd timing bases weren't named originally.
                         # Maybe no longer needed.
@@ -161,6 +161,7 @@ class Signal_Reconstruction():
                             if any(check):
                                 b_idx = check.index(True)
                                 # b_idx = all_bases.index(basis)
+                                self.shared_sigs[pname][ky] = b_key
                                 b_key = list(self.gp_idx[pname].keys())[b_idx]
                                 self.gp_idx[pname][ky] = self.gp_idx[pname][b_key]
                                 # TODO Fix the common signal idx collector!!!
@@ -186,8 +187,7 @@ class Signal_Reconstruction():
         self.p_idx = p_idx
 
     def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=False,
-                           mle=False, idx=None, condition=False, eps=1e-16,
-                           DM_quad=True,DM_timing=False):
+                           mle=False, idx=None, condition=False, eps=1e-16):
         """
         Parameters
         ----------
@@ -236,42 +236,56 @@ class Signal_Reconstruction():
                                        condition=condition,eps=eps)
 
             # Red noise pieces
+            psr = self.psrs[p_ct]
             if gp_type == 'DM':
-                psr = self.psrs[p_ct]
-                if DM_quad:
-                    tm_key = [ky for ky in self.gp_idx[psrname].keys() if 'timing' in ky][0]
-                    dmind = np.array([ct for ct, p in enumerate(psr.fitpars) if 'DM' in p])#[1:]
-                    idx = np.concatenate((self.gp_idx[psrname][tm_key][dmind], self.gp_idx[psrname]['dm_gp']))
-                    wave[psrname] += np.dot(T[:,idx], b[idx]) * (psr.freqs**2 * DM_K * 1e12)
-                elif DM_timing:
-                    tm_key = [ky for ky in self.gp_idx[psrname].keys() if 'timing' in ky][0]
-                    dmind = np.array([ct for ct, p in enumerate(psr.fitpars) if 'DM' in p])[0]
-                    wave[psrname] += np.dot(T[:,dmind], b[dmind]) #* (psr.freqs**2 * DM_K * 1e12)
-                else:
-                    idx = self.gp_idx[psrname]['dm_gp']
-                    wave[psrname] += np.dot(T[:,idx], b[idx]) * (psr.freqs**2 * DM_K * 1e12)
-
+                tm_key = [ky for ky in self.gp_idx[psrname].keys() if 'timing' in ky][0]
+                dmind = np.array([ct for ct, p in enumerate(psr.fitpars) if 'DM' in p])
+                idx = self.gp_idx[psrname][tm_key][dmind]
+                wave[psrname] += np.dot(T[:,dmind], b[dmind])
 
             elif gp_type == 'achrom_rn':
                 idx = self.gp_idx[psrname]['red_noise']
                 wave[psrname] += np.dot(T[:,idx], b[idx])
-            elif gp_type == 'FD':
-                idx = self.gp_idx[psrname]['FD']
+            elif gp_type == 'timing':
+                if any([ky for ky in self.gp_idx[psrname].keys()
+                        if 'svd' in ky]):
+                    raise ValueError('The SVD decomposition does not allow '
+                                     'reconstruction of the timing model '
+                                     'gaussian process realizations.')
+                tm_key = [ky for ky in self.gp_idx[psrname].keys()
+                          if 'timing' in ky][0]
+                idx = self.gp_idx[psrname][tm_key]
+                wave[psrname] += np.dot(T[:,idx], b[idx])
+            elif gp_type in psr.fitpars:
+                if any([ky for ky in self.gp_idx[psrname].keys()
+                        if 'svd' in ky]):
+                    raise ValueError('The SVD decomposition does not allow '
+                                     'reconstruction of the timing model '
+                                     'gaussian process realizations '
+                                     'individually.')
+
+                tm_key = [ky for ky in self.gp_idx[psrname].keys()
+                          if 'timing' in ky][0]
+                dmind = np.array([ct for ct, p in enumerate(psr.fitpars)
+                                  if gp_type in p])
+                idx = self.gp_idx[psrname][tm_key][dmind]
                 wave[psrname] += np.dot(T[:,idx], b[idx])
             elif gp_type == 'all':
                 wave[psrname] += np.dot(T, b)
             elif gp_type == 'gw':
                 #TODO Add common signal capability
+                #Need to make our own phi when shared...
                 gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
                 # [sig for sig
                 #           in self.pta._signalcollections[p_ct]._signals
                 #           if sig.signal_id=='red_noise_gw'][0]
+                phi_gw = gw_sig.get_phi(params=params)
+
                 phiinv_gw = gw_sig.get_phiinv(params=params)
                 idx = self.gp_idx[psrname]['red_noise_gw']
                 b = self._get_b(d[idx], TNT[idx,idx], phiinv_gw)
                 wave[psrname] += np.dot(T[:,idx], b)
             elif gp_type in self.gp_types:
-
                 try:
                     if gp_type in self.common_gp_idx[psrname].keys():
                         idx = self.gp_idx[psrname][gp_type]
@@ -313,7 +327,6 @@ class Signal_Reconstruction():
 
     def _get_b(self, d, TNT, phiinv):
         Sigma = TNT + (np.diag(phiinv) if phiinv.ndim == 1 else phiinv)
-
         try:
             u, s, _ = sl.svd(Sigma)
             mn = np.dot(u, np.dot(u.T, d)/s)
@@ -333,24 +346,39 @@ class Signal_Reconstruction():
             # conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
             # Sigma += sps.block_diag(conditioner,'csc')
             # Sigma += eps * sps.eye(phiinv.shape[0])
-            phi = self.pta.get_phi(params)
-            phisparse = sps.csc_matrix(phi)
-            conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
-            phisparse += sps.block_diag(conditioner,'csc')
+            phi = self.pta.get_phi(params)#.astype(np.float128)
+            #phisparse = sps.csc_matrix(phi)
+            # conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
+            # phisparse += sps.block_diag(conditioner,'csc')
             # phisparse += eps * sps.identity(phisparse.shape[0])
-            cf = cholesky(phisparse)
-            phiinv = cf.inv()
+            #cf = cholesky(phisparse)
+            #phiinv = cf.inv()
+
+            # u,s,vT = np.linalg.svd(phi)
+            # s_inv=np.diagflat(1/s)
+            # phiinv = np.dot(np.dot(vT.T,s_inv),u.T)
+            print('NP Inv')
+            # q,r = np.linalg.qr(phi,mode='complete')
+            # phiinv = np.dot(np.linalg.inv(r),q.T)
+            phiinv = np.linalg.inv(phi)
+            phiinv = sps.csc_matrix(phiinv)
         else:
-            phiinv = sps.csc_matrix(self.pta.get_phiinv(params, logdet=False))#,
+            phiinv = self.pta.get_phiinv(params, logdet=False)
+            # phiinv = sps.csc_matrix(self.pta.get_phiinv(params, logdet=False))#,
                                                         #   method='partition'))
 
-        # Sigma = sps.block_diag(TNTs,'csc') + sps.csc_matrix(phiinv)
-        Sigma = sps.block_diag(TNTs,'csc') + phiinv
+        sps_Sigma = sps.block_diag(TNTs,'csc') + sps.csc_matrix(phiinv)
+        Sigma = sl.block_diag(*TNTs) + phiinv #.astype(np.float128)
         TNr = np.concatenate(TNrs)
 
-        ch = cholesky(Sigma)
-        mn = ch(TNr)
+        ch = cholesky(sps_Sigma)
+        # mn = ch(TNr)
         Li = sps.linalg.inv(ch.L()).todense()
+        mn = np.linalg.solve(Sigma,TNr)
+        # r = 1e30
+        # regul = np.dot(Sigma.T,Sigma) + r*np.eye(Sigma.shape[0])
+        # regul_inv = sl.inv(regul)
+        # mn = np.dot(regul_inv,np.dot(Sigma.T,TNr))
 
         self.gp = np.random.randn(mn.shape[0])
         L = self.common_gp_idx[self.p_list[0]][gp_type].shape[0]
@@ -361,6 +389,7 @@ class Signal_Reconstruction():
             self.gp[idxs] = common_gp
 
         B = mn + np.dot(Li,self.gp)
+
         try:
             B = np.array(B.tolist()[0])
         except:
@@ -413,3 +442,122 @@ class Signal_Reconstruction():
 
     def _make_sigma(self, TNTs, phiinv):
         return sl.block_diag(*TNTs) + phiinv
+
+    def _shared_basis_get_phi(self, sc, params, primary_signal):
+        """Rewrite of get_phi where overlapping bases are ignored."""
+        phi = KernelMatrix(sc._Fmat.shape[1])
+
+        idx_dict = sc._combine_basis_columns(sc._signals)
+        primary_idxs = idx_dict[primary_signal]
+        sig_types = []
+
+        for sig in idx_dicts.keys():
+            if sig.signal_id==primary_signal:
+                pass
+
+        ### Remove overlapping signals
+        new_signals = []
+        for signal in sc._signals:
+            pass
+        # for signal in sc._signals:
+        #     np.array_equal()
+        #     if signal in sc._idx:
+        #         new_signals.append(signal)
+
+        for signal in sc._signals:
+            if signal in sc._idx:
+                phi = phi.add(signal.get_phi(params), sc._idx[signal])
+
+        return phi
+
+    def _shared_basis_get_phiinv(self, sc, params, primary_signal):
+        """Rewrite of get_phiinv where overlapping bases are ignored."""
+        return _shared_basis_get_phi.get_phi(sc, params, primary_signal).inv()
+
+
+### Copied implementation of KernelMatrix from enterprise
+### to avoid enterprise dependencies, though one needs enterprise to provide
+### the PTA object anyways...
+class KernelMatrix(np.ndarray):
+    def __new__(cls, init):
+        if isinstance(init, int):
+            ret = np.zeros(init, 'd').view(cls)
+        else:
+            ret = init.view(cls)
+
+        if ret.ndim == 2:
+            ret._cliques = -1 * np.ones(ret.shape[0])
+            ret._clcount = 0
+
+        return ret
+
+    # see PTA._setcliques
+    def _setcliques(self, idxs):
+        allidx = set(self._cliques[idxs])
+        maxidx = max(allidx)
+
+        if maxidx == -1:
+            self._cliques[idxs] = self._clcount
+            self._clcount = self._clcount + 1
+        else:
+            self._cliques[idxs] = maxidx
+            if len(allidx) > 1:
+                self._cliques[np.in1d(self._cliques,allidx)] = maxidx
+
+    def add(self, other, idx):
+        if other.ndim == 2 and self.ndim == 1:
+            self = KernelMatrix(np.diag(self))
+
+        if self.ndim == 1:
+            self[idx] += other
+        else:
+            if other.ndim == 1:
+                self[idx, idx] += other
+            else:
+                self._setcliques(idx)
+                idx = ((idx, idx) if isinstance(idx, slice)
+                       else (idx[:, None], idx))
+                self[idx] += other
+
+        return self
+
+    def set(self, other, idx):
+        if other.ndim == 2 and self.ndim == 1:
+            self = KernelMatrix(np.diag(self))
+
+        if self.ndim == 1:
+            self[idx] = other
+        else:
+            if other.ndim == 1:
+                self[idx, idx] = other
+            else:
+                self._setcliques(idx)
+                idx = ((idx, idx) if isinstance(idx, slice)
+                       else (idx[:, None], idx))
+                self[idx] = other
+
+        return self
+
+    def inv(self, logdet=False):
+        if self.ndim == 1:
+            inv = 1.0/self
+
+            if logdet:
+                return inv, np.sum(np.log(self))
+            else:
+                return inv
+        else:
+            try:
+                cf = sl.cho_factor(self)
+                inv = sl.cho_solve(cf, np.identity(cf[0].shape[0]))
+                if logdet:
+                    ld = 2.0*np.sum(np.log(np.diag(cf[0])))
+            except np.linalg.LinAlgError:
+                u, s, v = np.linalg.svd(self)
+                inv = np.dot(u/s, u.T)
+                if logdet:
+                    ld = np.sum(np.log(s))
+            if logdet:
+                return inv, ld
+            else:
+                return inv

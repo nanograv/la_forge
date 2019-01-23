@@ -353,7 +353,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
 ########## Red Noise Plotting Commands #########################
 
 def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
-                  Linestyle='-', n_realizations=0, Tspan=None):
+                  Linestyle='-', n_realizations=0, Tspan=None, to_resid=True):
     """
     Plots a power law line from the given parmeters in units of residual
     time.
@@ -421,8 +421,11 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
               'Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
         print('Red noise parameters: log10_A = '
               '{0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))
-
-    rho = utils.compute_rho(log10_A, gamma, F, T)
+              
+    if to_resid:
+        rho = utils.compute_rho(log10_A, gamma, F, T)
+    else:
+        rho = utils.compute_rho(log10_A, gamma, F, T)
 
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
 

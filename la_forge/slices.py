@@ -55,9 +55,11 @@ class SlicesCore(Core):
         min_ch_idx = np.argmin(chain_lengths)
         min_ch_len = np.amin(chain_lengths)
 
-        chain = np.zeros((min_ch_len,len(slices)))
+        chain = np.zeros((min_ch_len,len(chain_lengths)))
         chain_params = []
         for ii, ch in enumerate(chain_dict.values()):
+            # print(type(ch))
+            # print(ch)
             chain[:,ii] = ch[:min_ch_len]
 
         chain_params = [ky for ky in chain_dict.keys()]
@@ -71,6 +73,15 @@ class SlicesCore(Core):
         for ii, yr in enumerate(self.slices):
             self.ul[ii,:] = model_utils.ul(self.chain[self.burn:,ii],q=q)
         return self.ul
+
+    def get_bayes_fac(self, ntol = 200, logAmin = -18, logAmax = -12):
+        self.bf = np.zeros((len(self.slices),2))
+        for ii, yr in enumerate(self.slices):
+            self.bf[ii,:] = model_utils.bayes_fac(self.chain[self.burn:,ii],
+                                                  ntol = ntol,
+                                                  logAmin = logAmin,
+                                                  logAmax = logAmax)
+        return self.bf
 
 def get_idx(par, filename):
     #[x for x in open(filename).readlines()].index(par)
@@ -95,9 +106,9 @@ def store_chains(filepath, slices, idxs , params, verbose=True):
     for idx, yr in zip(idxs,slices):
         ch_path = filepath+'{0}/chain_1.txt'.format(yr)
         if isinstance(idx,(list,np.ndarray)):
-            chains[str(yr)] = OrderedDict()
+            # chains[str(yr)] = OrderedDict()
             for id, p in zip(idx, params):
-                ky = '_'.format(yr,p)
+                ky = '{0}_{1}'.format(yr,p)
                 chains[ky] = get_col(id, ch_path)
         else:
             chains[str(yr)] = get_col(idx, ch_path)
@@ -212,78 +223,105 @@ def plot_slice_ul(arrays, mjd=False, to_err=True, colors=None,labels=None,
 
     plt.close()
 
-def plot_slice_2d(arrays, mjd=False, to_err=True, colors=None,labels=None,
-                  Title=None,simulations=None,simulation_stats=None,
-                  Xlim=(2.8,11.5),Ylim = (1e-15,3e-13),cmap='gist_rainbow',
-                  publication_params=False, save=False,show=True,
-                  print_color=False):
-    burn=10000
-    Font =17
-    fig = plt.figure(figsize=[15,6])
-    #colors=['lightblue','darkblue']
-
-    fig.add_subplot(1,2,1)
-
-    gwb = chain_vary_gam[burn:,-5]
-    gamma = chain_vary_gam[burn:,-12]
-    gamma_mean = np.mean(gamma)
-    gwb_mean = np.mean(gwb)
-    counts,xedge,yedge,_ =plt.hist2d(gamma,gwb,bins=(xedges,yedges),normed=True,cmap='viridis')
-    ylabel('$log_{10}A_{gwb}$',fontsize=Font)
-    xlabel('Spectral index, $\gamma$',fontsize=Font)
-
-    xmax,ymax=np.unravel_index(np.argmax(counts),counts.shape)
-    gamma_ML = xedge[xmax]
-    gwb_ML = yedge[ymax]
-
-    #ylim(-17,-12.5)
-    #xlim(0,7)
-    #yticks([-17,-16,-15,-14,-13])
-
-    plot(gamma_ML,gwb_ML,'o',c='red',ms=14)
-    plot(gamma_mean,gwb_mean,'x',c='orange',ms=18)
-
-    title('6.0 yr slice w/ DMX',fontsize=Font)
 
 
-    fig.add_subplot(1,2,2)
-
-    gwb = chain_vary_dm1713[burn:,-5]
-    gamma = chain_vary_dm1713[burn:,-12]
-    gamma_mean = np.mean(gamma)
-    gwb_mean = np.mean(gwb)
-    counts,xedge,yedge,_ =hist2d(gamma,gwb,bins=(xedges,yedges),normed=True,cmap='viridis')
-
-    plt.ylabel('$log_{10}A_{gwb}$',fontsize=Font)
-
-    plt.xlabel('Spectral index, $\gamma$',fontsize=Font)
-
-    xmax,ymax=np.unravel_index(np.argmax(counts),counts.shape)
-    gamma_ML = xedge[xmax]
-    gwb_ML = yedge[ymax]
-
-    #ylim(-17,-12.5)
-    #xlim(0,7)
-    #yticks([-17,-16,-15,-14,-13])
-
-    plt.plot(gamma_ML,gwb_ML,'o',c='red',ms=14)
-    plt.plot(gamma_mean,gwb_mean,'x',c='orange',ms=18)
-
-    plt.title('6.0 yr slice w/ DM Gaussian Process',fontsize=Font)
-
-
-    l1 = plt.Line2D([0], [0],linestyle='none',color='red',marker='o',markersize=14)
-    l2 = plt.Line2D([0], [0],linestyle='none',color='orange', marker='x', markersize=14)
-    #l3 = Line2D([0], [0],color=colors[2])
-    #l4 = Line2D([0], [0],color=colors[3])
-    legend_loc=(0.15,0.11)
-    labels = ['Maximum Likelihood Value','Mean']
-    fig.legend((l1,l2),labels,loc=legend_loc,fontsize=16,numpoints=1)
-    fig.tight_layout(pad=0.3)
-    fig.suptitle('2d Posteriors of $log_{10}A_{gwb}$ and spectral index, $\gamma$, by Slice', y=1.05, fontsize=19)
-    #fig.suptitle('Red Noise Amplitude Posteriors by Slice\n (Note Different Time Scales)',y=1.05,fontsize=18)
+    # if xedges is None:
+    #     xedges = np.linspace(4.24768479e-04,6.99270982e+00,50)
     #
-    #fig.set_label(xlabel='$gamma$')
+    # if yedges is None:
+    #     yedges = np.linspace(-17.99999,-13.2,50)
+
+def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color=None,
+                  title='', suptitle='', cmap='gist_rainbow', fontsize=17,
+                  publication_params=False, save=False, show=True, thin=1,
+                  plot_datapoints=True,
+                  plot_density=False, plot_contours=True, no_fill_contours=True,
+                  data_kwargs={'alpha':0.008,
+                               'color':(0.12156, 0.466667, 0.70588, 1.0)},
+                  contour_kwargs = {'linewidths':0.8,
+                                    'colors':'k',
+                                    'levels':[150,350]},
+                  **kwargs):
+
+    """Function to plot 2d histograms of sliced analyses."""
+    L = len(x_pars)
+    if len(x_pars)!=len(y_pars):
+        raise ValueError('Lists x_pars and y_pars must be the same length!')
+
+    nrows = int(L // ncols)
+    if ncols%L > 0: nrows +=1
+
+    fig = plt.figure()#figsize=[6,8])
+    for ii, (x_par, y_par ,yr) in enumerate(zip(x_pars, y_pars, slices)):
+        axis = fig.add_subplot(nrows, ncols, ii+1)
+        corner.hist2d(core.get_param(x_par, to_burn=True)[::thin],
+                      core.get_param(y_par, to_burn=True)[::thin],
+                      bins=bins, ax=axis,
+                      plot_datapoints=plot_datapoints,
+                      no_fill_contours=no_fill_contours,
+                      plot_density=plot_density,
+                      plot_contours=plot_contours,
+                      data_kwargs=data_kwargs,
+                      contour_kwargs = contour_kwargs,
+                      **kwargs)
+
+        # if plot_2d_hist:
+        axis.set_title('{0} yr slice'.format(yr))
+        # axis.set_xlabel(x_par.decode())
+        # axis.set_ylabel(y_par.decode())
+        axis.set_xlim((0,7))
+        axis.set_xticks(np.linspace(0,7,8))
+        axis.set_ylim((-18,-13))
+            # if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
+            #     ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
+            #     ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
+            #     axis.set_ylim((ymin,ymax))
+        # if not publication_params:
+        #     axis.set_ylabel('$log_{10}A_{gwb}$',fontsize=Font)
+        #     axis.set_xlabel('Spectral index, $\gamma$',fontsize=Font)
+
+        # xmax, ymax = np.unravel_index(np.argmax(counts),counts.shape)
+        # gamma_ML = xedge[xmax]
+        # gwb_ML = yedge[ymax]
+
+        #ylim(-17,-12.5)
+        #xlim(0,7)
+        #yticks([-17,-16,-15,-14,-13])
+
+        # plot(gamma_ML,gwb_ML,'o',c='red',ms=14)
+        # plot(gamma_mean,gwb_mean,'x',c='orange',ms=18)
+        #
+        # plt.title('6.0 yr slice w/ DMX',fontsize=Font)
+
+
+        # fig.add_subplot(1,2,2)
+        #
+        #
+        # counts,xedge,yedge,_ =hist2d(gamma,gwb,bins=(xedges,yedges),normed=True,cmap='viridis')
+        #
+        # plt.ylabel('$log_{10}A_{gwb}$',fontsize=Font)
+        #
+        # plt.xlabel('Spectral index, $\gamma$',fontsize=Font)
+        #
+        # xmax,ymax=np.unravel_index(np.argmax(counts),counts.shape)
+        # gamma_ML = xedge[xmax]
+        # gwb_ML = yedge[ymax]
+        #
+        # plt.plot(gamma_ML,gwb_ML,'o',c='red',ms=14)
+        # plt.plot(gamma_mean,gwb_mean,'x',c='orange',ms=18)
+        #
+        # plt.title('6.0 yr slice w/ DM Gaussian Process',fontsize=Font)
+
+
+        # l1 = plt.Line2D([0], [0],linestyle='none',color='red',marker='o',markersize=14)
+        # l2 = plt.Line2D([0], [0],linestyle='none',color='orange', marker='x', markersize=14)
+        #l3 = Line2D([0], [0],color=colors[2])
+        #l4 = Line2D([0], [0],color=colors[3])
+        # legend_loc=(0.15,0.11)
+        # labels = ['Maximum Likelihood Value','Mean']
+        # fig.legend((l1,l2),labels,loc=legend_loc,fontsize=16,numpoints=1)
+    fig.tight_layout(pad=0.4)
+    fig.suptitle(suptitle, y=1.05, fontsize=19)
     plt.show()
     plt.close()
 

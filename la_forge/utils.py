@@ -1,7 +1,7 @@
 import glob
 import numpy as np
 from scipy import interpolate as interp
-from scipy import ndimage.filters as filter
+from scipy.ndimage import filters as filter
 
 try:
     from enterprise.pulsar import Pulsar

@@ -146,3 +146,16 @@ def compute_rho(log10_A, gamma, f, T):
     """
 
     return np.sqrt((10**log10_A)**2 / (12.0*np.pi**2) * fyr**(gamma-3) * f**(-gamma) / T)
+
+def convert_pal2_pars(p2_par):
+    p2 = p2_par.split('_')
+    psr = p2[-1]
+    if 'RN-Amplitude' in p2_par:
+        par = 'log10_A'
+        ent_par = '_'.join([psr,par])
+    elif 'RN-spectral-index' in p2_par:
+        par = 'gamma'
+        ent_par = '_'.join([psr,par])
+    elif 'GWB-Amplitude' == p2_par:
+        ent_par = 'log10_A_gw'
+    return ent_par

@@ -263,11 +263,6 @@ class Signal_Reconstruction():
                     b = self._get_b(d, TNT, phiinv_rn)
                     wave[psrname] += np.dot(T[:,idx], b[idx])
             elif gp_type == 'timing':
-                if any([ky for ky in self.gp_idx[psrname].keys()
-                        if 'svd' in ky]):
-                    raise ValueError('The SVD decomposition does not allow '
-                                     'reconstruction of the timing model '
-                                     'gaussian process realizations.')
                 tm_key = [ky for ky in self.gp_idx[psrname].keys()
                           if 'timing' in ky][0]
                 idx = self.gp_idx[psrname][tm_key]
@@ -289,8 +284,6 @@ class Signal_Reconstruction():
             elif gp_type == 'all':
                 wave[psrname] += np.dot(T, b)
             elif gp_type == 'gw':
-                #TODO Add common signal capability
-                #Need to make our own phi when shared...
                 if 'red_noise_gw' not in self.shared_sigs[psrname]:
                     #Parse whether it is a common signal.
                     if 'red_noise_gw' in self.common_gp_idx[psrname].keys():
@@ -300,6 +293,7 @@ class Signal_Reconstruction():
                     else: #If not common use pulsar Phi
                         idx = self.gp_idx[psrname]['red_noise_gw']
                         wave[psrname] += np.dot(T[:,idx], b[idx])
+                #Need to make our own phi when shared...
                 else:
                     gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
                     # [sig for sig

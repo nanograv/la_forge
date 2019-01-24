@@ -7,6 +7,7 @@ import os.path
 import corner
 from collections import OrderedDict
 
+## import la_forge dependencies
 from . import utils
 from .core import Core
 
@@ -161,8 +162,8 @@ class Signal_Reconstruction():
                             if any(check):
                                 b_idx = check.index(True)
                                 # b_idx = all_bases.index(basis)
-                                self.shared_sigs[pname][ky] = b_key
                                 b_key = list(self.gp_idx[pname].keys())[b_idx]
+                                self.shared_sigs[pname][ky] = b_key
                                 self.gp_idx[pname][ky] = self.gp_idx[pname][b_key]
                                 # TODO Fix the common signal idx collector!!!
                                 if sig.signal_type == 'common basis':
@@ -275,16 +276,21 @@ class Signal_Reconstruction():
             elif gp_type == 'gw':
                 #TODO Add common signal capability
                 #Need to make our own phi when shared...
+
                 gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
                 # [sig for sig
                 #           in self.pta._signalcollections[p_ct]._signals
                 #           if sig.signal_id=='red_noise_gw'][0]
-                phi_gw = gw_sig.get_phi(params=params)
-
-                phiinv_gw = gw_sig.get_phiinv(params=params)
+                # phi_gw = gw_sig.get_phi(params=params)
+                sc = self.pta._signalcollections[p_ct]
+                phi_gw = self._shared_basis_get_phi(sc, params, gw_sig)
+                # phiinv_gw = gw_sig.get_phiinv(params=params)
+                phiinv_gw = phi_gw.inv()
                 idx = self.gp_idx[psrname]['red_noise_gw']
-                b = self._get_b(d[idx], TNT[idx,idx], phiinv_gw)
-                wave[psrname] += np.dot(T[:,idx], b)
+                # b = self._get_b(d[idx], TNT[idx,idx], phiinv_gw)
+                # wave[psrname] += np.dot(T[:,idx], b)
+                b = self._get_b(d, TNT, phiinv_gw)
+                wave[psrname] += np.dot(T[:,idx], b[idx])
             elif gp_type in self.gp_types:
                 try:
                     if gp_type in self.common_gp_idx[psrname].keys():
@@ -447,22 +453,19 @@ class Signal_Reconstruction():
         """Rewrite of get_phi where overlapping bases are ignored."""
         phi = KernelMatrix(sc._Fmat.shape[1])
 
-        idx_dict = sc._combine_basis_columns(sc._signals)
+        idx_dict,_ = sc._combine_basis_columns(sc._signals)
         primary_idxs = idx_dict[primary_signal]
-        sig_types = []
+        # sig_types = []
 
-        for sig in idx_dicts.keys():
-            if sig.signal_id==primary_signal:
-                pass
-
-        ### Remove overlapping signals
+        ### Make new list of signals with no overlapping bases
         new_signals = []
-        for signal in sc._signals:
-            pass
-        # for signal in sc._signals:
-        #     np.array_equal()
-        #     if signal in sc._idx:
-        #         new_signals.append(signal)
+        for sig in idx_dict.keys():
+            if sig.signal_id==primary_signal.signal_id:
+                new_signals.append(sig)
+            elif not np.array_equal(primary_idxs,idx_dict[sig]):
+                new_signals.append(sig)
+            else:
+                pass
 
         for signal in sc._signals:
             if signal in sc._idx:

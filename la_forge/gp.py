@@ -244,9 +244,23 @@ class Signal_Reconstruction():
                 idx = self.gp_idx[psrname][tm_key][dmind]
                 wave[psrname] += np.dot(T[:,dmind], b[dmind])
 
-            elif gp_type == 'achrom_rn':
-                idx = self.gp_idx[psrname]['red_noise']
-                wave[psrname] += np.dot(T[:,idx], b[idx])
+            elif gp_type in ['achrom_rn','red_noise']:
+                if 'red_noise' not in self.shared_sigs[psrname]:
+                    if 'red_noise' in self.common_gp_idx[psrname].keys():
+                        idx = self.gp_idx[psrname]['red_noise']
+                        cidx = self.common_gp_idx[psrname]['red_noise']
+                        wave[psrname] += np.dot(T[:,idx], B[cidx])
+                    else:
+                        idx = self.gp_idx[psrname]['red_noise']
+                        wave[psrname] += np.dot(T[:,idx], b[idx])
+                else:
+                    rn_sig = self.pta.get_signal('{0}_red_noise'.format(psrname))
+                    sc = self.pta._signalcollections[p_ct]
+                    phi_rn = self._shared_basis_get_phi(sc, params, rn_sig)
+                    phiinv_rn = phi_gw.inv()
+                    idx = self.gp_idx[psrname]['red_noise']
+                    b = self._get_b(d, TNT, phiinv_rn)
+                    wave[psrname] += np.dot(T[:,idx], b[idx])
             elif gp_type == 'timing':
                 if any([ky for ky in self.gp_idx[psrname].keys()
                         if 'svd' in ky]):
@@ -276,21 +290,30 @@ class Signal_Reconstruction():
             elif gp_type == 'gw':
                 #TODO Add common signal capability
                 #Need to make our own phi when shared...
-
-                gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
-                # [sig for sig
-                #           in self.pta._signalcollections[p_ct]._signals
-                #           if sig.signal_id=='red_noise_gw'][0]
-                # phi_gw = gw_sig.get_phi(params=params)
-                sc = self.pta._signalcollections[p_ct]
-                phi_gw = self._shared_basis_get_phi(sc, params, gw_sig)
-                # phiinv_gw = gw_sig.get_phiinv(params=params)
-                phiinv_gw = phi_gw.inv()
-                idx = self.gp_idx[psrname]['red_noise_gw']
-                # b = self._get_b(d[idx], TNT[idx,idx], phiinv_gw)
-                # wave[psrname] += np.dot(T[:,idx], b)
-                b = self._get_b(d, TNT, phiinv_gw)
-                wave[psrname] += np.dot(T[:,idx], b[idx])
+                if 'red_noise_gw' not in self.shared_sigs[psrname]:
+                    #Parse whether it is a common signal.
+                    if 'red_noise_gw' in self.common_gp_idx[psrname].keys():
+                        idx = self.gp_idx[psrname]['red_noise_gw']
+                        cidx = self.common_gp_idx[psrname]['red_noise_gw']
+                        wave[psrname] += np.dot(T[:,idx], B[cidx])
+                    else: #If not common use pulsar Phi
+                        idx = self.gp_idx[psrname]['red_noise_gw']
+                        wave[psrname] += np.dot(T[:,idx], b[idx])
+                else:
+                    gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
+                    # [sig for sig
+                    #           in self.pta._signalcollections[p_ct]._signals
+                    #           if sig.signal_id=='red_noise_gw'][0]
+                    # phi_gw = gw_sig.get_phi(params=params)
+                    sc = self.pta._signalcollections[p_ct]
+                    phi_gw = self._shared_basis_get_phi(sc, params, gw_sig)
+                    # phiinv_gw = gw_sig.get_phiinv(params=params)
+                    phiinv_gw = phi_gw.inv()
+                    idx = self.gp_idx[psrname]['red_noise_gw']
+                    # b = self._get_b(d[idx], TNT[idx,idx], phiinv_gw)
+                    # wave[psrname] += np.dot(T[:,idx], b)
+                    b = self._get_b(d, TNT, phiinv_gw)
+                    wave[psrname] += np.dot(T[:,idx], b[idx])
             elif gp_type in self.gp_types:
                 try:
                     if gp_type in self.common_gp_idx[psrname].keys():

@@ -86,7 +86,10 @@ class SlicesCore(Core):
 def get_idx(par, filename):
     #[x for x in open(filename).readlines()].index(par)
     #This is tuned for the old PAL2 par files, not the enterprise ones...
-    par_list = list(np.loadtxt(filename,dtype='bytes').astype('U42'))
+    try:
+        par_list = list(np.load(filename))
+    except:
+        par_list = list(np.loadtxt(filename,dtype='bytes').astype('U42'))
     if isinstance(par,(list,np.ndarray)):
         idx = []
         for p in par:

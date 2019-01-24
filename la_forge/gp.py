@@ -127,7 +127,8 @@ class Signal_Reconstruction():
                     shared_bases=False
                 else:
                     shared_bases=True
-                    self.shared_sigs[pname] = OrderedDict()
+
+                self.shared_sigs[pname] = OrderedDict()
 
                 for sig in basis_signals:
                     if sig.signal_type in ['basis','common basis']:

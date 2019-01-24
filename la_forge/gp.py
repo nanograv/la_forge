@@ -491,7 +491,7 @@ class Signal_Reconstruction():
             else:
                 pass
 
-        for signal in sc._signals:
+        for signal in new_signals:
             if signal in sc._idx:
                 phi = phi.add(signal.get_phi(params), sc._idx[signal])
 

@@ -44,7 +44,10 @@ class SlicesCore(Core):
         #Get indices from par file.
         idxs = []
         for yr in slices:
-            file = slicesdir + '{0}/pars.txt'.format(yr)
+            try:
+                file = slicesdir + '{0}/pars.npy'.format(yr)
+            else:
+                file = slicesdir + '{0}/pars.txt'.format(yr)
             idxs.append(get_idx(params, file))
 
         chain_dict = store_chains(slicesdir, slices, idxs,
@@ -86,10 +89,12 @@ class SlicesCore(Core):
 def get_idx(par, filename):
     #[x for x in open(filename).readlines()].index(par)
     #This is tuned for the old PAL2 par files, not the enterprise ones...
+
     try:
         par_list = list(np.load(filename))
     except:
         par_list = list(np.loadtxt(filename,dtype='bytes').astype('U42'))
+
     if isinstance(par,(list,np.ndarray)):
         idx = []
         for p in par:
@@ -343,7 +348,7 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
     }
     fig.text(0.5, -0.02, x_par, ha='center',usetex=False)
     fig.text(-0.02, 0.5, y_par, va='center', rotation='vertical', usetex=False)
-    
+
     plt.show()
     plt.close()
 

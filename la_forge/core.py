@@ -85,7 +85,7 @@ class Core(object):
         if self.chain.shape[1] > len(self.params):
             self.params.extend(['lnlike'])
             print('Appending PTMCMCSampler sampling parameters to end of'
-                  ' parameter list. If unwanted please provided a parameter'
+                  ' parameter list. If unwanted please provide a parameter'
                   ' list.')
 
         if burn is None:
@@ -110,7 +110,8 @@ class Core(object):
                   'noise figures.\n'
                   'Please use core.set_rn_freqs() to set, if needed.')
 
-
+        self.mlv_idx = np.argmax(self.chain[self.burn:, -4]) + self.burn
+        self.mlv_params = self.chain[self.mlv_idx,:]
 
     def get_param(self, param, to_burn=True):
         """

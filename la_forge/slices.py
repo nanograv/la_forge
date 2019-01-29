@@ -46,7 +46,7 @@ class SlicesCore(Core):
         for yr in slices:
             try:
                 file = slicesdir + '{0}/pars.npy'.format(yr)
-            else:
+            except:
                 file = slicesdir + '{0}/pars.txt'.format(yr)
             idxs.append(get_idx(params, file))
 

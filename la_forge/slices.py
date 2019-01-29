@@ -31,7 +31,8 @@ class SlicesCore(Core):
     of a given txt file or a single string.
     """
     def __init__(self, label, slices, slicesdir=None, params=None,
-                 verbose=True, fancy_par_names=None, burn=None):
+                 verbose=True, fancy_par_names=None, burn=None,
+                 parfile = 'pars.npy'):
         """
         Parameters
         ----------
@@ -42,12 +43,11 @@ class SlicesCore(Core):
         self.slices = slices
         self.slicesdir = slicesdir
         #Get indices from par file.
+
+
         idxs = []
         for yr in slices:
-            try:
-                file = slicesdir + '{0}/pars.npy'.format(yr)
-            except:
-                file = slicesdir + '{0}/pars.txt'.format(yr)
+            file = slicesdir + '{0}/'.format(yr) + parfile
             idxs.append(get_idx(params, file))
 
         chain_dict = store_chains(slicesdir, slices, idxs,

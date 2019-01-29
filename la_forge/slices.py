@@ -121,7 +121,7 @@ def store_chains(filepath, slices, idxs , params, verbose=True):
         else:
             chains[str(yr)] = get_col(idx, ch_path)
         if verbose:
-            print('\rThe {0} yr slice is loaded'.format(yr),end='',flush=True)
+            print('\r{0} slice is loaded'.format(yr),end='',flush=True)
 
     if verbose: print('\n')
 

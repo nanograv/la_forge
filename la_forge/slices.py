@@ -234,7 +234,7 @@ def plot_slice_ul(arrays, mjd=False, to_err=True, colors=None,labels=None,
     # if yedges is None:
     #     yedges = np.linspace(-17.99999,-13.2,50)
 
-def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color=None,
+def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
                   title='', suptitle='', cmap='gist_rainbow', fontsize=17,
                   publication_params=False, save=False, show=True, thin=1,
                   plot_datapoints=True,
@@ -256,10 +256,11 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color=None,
 
     fig = plt.figure()#figsize=[6,8])
     for ii, (x_par, y_par ,yr) in enumerate(zip(x_pars, y_pars, slices)):
-        axis = fig.add_subplot(nrows, ncols, ii+1)
+        cell = ii+1
+        axis = fig.add_subplot(nrows, ncols, cell)
         corner.hist2d(core.get_param(x_par, to_burn=True)[::thin],
                       core.get_param(y_par, to_burn=True)[::thin],
-                      bins=bins, ax=axis,
+                      bins=bins, ax=axis, color=color,
                       plot_datapoints=plot_datapoints,
                       no_fill_contours=no_fill_contours,
                       plot_density=plot_density,
@@ -273,7 +274,17 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color=None,
         # axis.set_xlabel(x_par.decode())
         # axis.set_ylabel(y_par.decode())
         axis.set_xlim((0,7))
-        axis.set_xticks(np.linspace(0,7,8))
+        xticks = np.linspace(0,7,8)
+        yticks = np.linspace(-18,-13,6)
+
+        axis.set_xticks(xticks)#
+        if cell <= ((nrows-1) * ncols) and cell != (ncols * (nrows-1)):
+            empty_x_labels = ['']*len(xticks)
+            axis.set_xticklabels(empty_x_labels)
+
+        if (cell % ncols != 1) :
+            empty_y_labels = ['']*len(yticks)
+            axis.set_yticklabels(empty_y_labels)
         axis.set_ylim((-18,-13))
             # if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
             #     ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
@@ -325,6 +336,14 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color=None,
         # fig.legend((l1,l2),labels,loc=legend_loc,fontsize=16,numpoints=1)
     fig.tight_layout(pad=0.4)
     fig.suptitle(suptitle, y=1.05, fontsize=19)
+    font = {'family': 'serif',
+    'color':  'darkred',
+    'weight': 'normal',
+    'size': 16,
+    }
+    fig.text(0.5, -0.02, x_par, ha='center',usetex=False)
+    fig.text(-0.02, 0.5, y_par, va='center', rotation='vertical', usetex=False)
+    
     plt.show()
     plt.close()
 

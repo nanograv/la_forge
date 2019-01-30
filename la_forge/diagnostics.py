@@ -60,11 +60,11 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
     if suptitle is None:
         suptitle = 'PSR {0} Noise Parameters'.format(psr_name)
 
-    fig.suptitle(suptitle, y=1.02, fontsize=19)
+    fig.suptitle(suptitle, y=1.04, fontsize=19)
     fig.tight_layout(pad=0.4)
 
     if save:
-        plt.savefig(save)
+        plt.savefig(save, bbox_inches='tight')
     if show:
         plt.show()
 

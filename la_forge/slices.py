@@ -225,7 +225,7 @@ def plot_slice_ul(arrays, mjd=False, to_err=True, colors=None,labels=None,
     plt.ylim(Ylim[0],Ylim[1])
 
     if save:
-        plt.savefig(save)
+        plt.savefig(save, bbox_inches='tight')
     if show:
         plt.show()
 
@@ -348,8 +348,11 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
     }
     fig.text(0.5, -0.02, x_par, ha='center',usetex=False)
     fig.text(-0.02, 0.5, y_par, va='center', rotation='vertical', usetex=False)
-
-    plt.show()
+    if save:
+        plt.savefig(save, bbox_inches='tight')
+    if show:
+        plt.show()
+        
     plt.close()
 
 def figsize(scale):

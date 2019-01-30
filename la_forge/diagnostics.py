@@ -40,7 +40,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
     nrows = int(L // ncols)
     if ncols%L > 0: nrows +=1
 
-    fig = plt.figure(figsize=[15,5*nrows])
+    fig = plt.figure()#figsize=[15,5*nrows])
     for ii, p in enumerate(params):
         cell = ii+1
         axis = fig.add_subplot(nrows, ncols, cell)
@@ -67,5 +67,5 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
         plt.savefig(save)
     if show:
         plt.show()
-        
+
     plt.close()

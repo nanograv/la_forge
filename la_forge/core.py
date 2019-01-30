@@ -84,9 +84,10 @@ class Core(object):
 
         if self.chain.shape[1] > len(self.params):
             self.params.extend(['lnlike'])
-            print('Appending PTMCMCSampler sampling parameters to end of'
-                  ' parameter list. If unwanted please provide a parameter'
-                  ' list.')
+            if verbose:
+                print('Appending PTMCMCSampler sampling parameters to end of'
+                      ' parameter list. If unwanted please provide a parameter'
+                      ' list.')
 
         if burn is None:
             self.set_burn(int(0.25*self.chain.shape[0]))

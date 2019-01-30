@@ -33,14 +33,14 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
 
     psr_name = params[0]
     if psr_name[0] == 'B':
-        psr_name = psr_name[:7]
+        psr_name = psr_name[:8]
     elif psr_name == 'J':
-        psr_name = psr_name[:9]
+        psr_name = psr_name[:10]
 
     nrows = int(L // ncols)
     if ncols%L > 0: nrows +=1
 
-    fig = plt.figure()#figsize=[6,8])
+    fig = plt.figure(figsize=[15,5*nrows])
     for ii, p in enumerate(params):
         cell = ii+1
         axis = fig.add_subplot(nrows, ncols, cell)
@@ -62,5 +62,10 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
 
     fig.suptitle(suptitle, y=1.02, fontsize=19)
     fig.tight_layout(pad=0.4)
-    plt.show()
+
+    if save:
+        plt.savefig(save)
+    if show:
+        plt.show()
+        
     plt.close()

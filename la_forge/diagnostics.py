@@ -34,7 +34,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
     psr_name = params[0]
     if psr_name[0] == 'B':
         psr_name = psr_name[:8]
-    elif psr_name == 'J':
+    elif psr_name[0] == 'J':
         psr_name = psr_name[:10]
 
     nrows = int(L // ncols)

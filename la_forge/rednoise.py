@@ -100,10 +100,11 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
                            plot_2d_hist=True, verbose=True, Tspan=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
-                           n_tproc_realizations=1000, Colors=None,
+                           n_tproc_realizations=1000, Colors=None, bins=30,
                            labels=None,legend_loc=None,leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
-                           freq_xtra=None, free_spec_min=None):
+                           freq_xtra=None, free_spec_min=None,
+                           plot_density=None, plot_contours=None):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -178,6 +179,13 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
         fig, ax = plt.subplots(1, 1, figsize=(6,4))
         axes.append(ax)
 
+    if plot_density is not None and (len(plot_density)!=len(cores)):
+        raise ValueError('\"plot_density\" list must have the same '
+                         'number of entries as \"cores\"')
+    if plot_contours is not None and (len(plot_contours)!=len(cores)):
+        raise ValueError('\"plot_contours\" list must have the same '
+                         'number of entries as \"cores\"')
+
     ax1_ylim_pl = None
     ax1_ylim_tp = None
 
@@ -238,8 +246,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
             if plot_2d_hist:
                 corner.hist2d(c.get_param(gam_par)[c.burn:],
                               c.get_param(amp_par)[c.burn:],
-                              bins=20, ax=axes[1], plot_datapoints=False,
-                              plot_density=False, plot_contours=True,
+                              bins=bins, ax=axes[1], plot_datapoints=False,
+                              plot_density=plot_density[ii],
+                              plot_contours=plot_contours[ii],
                               no_fill_contours=True, color=Color)
                 ax1_ylim_tp = axes[1].get_ylim()
 
@@ -262,8 +271,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
             if plot_2d_hist:
                 corner.hist2d(c.get_param(gam_par)[c.burn:],
                               c.get_param(amp_par)[c.burn:],
-                              bins=20, ax=axes[1], plot_datapoints=False,
-                              plot_density=False, plot_contours=True,
+                              bins=bins, ax=axes[1], plot_datapoints=False,
+                              plot_density=plot_density[ii],
+                              plot_contours=plot_contours[ii],
                               no_fill_contours=True, color=Color)
                 ax1_ylim_tp = axes[1].get_ylim()
 
@@ -289,8 +299,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
             if plot_2d_hist:
                 corner.hist2d(c.get_param(gam_par, to_burn=True),
                               c.get_param(amp_par, to_burn=True),
-                              bins=20, ax=axes[1], plot_datapoints=False,
-                              plot_density=False, plot_contours=True,
+                              bins=bins, ax=axes[1], plot_datapoints=False,
+                              plot_density=plot_density[ii],
+                              plot_contours=plot_contours[ii],
                               no_fill_contours=True, color=Color)
                 ax1_ylim_pl = axes[1].get_ylim()
 
@@ -421,7 +432,7 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
               'Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
         print('Red noise parameters: log10_A = '
               '{0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))
-              
+
     if to_resid:
         rho = utils.compute_rho(log10_A, gamma, F, T)
     else:

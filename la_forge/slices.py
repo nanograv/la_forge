@@ -78,13 +78,14 @@ class SlicesCore(Core):
         return self.ul
 
     def get_bayes_fac(self, ntol = 200, logAmin = -18, logAmax = -12,
-                      nsamples=100):
+                      nsamples=100, smallest_dA=0.01, largest_dA=0.1):
         self.bf = np.zeros((len(self.slices),2))
         for ii, yr in enumerate(self.slices):
             self.bf[ii,:] = utils.bayes_fac(self.chain[self.burn:,ii],
                                             ntol = ntol, nsamples=nsamples,
                                             logAmin = logAmin,
-                                            logAmax = logAmax)
+                                            logAmax = logAmax,
+                                            smallest_dA=0.01, largest_dA=0.1)
         return self.bf
 
 def get_idx(par, filename):

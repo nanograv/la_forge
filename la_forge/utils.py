@@ -160,7 +160,8 @@ def convert_pal2_pars(p2_par):
         ent_par = 'log10_A_gw'
     return ent_par
 
-def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12, nsamples=100):
+def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
+              nsamples=100, smallest_dA=0.01, largest_dA=0.1):
     """
     Computes the Savage Dickey Bayes Factor and uncertainty. Based on code in
     enterprise_extensions.
@@ -172,7 +173,7 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12, nsamples=100):
     """
 
     prior = 1 / (logAmax - logAmin)
-    dA = np.linspace(0.01, 0.1, nsamples)
+    dA = np.linspace(smallest_dA, largest_dA, nsamples)
     bf = []
     bf_err = []
     mask = [] # selecting bins with more than 200 samples

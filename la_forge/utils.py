@@ -159,3 +159,34 @@ def convert_pal2_pars(p2_par):
     elif 'GWB-Amplitude' == p2_par:
         ent_par = 'log10_A_gw'
     return ent_par
+
+def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12, nsamples=100):
+    """
+    Computes the Savage Dickey Bayes Factor and uncertainty. Based on code in
+    enterprise_extensions.
+
+    :param samples: MCMC samples of GWB (or common red noise) amplitude
+    :param ntol: Tolerance on number of samples in bin
+
+    :returns: (bayes factor, 1-sigma bayes factor uncertainty)
+    """
+
+    prior = 1 / (logAmax - logAmin)
+    dA = np.linspace(0.01, 0.1, nsamples)
+    bf = []
+    bf_err = []
+    mask = [] # selecting bins with more than 200 samples
+
+    for ii,delta in enumerate(dA):
+        n = np.sum(samples <= (logAmin + delta))
+        N = len(samples)
+
+        post = n / N / delta
+
+        bf.append(prior/post)
+        bf_err.append(bf[ii]/np.sqrt(n))
+
+        if n > ntol:
+            mask.append(ii)
+
+    return np.mean(np.array(bf)[mask]), np.std(np.array(bf)[mask])

@@ -77,13 +77,14 @@ class SlicesCore(Core):
             self.ul[ii,:] = model_utils.ul(self.chain[self.burn:,ii],q=q)
         return self.ul
 
-    def get_bayes_fac(self, ntol = 200, logAmin = -18, logAmax = -12):
+    def get_bayes_fac(self, ntol = 200, logAmin = -18, logAmax = -12,
+                      nsamples=100):
         self.bf = np.zeros((len(self.slices),2))
         for ii, yr in enumerate(self.slices):
-            self.bf[ii,:] = model_utils.bayes_fac(self.chain[self.burn:,ii],
-                                                  ntol = ntol,
-                                                  logAmin = logAmin,
-                                                  logAmax = logAmax)
+            self.bf[ii,:] = utils.bayes_fac(self.chain[self.burn:,ii],
+                                            ntol = ntol, nsamples=nsamples,
+                                            logAmin = logAmin,
+                                            logAmax = logAmax)
         return self.bf
 
 def get_idx(par, filename):
@@ -352,7 +353,7 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
         plt.savefig(save, bbox_inches='tight')
     if show:
         plt.show()
-        
+
     plt.close()
 
 def figsize(scale):

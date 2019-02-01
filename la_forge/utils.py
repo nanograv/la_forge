@@ -188,7 +188,7 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
 
         if n > ntol:
             mask.append(ii)
-    print(bf)
+    
     if not all([val==np.inf for val in bf]):
         return np.mean(np.array(bf)[mask]), np.std(np.array(bf)[mask])
     else:

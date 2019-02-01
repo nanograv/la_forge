@@ -186,13 +186,18 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
         bf.append(prior/post)
         bf_err.append(bf[ii]/np.sqrt(n))
 
-        if n > ntol:
+        if n >= ntol:
             mask.append(ii)
-    
-    if not all([val==np.inf for val in bf]):
+    # Parse various answers depending on how good we can calculate the SD BF
+    # WARNING
+    if all([val!=np.inf for val in bf]):
         return np.mean(np.array(bf)[mask]), np.std(np.array(bf)[mask])
-    else:
+    elif all([val==np.inf for val in bf]):
         post = 1 / N / smallest_dA
         print('Not enough samples at low amplitudes.\n'
               'Can only set lower limit on Savage-Dickey Bayes Factor!!')
         return prior/post, np.nan
+    else:
+        print('Not enough samples in all bins.'
+              'Calculating mean by ignoring np.nan.')
+        return np.nanmean(np.array(bf)[mask]), np.nanstd(np.array(bf)[mask])

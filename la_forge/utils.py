@@ -176,12 +176,11 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
     dA = np.linspace(smallest_dA, largest_dA, nsamples)
     bf = []
     bf_err = []
-    mask = [] # selecting bins with more than 200 samples
+    mask = [] # selecting bins with more than ntol samples
+    N = len(samples)
 
     for ii,delta in enumerate(dA):
         n = np.sum(samples <= (logAmin + delta))
-        N = len(samples)
-
         post = n / N / delta
 
         bf.append(prior/post)
@@ -189,5 +188,11 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
 
         if n > ntol:
             mask.append(ii)
-
-    return np.mean(np.array(bf)[mask]), np.std(np.array(bf)[mask])
+    print(bf)
+    if not all([val==np.inf for val in bf]):
+        return np.mean(np.array(bf)[mask]), np.std(np.array(bf)[mask])
+    else:
+        post = 1 / N / smallest_dA
+        print('Not enough samples at low amplitudes.\n'
+              'Can only set lower limit on Savage-Dickey Bayes Factor!!')
+        return prior/post, np.nan

@@ -222,7 +222,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         plt.legend(loc='upper right',framealpha=1.0)
 
     if mjd is not None:
-        plt.xticks(mjd)
+        plt.xticks(mjd[0::2])
     else:
         plt.xticks(Nyears[0::2])
 
@@ -263,7 +263,7 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
         raise ValueError('Lists x_pars and y_pars must be the same length!')
 
     nrows = int(L // ncols)
-    if L % nrows > 0: nrows +=1
+    if L % ncols > 0: nrows +=1
 
     fig = plt.figure()#figsize=[6,8])
     for ii, (x_par, y_par ,yr) in enumerate(zip(x_pars, y_pars, slices)):
@@ -290,7 +290,10 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
         axis.set_xticks(xticks)#
 
         # Set inner xticks null
-        if cell <= ((nrows-1) * ncols) and cell != (ncols * (nrows-1)):
+        if cell <= ((nrows-1) * ncols):
+            empty_x_labels = ['']*len(xticks)
+            axis.set_xticklabels(empty_x_labels)
+        elif (cell == (ncols * (nrows-1))) and (L!=ncols*nrows):
             empty_x_labels = ['']*len(xticks)
             axis.set_xticklabels(empty_x_labels)
 

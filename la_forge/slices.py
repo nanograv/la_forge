@@ -221,7 +221,11 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         plt.ylabel(r'$log_{10}A_{gwb}$')
         plt.legend(loc='upper right',framealpha=1.0)
 
-    plt.xticks(Nyears[0::2])
+    if mjd is not None:
+        plt.xticks(mjd)
+    else:
+        plt.xticks(Nyears[0::2])
+
     plt.grid(which='both')
     plt.xlim(Xlim[0],Xlim[1])
     plt.ylim(Ylim[0],Ylim[1])

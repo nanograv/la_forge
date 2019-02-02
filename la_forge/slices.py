@@ -141,13 +141,13 @@ def calculate_err_lines(UL_array):
     upper = np.sum(UL_array,axis=1)
     return lower, upper
 
-def plot_slice_ul(arrays, mjd=False, to_err=True, colors=None,labels=None,
+def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
                   Title=None,simulations=None,simulation_stats=None,
                   Xlim=(2.8,11.5),Ylim = (1e-15,3e-13),cmap='gist_rainbow',
                   publication_params=False, save=False,show=True,
                   print_color=False):
     """arrays is a list of arrays."""
-    if mjd:
+    if mjd not None:
         time = mjd
     else:
         time = Nyears

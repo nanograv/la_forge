@@ -361,7 +361,7 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
                   title='', log=True, Xlim=None, Ylim = None,
                   cmap='gist_rainbow', publication_params=False, save=False,
                   show=True,  arrow_len=60):
-                  
+
     for ii, arr in enumerate(bayes_fac):
         bayes = []
         bf_ll = []
@@ -376,7 +376,7 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
 
         plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2],
                      linestyle='none',marker='o',color=colors[ii],
-                     labels=labels[ii])
+                     label=labels[ii])
         if bf_ll.size!=0:
             plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
                          lolims=True,linestyle='none',marker='o',

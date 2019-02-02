@@ -147,7 +147,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
                   publication_params=False, save=False,show=True,
                   print_color=False):
     """arrays is a list of arrays."""
-    if mjd not None:
+    if mjd is not None:
         time = mjd
     else:
         time = Nyears

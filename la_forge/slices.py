@@ -357,6 +357,47 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
 
     plt.close()
 
+def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
+                  title='', log=True, Xlim=None, Ylim = None,
+                  cmap='gist_rainbow', publication_params=False, save=False,
+                  show=True,  arrow_len=60):
+        for ii, arr in enumerate(bayes_fac):
+            bayes = []
+            bf_ll = []
+            for (bf, bf_err), yr in zip(arr, Nyears):
+                if not np.isnan(bf_err):
+                    bayes.append([yr,bf,bf_err])
+                else:
+                    bf_ll.append([yr,bf])
+
+            bayes = np.array(bayes)
+            bf_ll = np.array(bf_ll)
+
+            plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2],
+                         linestyle='none',marker='o',color=colors[ii],
+                         labels=labels[ii])
+            if bf_ll.size!=0:
+                plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
+                             lolims=True,linestyle='none',marker='o',
+                             color=colors[ii],fillstyle='none')
+
+    plt.axhline(y=1,linestyle='--',color='k',linewidth=1)
+
+    if log: plt.yscale("log", nonposy='clip')
+
+    plt.legend(loc='upper left')
+    plt.xticks(Nyears[::2])
+    plt.xlabel('Years')
+    plt.ylabel(r'$log_{10}\mathcal{B}$')
+    plt.title(title)
+
+    if save:
+        plt.savefig(save, bbox_inches='tight')
+    if show:
+        plt.show()
+
+    plt.close()
+################## Plot Parameters ############################
 def figsize(scale):
     fig_width_pt = 513.17 #469.755    # Get this from LaTeX using \the\textwidth
     inches_per_pt = 1.0 / 72.27         # Convert pt to inch

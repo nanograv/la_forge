@@ -259,7 +259,7 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
         raise ValueError('Lists x_pars and y_pars must be the same length!')
 
     nrows = int(L // ncols)
-    if ncols%L > 0: nrows +=1
+    if nrows%L > 0: nrows +=1
 
     fig = plt.figure()#figsize=[6,8])
     for ii, (x_par, y_par ,yr) in enumerate(zip(x_pars, y_pars, slices)):

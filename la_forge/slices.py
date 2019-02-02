@@ -276,7 +276,6 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
                       contour_kwargs = contour_kwargs,
                       **kwargs)
 
-        # if plot_2d_hist:
         axis.set_title('{0} yr slice'.format(yr))
         # axis.set_xlabel(x_par.decode())
         # axis.set_ylabel(y_par.decode())
@@ -285,62 +284,18 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
         yticks = np.linspace(-18,-13,6)
 
         axis.set_xticks(xticks)#
+
+        # Set inner xticks null
         if cell <= ((nrows-1) * ncols) and cell != (ncols * (nrows-1)):
             empty_x_labels = ['']*len(xticks)
             axis.set_xticklabels(empty_x_labels)
 
+        # Set inner yticks null
         if (cell % ncols != 1) :
             empty_y_labels = ['']*len(yticks)
             axis.set_yticklabels(empty_y_labels)
         axis.set_ylim((-18,-13))
-            # if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
-            #     ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
-            #     ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
-            #     axis.set_ylim((ymin,ymax))
-        # if not publication_params:
-        #     axis.set_ylabel('$log_{10}A_{gwb}$',fontsize=Font)
-        #     axis.set_xlabel('Spectral index, $\gamma$',fontsize=Font)
 
-        # xmax, ymax = np.unravel_index(np.argmax(counts),counts.shape)
-        # gamma_ML = xedge[xmax]
-        # gwb_ML = yedge[ymax]
-
-        #ylim(-17,-12.5)
-        #xlim(0,7)
-        #yticks([-17,-16,-15,-14,-13])
-
-        # plot(gamma_ML,gwb_ML,'o',c='red',ms=14)
-        # plot(gamma_mean,gwb_mean,'x',c='orange',ms=18)
-        #
-        # plt.title('6.0 yr slice w/ DMX',fontsize=Font)
-
-
-        # fig.add_subplot(1,2,2)
-        #
-        #
-        # counts,xedge,yedge,_ =hist2d(gamma,gwb,bins=(xedges,yedges),normed=True,cmap='viridis')
-        #
-        # plt.ylabel('$log_{10}A_{gwb}$',fontsize=Font)
-        #
-        # plt.xlabel('Spectral index, $\gamma$',fontsize=Font)
-        #
-        # xmax,ymax=np.unravel_index(np.argmax(counts),counts.shape)
-        # gamma_ML = xedge[xmax]
-        # gwb_ML = yedge[ymax]
-        #
-        # plt.plot(gamma_ML,gwb_ML,'o',c='red',ms=14)
-        # plt.plot(gamma_mean,gwb_mean,'x',c='orange',ms=18)
-        #
-        # plt.title('6.0 yr slice w/ DM Gaussian Process',fontsize=Font)
-
-
-        # l1 = plt.Line2D([0], [0],linestyle='none',color='red',marker='o',markersize=14)
-        # l2 = plt.Line2D([0], [0],linestyle='none',color='orange', marker='x', markersize=14)
-        #l3 = Line2D([0], [0],color=colors[2])
-        #l4 = Line2D([0], [0],color=colors[3])
-        # legend_loc=(0.15,0.11)
-        # labels = ['Maximum Likelihood Value','Mean']
-        # fig.legend((l1,l2),labels,loc=legend_loc,fontsize=16,numpoints=1)
     fig.tight_layout(pad=0.4)
     fig.suptitle(suptitle, y=1.05, fontsize=19)
     font = {'family': 'serif',
@@ -398,6 +353,7 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
         plt.show()
 
     plt.close()
+
 ################## Plot Parameters ############################
 def figsize(scale):
     fig_width_pt = 513.17 #469.755    # Get this from LaTeX using \the\textwidth

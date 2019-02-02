@@ -203,10 +203,10 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
 
     if not publication_params:
         plt.title(Title,fontsize=17)
-        if mjd:
-            plt.xlabel('MJD', fontsize=16)
-        else:
-            plt.xlabel('Years', fontsize=16)
+        # if mjd:
+        #     plt.xlabel('MJD', fontsize=16)
+        # else:
+        #     plt.xlabel('Years', fontsize=16)
 
         plt.ylabel(r'$log_{10}A_{gwb}$', fontsize=16)
         plt.legend(loc='upper right',fontsize=12,framealpha=1.0)

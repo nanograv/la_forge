@@ -380,9 +380,9 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
                 plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
                              lolims=True,linestyle='none',marker='o',
                              color=colors[ii],fillstyle='none')
-
+                             
     plt.axhline(y=1,linestyle='--',color='k',linewidth=1)
-    
+
     if log: plt.yscale("log", nonposy='clip')
 
     plt.legend(loc='upper left')

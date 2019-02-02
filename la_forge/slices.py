@@ -382,7 +382,7 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
                              color=colors[ii],fillstyle='none')
 
     plt.axhline(y=1,linestyle='--',color='k',linewidth=1)
-
+    
     if log: plt.yscale("log", nonposy='clip')
 
     plt.legend(loc='upper left')

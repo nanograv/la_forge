@@ -361,26 +361,27 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
                   title='', log=True, Xlim=None, Ylim = None,
                   cmap='gist_rainbow', publication_params=False, save=False,
                   show=True,  arrow_len=60):
-        for ii, arr in enumerate(bayes_fac):
-            bayes = []
-            bf_ll = []
-            for (bf, bf_err), yr in zip(arr, Nyears):
-                if not np.isnan(bf_err):
-                    bayes.append([yr,bf,bf_err])
-                else:
-                    bf_ll.append([yr,bf])
+                  
+    for ii, arr in enumerate(bayes_fac):
+        bayes = []
+        bf_ll = []
+        for (bf, bf_err), yr in zip(arr, Nyears):
+            if not np.isnan(bf_err):
+                bayes.append([yr,bf,bf_err])
+            else:
+                bf_ll.append([yr,bf])
 
-            bayes = np.array(bayes)
-            bf_ll = np.array(bf_ll)
+        bayes = np.array(bayes)
+        bf_ll = np.array(bf_ll)
 
-            plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2],
-                         linestyle='none',marker='o',color=colors[ii],
-                         labels=labels[ii])
-            if bf_ll.size!=0:
-                plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
-                             lolims=True,linestyle='none',marker='o',
-                             color=colors[ii],fillstyle='none')
-                             
+        plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2],
+                     linestyle='none',marker='o',color=colors[ii],
+                     labels=labels[ii])
+        if bf_ll.size!=0:
+            plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
+                         lolims=True,linestyle='none',marker='o',
+                         color=colors[ii],fillstyle='none')
+
     plt.axhline(y=1,linestyle='--',color='k',linewidth=1)
 
     if log: plt.yscale("log", nonposy='clip')

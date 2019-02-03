@@ -110,9 +110,11 @@ class Core(object):
             print('Red noise frequencies must be set before plotting most red '
                   'noise figures.\n'
                   'Please use core.set_rn_freqs() to set, if needed.')
-
-        self.mlv_idx = np.argmax(self.chain[self.burn:, -4]) + self.burn
-        self.mlv_params = self.chain[self.mlv_idx,:]
+                  
+        if 'lnlike' in self.params:
+            self.mlv_idx = np.argmax(self.get_param('lnlike',to_burn=True))
+            self.mlv_idx += self.burn
+            self.mlv_params = self.chain[self.mlv_idx,:]
 
     def get_param(self, param, to_burn=True):
         """

@@ -95,7 +95,7 @@ def get_idx(par, filename):
     try:
         par_list = list(np.load(filename))
     except:
-        par_list = list(np.loadtxt(filename,dtype='bytes').astype('U42'))
+        par_list = list(np.loadtxt(filename,dtype=str))
 
     if isinstance(par,(list,np.ndarray)):
         idx = []

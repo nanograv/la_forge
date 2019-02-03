@@ -12,4 +12,4 @@ from .rednoise import plot_rednoise_spectrum
 from . import utils
 from .core import Core
 
-__all__ = ['plot_rednoise_spectrum','utils','Core']
+__all__ = ['utils','core','slices','rednoise','diagnostics','gp']

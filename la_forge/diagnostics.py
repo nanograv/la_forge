@@ -17,7 +17,7 @@ __all__ = ['plot_chains']
 
 def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
                 suptitle=None, color='k',publication_params=False, titles=None,
-                save=False, show=True, **kwargs):
+                save=False, show=True, linewidth=0.1, **kwargs):
 
     """Function to plot histograms of cores."""
     if pars is not None:
@@ -48,7 +48,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
             plt.hist(core.get_param(p), bins=bins, density=True,
                      histtype='step', lw=1.5, **kwargs)
         else:
-            plt.plot(core.get_param(p,to_burn=False), lw=0.1, **kwargs)
+            plt.plot(core.get_param(p,to_burn=False), lw=linewidth, **kwargs)
 
         if titles is None:
             par_name = p.replace(psr_name+'_','')

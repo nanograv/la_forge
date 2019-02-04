@@ -16,7 +16,7 @@ from .core import Core
 __all__ = ['plot_chains']
 
 def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
-                suptitle=None, color='k',publication_params=False,
+                suptitle=None, color='k',publication_params=False, titles=None,
                 save=False, show=True, **kwargs):
 
     """Function to plot histograms of cores."""
@@ -50,8 +50,11 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
         else:
             plt.plot(core.get_param(p,to_burn=False), lw=0.1, **kwargs)
 
-        par_name = p.replace(psr_name+'_','')
-        axis.set_title(par_name)
+        if titles is None:
+            par_name = p.replace(psr_name+'_','')
+            axis.set_title(par_name)
+        else:
+            axis.set_title(titles[ii])
         # axis.set_xlabel(x_par.decode())
         # axis.set_ylabel(y_par.decode())
         axis.set_yticks([])#

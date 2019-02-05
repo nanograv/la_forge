@@ -182,9 +182,14 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
     if plot_density is not None and (len(plot_density)!=len(cores)):
         raise ValueError('\"plot_density\" list must have the same '
                          'number of entries as \"cores\"')
+    elif plot_density is None:
+        plot_density = np.zeros_like(cores,dtype=bool)
+
     if plot_contours is not None and (len(plot_contours)!=len(cores)):
         raise ValueError('\"plot_contours\" list must have the same '
                          'number of entries as \"cores\"')
+    elif plot_contours is None:
+        plot_density = np.ones_like(cores,dtype=bool)
 
     ax1_ylim_pl = None
     ax1_ylim_tp = None

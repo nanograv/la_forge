@@ -30,7 +30,7 @@ class SlicesCore(Core):
     time slices. Currently this supports a list of strings for multiple columns
     of a given txt file or a single string.
     """
-    def __init__(self, label, slices, slicesdir=None, params=None,
+    def __init__(self, label, slices, slicedirs=None, params=None,
                  verbose=True, fancy_par_names=None, burn=None,
                  parfile = 'pars.npy'):
         """
@@ -41,14 +41,21 @@ class SlicesCore(Core):
         """
 
         self.slices = slices
-        self.slicesdir = slicesdir
+        self.slicedirs = slicedirs
         #Get indices from par file.
 
-
         idxs = []
-        for yr in slices:
-            file = slicesdir + '{0}/'.format(yr) + parfile
-            idxs.append(get_idx(params, file))
+        if isinstance(params,str):
+            params = [params]
+
+        if np.array(params).ndim == 2:
+            for dir,par in zip(slicesdirs,params):
+                file = dir + '/' + parfile
+                idxs.append(get_idx(params, file))
+        elif np.array(params).ndim == 1:
+            for dir in slicesdirs:
+                file = dir + '/' + parfile
+                idxs.append(get_idx(params, file))
 
         chain_dict = store_chains(slicesdir, slices, idxs,
                                   params, verbose=verbose)
@@ -147,6 +154,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
                   publication_params=False, save=False,show=True,
                   print_color=False):
     """arrays is a list of arrays."""
+
     if mjd is not None:
         time = mjd
     else:
@@ -245,7 +253,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
     # if yedges is None:
     #     yedges = np.linspace(-17.99999,-13.2,50)
 
-def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
+def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
                   title='', suptitle='', cmap='gist_rainbow', fontsize=17,
                   publication_params=False, save=False, show=True, thin=1,
                   plot_datapoints=True,
@@ -266,7 +274,7 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
     if L % ncols > 0: nrows +=1
 
     fig = plt.figure()#figsize=[6,8])
-    for ii, (x_par, y_par ,yr) in enumerate(zip(x_pars, y_pars, slices)):
+    for ii, (x_par, y_par ,ti) in enumerate(zip(x_pars, y_pars, titles)):
         cell = ii+1
         axis = fig.add_subplot(nrows, ncols, cell)
         corner.hist2d(core.get_param(x_par, to_burn=True)[::thin],
@@ -280,7 +288,7 @@ def plot_slice_2d(core, x_pars, y_pars, slices, ncols=3, bins=30, color='k',
                       contour_kwargs = contour_kwargs,
                       **kwargs)
 
-        axis.set_title('{0} yr slice'.format(yr))
+        axis.set_title(ti)
         # axis.set_xlabel(x_par.decode())
         # axis.set_ylabel(y_par.decode())
         axis.set_xlim((0,7))

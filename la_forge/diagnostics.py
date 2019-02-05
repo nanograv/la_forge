@@ -15,9 +15,11 @@ from .core import Core
 
 __all__ = ['plot_chains']
 
-def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
-                suptitle=None, color='k',publication_params=False, titles=None,
-                save=False, show=True, linewidth=0.1, **kwargs):
+def plot_chains(core, hist=True, pars=None, exclude=None,
+                ncols=3, bins=40, suptitle=None, color='k',
+                publication_params=False, titles=None,
+                save=False, show=True, linewidth=0.1, log=False,
+                **kwargs):
 
     """Function to plot histograms of cores."""
     if pars is not None:
@@ -45,7 +47,8 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
         cell = ii+1
         axis = fig.add_subplot(nrows, ncols, cell)
         if hist:
-            plt.hist(core.get_param(p), bins=bins, density=True,
+            plt.hist(core.get_param(p), bins=bins,
+                     density=True, log=log,
                      histtype='step', lw=1.5, **kwargs)
         else:
             plt.plot(core.get_param(p,to_burn=False), lw=linewidth, **kwargs)

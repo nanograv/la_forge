@@ -119,7 +119,7 @@ def get_col(col,filename):
 
 def store_chains(filepath, idxs , verbose=True):
     chains= []
-    for idx, yr in zip(idxs, slices):
+    for idx in idxs:
         ch_path = filepath+'/chain_1.txt'
         if isinstance(idx,(list,np.ndarray)):
             for id, p in zip(idx, params):

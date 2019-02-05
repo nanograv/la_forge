@@ -103,7 +103,7 @@ def get_idx(par, filename):
     except:
         par_list = list(np.loadtxt(filename,dtype=str))
 
-    if isinstance(par,(list,np.ndarray)):
+    if par.ndim>0:
         idx = []
         for p in par:
             idx.append(par_list.index(p))

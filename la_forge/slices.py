@@ -40,7 +40,6 @@ class SlicesCore(Core):
 
         """
 
-        self.slices = slices
         self.slicedirs = slicedirs
         #Get indices from par file.
 

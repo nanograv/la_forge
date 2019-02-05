@@ -50,10 +50,12 @@ def plot_chains(core, hist=True, pars=None, exclude=None, ncols=3, bins=40,
         else:
             plt.plot(core.get_param(p,to_burn=False), lw=linewidth, **kwargs)
 
-        if titles is None:
+        if (titles is None) and (core.fancy_par_names is None):
             par_name = p.replace(psr_name+'_','')
             axis.set_title(par_name)
-        else:
+        elif core.fancy_par_names is not None:
+            axis.set_title(core.fancy_par_names[ii])
+        elif titles is not None:
             axis.set_title(titles[ii])
         # axis.set_xlabel(x_par.decode())
         # axis.set_ylabel(y_par.decode())

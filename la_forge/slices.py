@@ -49,11 +49,11 @@ class SlicesCore(Core):
             params = [params]
 
         if np.array(params).ndim == 2:
-            for dir,par in zip(slicesdirs,params):
+            for dir,par in zip(slicedirs,params):
                 file = dir + '/' + parfile
                 idxs.append(get_idx(params, file))
         elif np.array(params).ndim == 1:
-            for dir in slicesdirs:
+            for dir in slicedirs:
                 file = dir + '/' + parfile
                 idxs.append(get_idx(params, file))
 

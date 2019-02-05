@@ -117,10 +117,10 @@ def get_col(col,filename):
     L = [x.split('\t')[col] for x in open(filename).readlines()]
     return np.array(L).astype(float)
 
-def store_chains(filepath, idxs , verbose=True):
+def store_chains(filepaths, idxs , verbose=True):
     chains= []
-    for idx in idxs:
-        ch_path = filepath+'/chain_1.txt'
+    for idx, path in zip(idxs, filepaths):
+        ch_path = path+'/chain_1.txt'
         if isinstance(idx,(list,np.ndarray)):
             for id, p in zip(idx, params):
                  chains.append(get_col(id, ch_path))

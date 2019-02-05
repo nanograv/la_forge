@@ -49,16 +49,15 @@ class SlicesCore(Core):
             params = [params]
 
         if np.array(params).ndim == 2:
-            for dir,par in zip(slicedirs,params):
+            for dir,pars in zip(slicedirs,params):
                 file = dir + '/' + parfile
-                idxs.append(get_idx(params, file))
+                idxs.append(get_idx(pars, file))
         elif np.array(params).ndim == 1:
             for dir in slicedirs:
                 file = dir + '/' + parfile
                 idxs.append(get_idx(params, file))
 
-        chain_dict = store_chains(slicesdir, slices, idxs,
-                                  params, verbose=verbose)
+        chain_dict = store_chains(slicedirs, idxs, verbose=verbose)
 
         #Make all chains the same length by truncating to length of shortest.
         chain_lengths = [len(ch) for ch in chain_dict.values()]
@@ -79,15 +78,15 @@ class SlicesCore(Core):
                          verbose=verbose)
 
     def get_ul_slices_err(self,q=95.0):
-        self.ul = np.zeros((len(self.slices),2))
-        for ii, yr in enumerate(self.slices):
+        self.ul = np.zeros((len(self.params),2))
+        for ii, yr in enumerate(self.params):
             self.ul[ii,:] = model_utils.ul(self.chain[self.burn:,ii],q=q)
         return self.ul
 
     def get_bayes_fac(self, ntol = 200, logAmin = -18, logAmax = -12,
                       nsamples=100, smallest_dA=0.01, largest_dA=0.1):
-        self.bf = np.zeros((len(self.slices),2))
-        for ii, yr in enumerate(self.slices):
+        self.bf = np.zeros((len(self.params),2))
+        for ii, yr in enumerate(self.params):
             self.bf[ii,:] = utils.bayes_fac(self.chain[self.burn:,ii],
                                             ntol = ntol, nsamples=nsamples,
                                             logAmin = logAmin,
@@ -118,10 +117,10 @@ def get_col(col,filename):
     L = [x.split('\t')[col] for x in open(filename).readlines()]
     return np.array(L).astype(float)
 
-def store_chains(filepath, slices, idxs , params, verbose=True):
+def store_chains(filepath, slices, idxs , verbose=True):
     chains= OrderedDict()
-    for idx, yr in zip(idxs,slices):
-        ch_path = filepath+'{0}/chain_1.txt'.format(yr)
+    for idx, yr in zip(idxs, slices):
+        ch_path = filepath+'/chain_1.txt'
         if isinstance(idx,(list,np.ndarray)):
             # chains[str(yr)] = OrderedDict()
             for id, p in zip(idx, params):

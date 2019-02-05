@@ -30,7 +30,7 @@ class SlicesCore(Core):
     time slices. Currently this supports a list of strings for multiple columns
     of a given txt file or a single string.
     """
-    def __init__(self, label, slices, slicedirs=None, params=None,
+    def __init__(self, label, slicedirs=None, params=None,
                  verbose=True, fancy_par_names=None, burn=None,
                  parfile = 'pars.npy'):
         """
@@ -45,33 +45,35 @@ class SlicesCore(Core):
         #Get indices from par file.
 
         idxs = []
-        if isinstance(params,str):
-            params = [params]
+        if isinstance(params,(str,list)):
+            params = np.array(params)
 
-        if np.array(params).ndim == 2:
+        chain_params = []
+        if params.ndim == 2:
             for dir,pars in zip(slicedirs,params):
                 file = dir + '/' + parfile
                 idxs.append(get_idx(pars, file))
-        elif np.array(params).ndim == 1:
-            for dir in slicedirs:
+                for p in pars:
+                    chain_params.append(p)
+        elif params.ndim in [0,1]:
+            for dir,par in zip(slicedirs,params):
                 file = dir + '/' + parfile
                 idxs.append(get_idx(params, file))
+                chain_params.append(par)
 
-        chain_dict = store_chains(slicedirs, idxs, verbose=verbose)
+        chain_list = store_chains(slicedirs, idxs, verbose=verbose)
 
         #Make all chains the same length by truncating to length of shortest.
-        chain_lengths = [len(ch) for ch in chain_dict.values()]
+        chain_lengths = [len(ch) for ch in chain_list]
         min_ch_idx = np.argmin(chain_lengths)
         min_ch_len = np.amin(chain_lengths)
 
         chain = np.zeros((min_ch_len,len(chain_lengths)))
         chain_params = []
-        for ii, ch in enumerate(chain_dict.values()):
+        for ii, ch in enumerate(chain_list):
             # print(type(ch))
             # print(ch)
             chain[:,ii] = ch[:min_ch_len]
-
-        chain_params = [ky for ky in chain_dict.keys()]
 
         super().__init__(label=label, chain=chain, params=chain_params,
                          burn=burn, fancy_par_names=fancy_par_names,
@@ -117,19 +119,17 @@ def get_col(col,filename):
     L = [x.split('\t')[col] for x in open(filename).readlines()]
     return np.array(L).astype(float)
 
-def store_chains(filepath, slices, idxs , verbose=True):
-    chains= OrderedDict()
+def store_chains(filepath, idxs , verbose=True):
+    chains= []
     for idx, yr in zip(idxs, slices):
         ch_path = filepath+'/chain_1.txt'
         if isinstance(idx,(list,np.ndarray)):
-            # chains[str(yr)] = OrderedDict()
             for id, p in zip(idx, params):
-                ky = '{0}_{1}'.format(yr,p)
-                chains[ky] = get_col(id, ch_path)
+                 chains.append(get_col(id, ch_path))
         else:
-            chains[str(yr)] = get_col(idx, ch_path)
+            chains.append(get_col(id, ch_path))
         if verbose:
-            print('\r{0} slice is loaded'.format(yr),end='',flush=True)
+            print('\r{0} is loaded.'.format(ch_path),end='',flush=True)
 
     if verbose: print('\n')
 

@@ -31,8 +31,8 @@ class SlicesCore(Core):
     of a given txt file or a single string.
     """
     def __init__(self, label, slicedirs=None, params=None,
-                 verbose=True, fancy_par_names=None, burn=None,
-                 parfile = 'pars.npy'):
+                 verbose=True, par_names=None, fancy_par_names=None,
+                  burn=None, parfile = 'pars.npy'):
         """
         Parameters
         ----------
@@ -47,18 +47,18 @@ class SlicesCore(Core):
         if isinstance(params,(str,list)):
             params = np.array(params)
 
-        chain_params = []
+        # chain_params = []
         if params.ndim == 2:
             for dir,pars in zip(slicedirs,params):
                 file = dir + '/' + parfile
                 idxs.append(get_idx(pars, file))
-                for p in pars:
-                    chain_params.append(p)
+                # for p in pars:
+                #     chain_params.append(p)
         elif params.ndim in [0,1]:
-            for dir,par in zip(slicedirs,params):
+            for dir in slicedirs:
                 file = dir + '/' + parfile
                 idxs.append(get_idx(params, file))
-                chain_params.append(par)
+                # chain_params.append(par)
 
         chain_list = store_chains(slicedirs, idxs, verbose=verbose)
 
@@ -68,13 +68,12 @@ class SlicesCore(Core):
         min_ch_len = np.amin(chain_lengths)
 
         chain = np.zeros((min_ch_len,len(chain_lengths)))
-        chain_params = []
         for ii, ch in enumerate(chain_list):
             # print(type(ch))
             # print(ch)
             chain[:,ii] = ch[:min_ch_len]
 
-        super().__init__(label=label, chain=chain, params=chain_params,
+        super().__init__(label=label, chain=chain, params=par_names,
                          burn=burn, fancy_par_names=fancy_par_names,
                          verbose=verbose)
 

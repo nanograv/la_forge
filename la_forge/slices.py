@@ -125,7 +125,7 @@ def store_chains(filepaths, idxs , verbose=True):
             for id, p in zip(idx, params):
                  chains.append(get_col(id, ch_path))
         else:
-            chains.append(get_col(id, ch_path))
+            chains.append(get_col(idx, ch_path))
         if verbose:
             print('\r{0} is loaded.'.format(ch_path),end='',flush=True)
 

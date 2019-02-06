@@ -98,10 +98,15 @@ def get_idx(par, filename):
     #[x for x in open(filename).readlines()].index(par)
     #This is tuned for the old PAL2 par files, not the enterprise ones...
 
+
     try:
         par_list = list(np.load(filename))
     except:
-        par_list = list(np.loadtxt(filename,dtype=str))
+        try:
+            par_list = list(np.loadtxt(filename,dtype=str))
+        except:
+            new_name = filename[:-3] +'txt'
+            par_list = list(np.loadtxt(new_name,dtype=str))
 
     if isinstance(par,list):
         idx = []

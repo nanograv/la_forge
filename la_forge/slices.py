@@ -44,17 +44,17 @@ class SlicesCore(Core):
         #Get indices from par file.
 
         idxs = []
-        if isinstance(params,(str,list)):
-            params = np.array(params)
+        if isinstance(params,str):
+            params = [params]
 
         # chain_params = []
-        if params.ndim == 2:
-            for dir,pars in zip(slicedirs,params):
+        if isinstance(params[0],list):
+            for dir,pars in zip(slicedirs, params):
                 file = dir + '/' + parfile
                 idxs.append(get_idx(pars, file))
                 # for p in pars:
                 #     chain_params.append(p)
-        elif params.ndim in [0,1]:
+        else:
             for dir in slicedirs:
                 file = dir + '/' + parfile
                 idxs.append(get_idx(params, file))

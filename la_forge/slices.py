@@ -122,7 +122,7 @@ def store_chains(filepaths, idxs , verbose=True):
     for idx, path in zip(idxs, filepaths):
         ch_path = path+'/chain_1.txt'
         if isinstance(idx,(list,np.ndarray)):
-            for id, p in zip(idx, params):
+            for id, p in idx:
                  chains.append(get_col(id, ch_path))
         else:
             chains.append(get_col(idx, ch_path))

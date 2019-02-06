@@ -96,7 +96,7 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None,
 
 
 
-def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type=None,
+def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            plot_2d_hist=True, verbose=True, Tspan=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
@@ -125,9 +125,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type=None,
 
     show_figure : bool
 
-    rn_type : str {'','_dm_gp','_chrom_gp','_red_noise'}
-        String to choose which type of red noise parameters are used in
-        plots.
+    rn_types : list {'','_dm_gp','_chrom_gp','_red_noise'}
+        List of strings to choose which type of red noise
+        parameters are used in each of the plots.
 
     plot_2d_hist : bool, optional
         Whether to include two dimensional histogram of powerlaw red noise
@@ -214,10 +214,10 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type=None,
     amp_par = pulsar+rn_type+'_log10_A'
     gam_par = pulsar+rn_type+'_gamma'
 
-    for ii, c in enumerate(cores):
+    for ii, (c,rn_type) in enumerate(zip(cores,rn_types)):
 
         ###Free Spectral Plotting
-        if pulsar + c.rn_type +  '_log10_rho_0' in c.params:
+        if pulsar + rn_type +  '_log10_rho_0' in c.params:
             Color = Colors[color_idx]
 
             if free_spec_ct==1:
@@ -239,7 +239,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type=None,
             color_idx += 1
 
         ### T-Process Plotting
-    elif pulsar + c.rn_type + '_alphas_0' in c.params:
+        elif pulsar + rn_type + '_alphas_0' in c.params:
             Color = Colors[color_idx]
             par_root = pulsar + rn_type +  '_alphas'
 

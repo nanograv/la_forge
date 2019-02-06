@@ -13,10 +13,10 @@ La Forge
         :target: https://la-forge.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pre00.deviantart.net/ffe1/th/pre/i/2016/322/7/1/geordi_la_forge_star_trek_next_generation_visor_by_sjvernon-daosphq.png
-        :target: https://www.deviantart.com/sjvernon/art/Geordi-La-Forge-Star-Trek-Next-Generation-Visor-646311950
-        :alt: Visor
 
+.. image:: ./visor.png
+        : target: https://www.deviantart.com/sjvernon/art/Geordi-La-Forge-Star-Trek-Next-Generation-Visor-646311950
+        : alt: Graphic Credit: Stewart Vernon, via Deviant Art
 
 Graphic Credit: Stewart Vernon, via Deviant Art
 

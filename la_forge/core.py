@@ -84,9 +84,10 @@ class Core(object):
 
         if self.chain.shape[1] > len(self.params):
             self.params.extend(['lnlike'])
-            print('Appending PTMCMCSampler sampling parameters to end of'
-                  ' parameter list. If unwanted please provided a parameter'
-                  ' list.')
+            if verbose:
+                print('Appending PTMCMCSampler sampling parameters to end of'
+                      ' parameter list. If unwanted please provide a parameter'
+                      ' list.')
 
         if burn is None:
             self.set_burn(int(0.25*self.chain.shape[0]))
@@ -107,10 +108,13 @@ class Core(object):
         self.rn_freqs = None
         if verbose:
             print('Red noise frequencies must be set before plotting most red '
-                  'noise figures. Please use core.set_rn_freqs() to set, if '
-                  'needed.')
-
-
+                  'noise figures.\n'
+                  'Please use core.set_rn_freqs() to set, if needed.')
+                  
+        if 'lnlike' in self.params:
+            self.mlv_idx = np.argmax(self.get_param('lnlike',to_burn=True))
+            self.mlv_idx += self.burn
+            self.mlv_params = self.chain[self.mlv_idx,:]
 
     def get_param(self, param, to_burn=True):
         """

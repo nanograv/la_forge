@@ -146,3 +146,58 @@ def compute_rho(log10_A, gamma, f, T):
     """
 
     return np.sqrt((10**log10_A)**2 / (12.0*np.pi**2) * fyr**(gamma-3) * f**(-gamma) / T)
+
+def convert_pal2_pars(p2_par):
+    p2 = p2_par.split('_')
+    psr = p2[-1]
+    if 'RN-Amplitude' in p2_par:
+        par = 'log10_A'
+        ent_par = '_'.join([psr,par])
+    elif 'RN-spectral-index' in p2_par:
+        par = 'gamma'
+        ent_par = '_'.join([psr,par])
+    elif 'GWB-Amplitude' == p2_par:
+        ent_par = 'log10_A_gw'
+    return ent_par
+
+def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
+              nsamples=100, smallest_dA=0.01, largest_dA=0.1):
+    """
+    Computes the Savage Dickey Bayes Factor and uncertainty. Based on code in
+    enterprise_extensions.
+
+    :param samples: MCMC samples of GWB (or common red noise) amplitude
+    :param ntol: Tolerance on number of samples in bin
+
+    :returns: (bayes factor, 1-sigma bayes factor uncertainty)
+    """
+
+    prior = 1 / (logAmax - logAmin)
+    dA = np.linspace(smallest_dA, largest_dA, nsamples)
+    bf = []
+    bf_err = []
+    mask = [] # selecting bins with more than ntol samples
+    N = len(samples)
+
+    for ii,delta in enumerate(dA):
+        n = np.sum(samples <= (logAmin + delta))
+        post = n / N / delta
+
+        bf.append(prior/post)
+        bf_err.append(bf[ii]/np.sqrt(n))
+
+        if n >= ntol:
+            mask.append(ii)
+    # Parse various answers depending on how good we can calculate the SD BF
+    # WARNING
+    if all([val!=np.inf for val in bf]):
+        return np.mean(np.array(bf)[mask]), np.std(np.array(bf)[mask])
+    elif all([val==np.inf for val in bf]):
+        post = 1 / N / smallest_dA
+        print('Not enough samples at low amplitudes.\n'
+              'Can only set lower limit on Savage-Dickey Bayes Factor!!')
+        return prior/post, np.nan
+    else:
+        print('Not enough samples in all bins.'
+              'Calculating mean by ignoring np.nan.')
+        return np.nanmean(np.array(bf)[mask]), np.nanstd(np.array(bf)[mask])

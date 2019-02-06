@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import os.path
 import sys
@@ -110,7 +110,7 @@ class Core(object):
             print('Red noise frequencies must be set before plotting most red '
                   'noise figures.\n'
                   'Please use core.set_rn_freqs() to set, if needed.')
-                  
+
         if 'lnlike' in self.params:
             self.mlv_idx = np.argmax(self.get_param('lnlike',to_burn=True))
             self.mlv_idx += self.burn

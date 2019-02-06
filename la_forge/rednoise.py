@@ -96,7 +96,7 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None,
 
 
 
-def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
+def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type=None,
                            plot_2d_hist=True, verbose=True, Tspan=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
@@ -217,7 +217,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
     for ii, c in enumerate(cores):
 
         ###Free Spectral Plotting
-        if pulsar + rn_type +  '_log10_rho_0' in c.params:
+        if pulsar + c.rn_type +  '_log10_rho_0' in c.params:
             Color = Colors[color_idx]
 
             if free_spec_ct==1:
@@ -239,7 +239,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_type='',
             color_idx += 1
 
         ### T-Process Plotting
-        elif pulsar + rn_type + '_alphas_0' in c.params:
+    elif pulsar + c.rn_type + '_alphas_0' in c.params:
             Color = Colors[color_idx]
             par_root = pulsar + rn_type +  '_alphas'
 

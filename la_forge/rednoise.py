@@ -211,9 +211,6 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         NUM_COLORS = len(cores)
         Colors = cm(np.arange(NUM_COLORS)/NUM_COLORS)
 
-    amp_par = pulsar+rn_type+'_log10_A'
-    gam_par = pulsar+rn_type+'_gamma'
-
     for ii, (c,rn_type) in enumerate(zip(cores,rn_types)):
 
         ###Free Spectral Plotting
@@ -240,6 +237,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
         ### T-Process Plotting
         elif pulsar + rn_type + '_alphas_0' in c.params:
+            amp_par = pulsar+rn_type+'_log10_A'
+            gam_par = pulsar+rn_type+'_gamma'
             Color = Colors[color_idx]
             par_root = pulsar + rn_type +  '_alphas'
 
@@ -265,6 +264,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
         ### Adaptive T-Process Plotting
         elif pulsar + rn_type + '_alphas_adapt_0' in c.params:
+            amp_par = pulsar+rn_type+'_log10_A'
+            gam_par = pulsar+rn_type+'_gamma'
             Color = Colors[color_idx]
             alpha_par = pulsar + rn_type +  '_alphas_adapt_0'
             nfreq_par = pulsar + rn_type +  '_nfreq'
@@ -290,6 +291,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
         ### Powerlaw Plotting
         else:
+            amp_par = pulsar+rn_type+'_log10_A'
+            gam_par = pulsar+rn_type+'_gamma'
             if plaw_ct==1:
                 Linestyle = '-'
             else:

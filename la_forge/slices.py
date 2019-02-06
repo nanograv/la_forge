@@ -5,6 +5,7 @@ from __future__ import division, print_function
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
+import sys
 import corner
 from collections import OrderedDict
 from enterprise_extensions import model_utils
@@ -68,14 +69,28 @@ class SlicesCore(Core):
         min_ch_len = np.amin(chain_lengths)
 
         chain = np.zeros((min_ch_len,len(chain_lengths)))
+
         for ii, ch in enumerate(chain_list):
             # print(type(ch))
             # print(ch)
             chain[:,ii] = ch[:min_ch_len]
 
-        super().__init__(label=label, chain=chain, params=par_names,
-                         burn=burn, fancy_par_names=fancy_par_names,
-                         verbose=verbose)
+        if sys.version_info[0]<3:
+            try:
+                super(SlicesCore, self).__init__(label=label, chain=chain,
+                                                 params=par_names, burn=burn,
+                                                 fancy_par_names=fancy_par_names,
+                                                 verbose=verbose)
+            except TypeError:
+                err_msg = 'Python 2 sometimes errors when reloading in '
+                err_msg += 'Jupyter Notebooks. Try reloading kernel.'
+                raise TypeError(err_msg)
+        else:
+            super().__init__(label=label, chain=chain, params=par_names,
+                             burn=burn, fancy_par_names=fancy_par_names,
+                             verbose=verbose)
+
+
 
     def get_ul_slices_err(self,q=95.0):
         self.ul = np.zeros((len(self.params),2))

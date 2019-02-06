@@ -18,8 +18,8 @@ __all__ = ['plot_chains']
 def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
-                save=False, show=True, linewidth=0.1, log=False,
-                **kwargs):
+                save=False, show=True, linewidth=0.1,
+                log=False, **kwargs):
 
     """Function to plot histograms of cores."""
     if pars is not None:

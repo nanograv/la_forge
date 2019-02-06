@@ -15,8 +15,8 @@ La Forge
 
 
 .. image:: ./visor.png
-        : target: https://www.deviantart.com/sjvernon/art/Geordi-La-Forge-Star-Trek-Next-Generation-Visor-646311950
-        : alt: Graphic Credit: Stewart Vernon, via Deviant Art
+        :target: https://www.deviantart.com/sjvernon/art/Geordi-La-Forge-Star-Trek-Next-Generation-Visor-646311950
+        :alt: Graphic Credit: Stewart Vernon, via Deviant Art
 
 Graphic Credit: Stewart Vernon, via Deviant Art
 

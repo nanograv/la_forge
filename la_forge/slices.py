@@ -95,7 +95,10 @@ class SlicesCore(Core):
     def get_ul_slices_err(self,q=95.0):
         self.ul = np.zeros((len(self.params),2))
         for ii, yr in enumerate(self.params):
-            self.ul[ii,:] = model_utils.ul(self.chain[self.burn:,ii],q=q)
+            try:
+                self.ul[ii,:] = model_utils.ul(self.chain[self.burn:,ii],q=q)
+            except ZeroDivisionError:
+                self.ul[ii,:] = (np.percentile(self.chain[self.burn:,ii],q=q),np.nan)
         return self.ul
 
     def get_bayes_fac(self, ntol = 200, logAmin = -18, logAmax = -12,

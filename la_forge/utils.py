@@ -146,7 +146,8 @@ def compute_rho(log10_A, gamma, f, T):
     Converts from power to residual RMS.
     """
 
-    return np.sqrt((10**log10_A)**2 / (12.0*np.pi**2) * fyr**(gamma-3) * f**(-gamma) / T)
+    return np.sqrt((10**log10_A)**2 / (12.0*np.pi**2)
+                    * fyr**(gamma-3) * f**(-gamma) / T)
 
 def convert_pal2_pars(p2_par):
     p2 = p2_par.split('_')
@@ -189,16 +190,20 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
 
         if n >= ntol:
             mask.append(ii)
-    # Parse various answers depending on how good we can calculate the SD BF
+    # Parse various answers depending on how well
+    # we can calculate the SD BF
     # WARNING
     if all([val!=np.inf for val in bf]):
-        return np.mean(np.array(bf)[mask]), np.std(np.array(bf)[mask])
+        return (np.mean(np.array(bf)[mask]),
+                np.std(np.array(bf)[mask]))
     elif all([val==np.inf for val in bf]):
         post = 1 / N / smallest_dA
         print('Not enough samples at low amplitudes.\n'
-              'Can only set lower limit on Savage-Dickey Bayes Factor!!')
+              'Can only set lower limit on Savage-Dickey'
+              'Bayes Factor!!')
         return prior/post, np.nan
     else:
         print('Not enough samples in all bins.'
               'Calculating mean by ignoring np.nan.')
-        return np.nanmean(np.array(bf)[mask]), np.nanstd(np.array(bf)[mask])
+        return (np.nanmean(np.array(bf)[mask]),
+                np.nanstd(np.array(bf)[mask]))

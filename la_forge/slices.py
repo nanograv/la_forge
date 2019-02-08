@@ -27,18 +27,40 @@ Nyears.append(11.4)
 
 class SlicesCore(Core):
     """
-    A class to make a core that only contains the GW statistics of a set of
-    time slices. Currently this supports a list of strings for multiple columns
-    of a given txt file or a single string.
+    A class to make a la_forge.core.Core object that contains a subset of
+    parameters from different chains. Currently this supports a list of strings
+    for multiple columns of a given txt file or a single string.
+
+    Parameters
+    ----------
     """
     def __init__(self, label, slicedirs=None, params=None,
                  verbose=True, par_names=None, fancy_par_names=None,
-                  burn=None, parfile = 'pars.npy'):
+                 burn=None, parfile = 'pars.npy'):
         """
         Parameters
         ----------
 
+        label : str
+            Label for this chain.
 
+        slicedirs : list
+            Directories where the various chain files can be found.
+
+        params : list, list of lists
+            Parameter names to extract from chains. If list of parameter names
+            is provided this set of parameters will be extracted from each
+            directory. If list of list, main list must be the same length as
+            `slicedirs`, but inner lists may be arbitrary length. The parameters
+            in each inner list will be extracted.
+
+        parfile : str
+            Name of parameter list file in the directories that corresponds to
+            columns of the chains.
+
+        burn : int
+            Burn in length for chains. Will autmatically be set to 1/4 of chain
+            length if none is provided.
         """
 
         self.slicedirs = slicedirs

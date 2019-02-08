@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 import numpy as np
 import os.path
-import sys
+import sys, pickle
 import glob
 
 from astropy.io import fits
@@ -9,6 +9,13 @@ from astropy.table import Table
 
 from . import utils
 
+### Convenience function to load a Core object
+
+def load_Core(filepath):
+    with open(filepath, "rb") as fin:
+        core = pickle.load(fin)
+        core.filepath = filepath
+    return core
 
 class Core(object):
     """
@@ -246,6 +253,17 @@ class Core(object):
             raise ValueError(err_msg)
 
         self.fancy_par_names = names_list
+
+    def save(self, filepath):
+        self.filepath = filepath
+        with open(filepath, "wb") as fout:
+            pickle.dump(self,fout)
+
+    def reload(self, filepath):
+        with open(filepath, "rb") as fin:
+            self = pickle.load(fin)
+
+
 
 ##### Methods to act on Core objects
 

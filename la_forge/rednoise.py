@@ -23,7 +23,7 @@ fyr = 1./secperyr
 def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     """
     Function to determine if an array or list of values is sufficiently
-        seperate from the minimum value.
+        separate from the minimum value.
 
     Parameters
     ----------
@@ -39,12 +39,24 @@ def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     lower_q: float
         Percentile value to evaluate lower bound.
     """
-    lowerbound = np.percentile(vals,q=lower_q)
+    lowerbound = np.percentile(vals, q=lower_q)
 
     if lowerbound > minval + threshold:
         return False
     else:
         return True
+
+def gorilla_bf(array, max=-4, min=-10, nbins=None):
+    """
+    Function to determine if the smallest amplitude bin is more or less probable
+    than the prior.
+    """
+    prior = 1/(max-min)
+    if nbins is None:
+        nbins=int(max-min)
+    hist,_ = np.histogram(array, bins=nbins, density=True)
+
+    return prior/hist[0]
 
 def get_rn_freqs(core):
     """
@@ -103,7 +115,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            n_tproc_realizations=1000, Colors=None, bins=30,
                            labels=None,legend_loc=None,leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
-                           freq_xtra=None, free_spec_min=None,
+                           freq_xtra=None, free_spec_min=None, free_spec_ci=95,
                            plot_density=None, plot_contours=None):
 
     """
@@ -225,7 +237,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             par_root = pulsar + rn_type +  '_log10_rho'
 
             plot_free_spec(c, axes[0], Tspan=Tspan, parname_root=par_root,
-                           prior_min=None, Color=Color, Fillstyle=Fillstyle,
+                           prior_min=free_spec_min, Color=Color,
+                           ci=free_spec_ci, Fillstyle=Fillstyle,
                            verbose=verbose)
 
             lines.append(plt.Line2D([0], [0], color=Color, linestyle='None',
@@ -310,7 +323,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                               bins=bins, ax=axes[1], plot_datapoints=False,
                               plot_density=plot_density[ii],
                               plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color)
+                              no_fill_contours=True, color=Color,
+                              levels=(0.39346934, 0.86466472, 0.988891,))
                 ax1_ylim_pl = axes[1].get_ylim()
 
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2,
@@ -344,23 +358,27 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         axes[1].set_xlabel(pulsar + '_gamma')
         axes[1].set_ylabel(pulsar + '_log10_A')
         axes[1].set_xlim((0,7))
-        if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
-            ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
-            ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
-            axes[1].set_ylim((ymin,ymax))
+        axes[1].set_ylim((-15.5,-11.2))
+        # if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
+        #     ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
+        #     ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
+        #     axes[1].set_ylim((ymin,ymax))
 
         if legend_loc is None: legend_loc=(-0.45,-0.15)
     else:
         if legend_loc is None: legend_loc=(-0.15,-0.15)
 
-    leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
-                   bbox_to_anchor=Bbox_anchor, ncol=len(labels))
+    # leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
+    #                bbox_to_anchor=Bbox_anchor, ncol=len(labels))
+    leg = fig.legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
+                        ncol=len(labels))#, bbox_to_anchor=Bbox_anchor)
     leg.get_frame().set_alpha(leg_alpha)
+    # fig.subplots_adjust(bottom=0.4)
 
     plt.tight_layout()
 
     if plotpath is not None:
-        plt.savefig(plotpath,additional_artists=[leg], bbox_inches='tight')
+        plt.savefig(plotpath, additional_artists=[leg], bbox_inches='tight')
         print('Figure saved to ' + plotpath)
 
     if show_figure:
@@ -448,10 +466,10 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
 
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
 
-def plot_free_spec(core, axis, parname_root, prior_min=None,
+def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
                    Color='k', Fillstyle='full', verbose=True, Tspan=None):
     """
-    Plots red noise free spectral parmeters in units of residual time.
+    Plots red noise free spectral parameters in units of residual time.
     Determines whether the posteriors should be considered as a fit a parameter
     or as upper limits of the given parameter and plots accordingly.
 
@@ -469,14 +487,12 @@ def plot_free_spec(core, axis, parname_root, prior_min=None,
     parname_root : str
         Name of red noise free spectral coefficient parameters.
 
-    prior_min : float
+    prior_min : float, None, 'bayes'
         Minimum value for uniform or log-uniform prior used in search over free
-        spectral coefficients.
+        spectral coefficients. If 'bayes' is used then a gorilla_bf calculation is
+        done to determine if confidence interval should be plotted.
 
     verbose : bool, optional
-
-    n_realizations : int, optional
-        Number of realizations to plot.
 
     Color : str, optional
         Color of the free spectral coefficient markers.
@@ -503,32 +519,41 @@ def plot_free_spec(core, axis, parname_root, prior_min=None,
     f1, median, minval, maxval = [], [], [], []
     f2, ul = [], []
 
-    # Find smallest sample for setting upper limit check.
-    min_sample = np.amin([core.get_param(parname_root + '_' + str(n)).min()
-                          for n in range(nfreqs)])
-    if prior_min is not None:
-        MinVal = prior_min
-    elif min_sample < -9:
-        MinVal = -10
-    else:
-        MinVal = -9
+    if prior_min != 'bayes':
+        # Find smallest sample for setting upper limit check.
+        min_sample = np.amin([core.get_param(parname_root + '_' + str(n)).min()
+                              for n in range(nfreqs)])
+        if prior_min is not None:
+            MinVal = prior_min
+        elif min_sample < -9:
+            MinVal = -10
+        else:
+            MinVal = -9
 
     for n in range(nfreqs):
         param_nm = parname_root +  '_' + str(n)
 
         # Sort whether posteriors meet criterion to be an upper limit or conf int.
-        if determine_if_limit(core.get_param(param_nm)[core.burn:],
-                              threshold=0.1, minval=MinVal):
+        if prior_min != 'bayes':
+            is_limit = determine_if_limit(core.get_param(param_nm),
+                                          threshold=0.1, minval=MinVal)
+        else:
+            is_limit = (gorilla_bf(core.get_param(param_nm))<1.5)
+
+        if is_limit:
             f2.append(F[n])
             x = core.get_param_confint(param_nm, onesided=True, interval=95)
             ul.append(x)
         else:
             f1.append(F[n])
-            median.append(core.get_param_median(param_nm))
-            x,y = core.get_param_confint(param_nm, onesided=False, interval=95)
+            # median.append(core.get_param_median(param_nm))
+            hist, binedges = np.histogram(core.get_param(param_nm),bins=100)
+
+            median.append(binedges[np.argmax(hist)])
+            x,y = core.get_param_confint(param_nm, onesided=False, interval=ci)
             minval.append(x)
             maxval.append(y)
-
+    print(median)
     #Make lists into numpy arrays
     f1 = np.array(f1)
     median = np.array(median)

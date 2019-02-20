@@ -193,8 +193,8 @@ def calculate_err_lines(UL_array):
 def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
                   Title=None,simulations=None,simulation_stats=None,
                   Xlim=(2.8,11.5),Ylim = (1e-15,3e-13),cmap='gist_rainbow',
-                  publication_params=False, save=False,show=True,
-                  print_color=False):
+                  publication_params=False, save=False, show=True,
+                  print_color=False, standalone=True):
     """arrays is a list of arrays."""
 
     if mjd is not None:
@@ -202,11 +202,13 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
     else:
         time = Nyears
 
-    if not publication_params:
-        plt.figure(figsize=[12,8])
-    else:
-        set_publication_params()
-        plt.figure()
+    if standalone:
+        if not publication_params:
+            plt.figure(figsize=[12,8])
+        else:
+            set_publication_params()
+            plt.figure()
+
     NUM_COLORS = len(arrays)
     cm = plt.get_cmap(cmap)
 
@@ -280,12 +282,13 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
     plt.xlim(Xlim[0],Xlim[1])
     plt.ylim(Ylim[0],Ylim[1])
 
-    if save:
-        plt.savefig(save, bbox_inches='tight')
-    if show:
-        plt.show()
+    if standalone:
+        if save:
+            plt.savefig(save, bbox_inches='tight')
+        if show:
+            plt.show()
 
-    plt.close()
+        plt.close()
 
 
 
@@ -298,7 +301,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
 def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
                   title='', suptitle='', cmap='gist_rainbow', fontsize=17,
                   publication_params=False, save=False, show=True, thin=1,
-                  plot_datapoints=True,
+                  plot_datapoints=True,xlabel='',ylabel='',
                   plot_density=False, plot_contours=True, no_fill_contours=True,
                   data_kwargs={'alpha':0.008,
                                'color':(0.12156, 0.466667, 0.70588, 1.0)},
@@ -360,8 +363,8 @@ def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
     'weight': 'normal',
     'size': 16,
     }
-    fig.text(0.5, -0.02, x_par, ha='center',usetex=False)
-    fig.text(-0.02, 0.5, y_par, va='center', rotation='vertical', usetex=False)
+    fig.text(0.5, -0.02, xlabel, ha='center',usetex=False)
+    fig.text(-0.02, 0.5, ylabel, va='center', rotation='vertical', usetex=False)
     if save:
         plt.savefig(save, bbox_inches='tight')
     if show:
@@ -372,7 +375,7 @@ def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
 def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
                   title='', log=True, Xlim=None, Ylim = None,
                   cmap='gist_rainbow', publication_params=False, save=False,
-                  show=True,  arrow_len=60):
+                  show=True,  arrow_len=60, standalone=True):
 
     for ii, arr in enumerate(bayes_fac):
         bayes = []
@@ -404,12 +407,13 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
     plt.ylabel(r'$log_{10}\mathcal{B}$')
     plt.title(title)
 
-    if save:
-        plt.savefig(save, bbox_inches='tight')
-    if show:
-        plt.show()
+    if standalone:
+        if save:
+            plt.savefig(save, bbox_inches='tight')
+        if show:
+            plt.show()
 
-    plt.close()
+        plt.close()
 
 ################## Plot Parameters ############################
 def figsize(scale):

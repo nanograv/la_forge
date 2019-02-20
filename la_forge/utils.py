@@ -207,3 +207,17 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
               'Calculating mean by ignoring np.nan.')
         return (np.nanmean(np.array(bf)[mask]),
                 np.nanstd(np.array(bf)[mask]))
+
+fyr = 1/(365.25*24*3600)
+def rn_power(amp, gamma=None, freqs=None, sum_freqs=True):
+    """Calculate the power in a red noise signal assuming the
+    P=A^2(f/f_yr)^-gamma form. """
+    if gamma is None and freqs is None and amp.ndim>1:
+        power = (10**amp)**2 
+    else:
+        power = (10**amp[:,np.newaxis])**2 \
+                *(np.array(freqs)/fyr)**-gamma[:,np.newaxis]
+    if sum_freqs:
+        return np.sum(power, axis=1)
+    else:
+        return power

@@ -116,6 +116,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            labels=None,legend_loc=None,leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
                            freq_xtra=None, free_spec_min=None, free_spec_ci=95,
+                           free_spec_violin=False,
                            plot_density=None, plot_contours=None):
 
     """
@@ -239,7 +240,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             plot_free_spec(c, axes[0], Tspan=Tspan, parname_root=par_root,
                            prior_min=free_spec_min, Color=Color,
                            ci=free_spec_ci, Fillstyle=Fillstyle,
-                           verbose=verbose)
+                           verbose=verbose, violin=free_spec_violin)
 
             lines.append(plt.Line2D([0], [0], color=Color, linestyle='None',
                          marker='o', fillstyle=Fillstyle))
@@ -342,10 +343,10 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
     if freq_xtra is not None:
         if isinstance(freq_xtra, float):
-            axes[0].axvline(freq_xtra, color='0.3', ls='--')
+            axes[0].axvline(freq_xtra, color='0.3', ls=':')
         elif isinstance(freq_xtra,list) or isinstance(freq_xtra,array):
             for xfreq in freq_xtra:
-                axes[0].axvline(xfreq, color='0.3', ls='--')
+                axes[0].axvline(xfreq, color='0.3', ls=':')
 
     axes[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
     axes[0].set_ylabel('log10 RMS (s)')
@@ -467,7 +468,8 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
 
 def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
-                   Color='k', Fillstyle='full', verbose=True, Tspan=None):
+                   violin=False, Color='k', Fillstyle='full',
+                   verbose=True, Tspan=None):
     """
     Plots red noise free spectral parameters in units of residual time.
     Determines whether the posteriors should be considered as a fit a parameter
@@ -516,58 +518,97 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
         print('Plotting Free Spectral RN Params:'
               'Tspan = {0:.1f} yrs   f_min = {1:.1e}'.format(T/secperyr, 1./T))
 
-    f1, median, minval, maxval = [], [], [], []
-    f2, ul = [], []
+    if violin:
+        if prior_min is None:
+            start_idx = core.params.index(parname_root +  '_0')
+            end_idx = core.params.index(parname_root +  '_' + str(nfreqs-1))+1
+            parts = axis.violinplot(core.chain[core.burn:,start_idx:end_idx],
+                                    positions=F, widths=F*0.07,
+                                    showextrema=False)
+            for pc in parts['bodies']:
+                pc.set_facecolor(Color)
+                #pc.set_edgecolor('black')
+                pc.set_alpha(0.6)
 
-    if prior_min != 'bayes':
-        # Find smallest sample for setting upper limit check.
-        min_sample = np.amin([core.get_param(parname_root + '_' + str(n)).min()
-                              for n in range(nfreqs)])
-        if prior_min is not None:
-            MinVal = prior_min
-        elif min_sample < -9:
-            MinVal = -10
-        else:
-            MinVal = -9
+        elif prior_min is 'bayes':
+            f1, f2, ul, coeff = [], [], [], []
+            for n in range(nfreqs):
+                param_nm = parname_root +  '_' + str(n)
+                is_limit = (gorilla_bf(core.get_param(param_nm))<1.0)
+                if is_limit:
+                    f2.append(F[n])
+                    x = core.get_param_confint(param_nm, onesided=True,
+                                               interval=95)
+                    ul.append(x)
+                else:
+                    f1.append(F[n])
+                    idx = core.params.index(parname_root +  '_' + str(n))
+                    coeff.append(core.chain[core.burn:,idx])
 
-    for n in range(nfreqs):
-        param_nm = parname_root +  '_' + str(n)
+            f1 = np.array(f1)
+            f2 = np.array(f2)
+            parts = axis.violinplot(coeff, positions=f1, widths=f1*0.07,
+                                    showextrema=False)
+            axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
+                          color=Color, zorder=8, fillstyle=Fillstyle)
 
-        # Sort whether posteriors meet criterion to be an upper limit or conf int.
+            for pc in parts['bodies']:
+                pc.set_facecolor(Color)
+                #pc.set_edgecolor('black')
+                pc.set_alpha(0.6)
+    else:
+        f1, median, minval, maxval = [], [], [], []
+        f2, ul = [], []
+
         if prior_min != 'bayes':
-            is_limit = determine_if_limit(core.get_param(param_nm),
-                                          threshold=0.1, minval=MinVal)
-        else:
-            is_limit = (gorilla_bf(core.get_param(param_nm))<1.5)
+            # Find smallest sample for setting upper limit check.
+            min_sample = np.amin([core.get_param(parname_root + '_' + str(n)).min()
+                                  for n in range(nfreqs)])
+            if prior_min is not None:
+                MinVal = prior_min
+            elif min_sample < -9:
+                MinVal = -10
+            else:
+                MinVal = -9
 
-        if is_limit:
-            f2.append(F[n])
-            x = core.get_param_confint(param_nm, onesided=True, interval=95)
-            ul.append(x)
-        else:
-            f1.append(F[n])
-            # median.append(core.get_param_median(param_nm))
-            hist, binedges = np.histogram(core.get_param(param_nm),bins=100)
+        for n in range(nfreqs):
+            param_nm = parname_root +  '_' + str(n)
 
-            median.append(binedges[np.argmax(hist)])
-            x,y = core.get_param_confint(param_nm, onesided=False, interval=ci)
-            minval.append(x)
-            maxval.append(y)
-    print(median)
-    #Make lists into numpy arrays
-    f1 = np.array(f1)
-    median = np.array(median)
-    minval = np.array(minval)
-    maxval = np.array(maxval)
-    f2 = np.array(f2)
-    ul = np.array(ul)
+            # Sort whether posteriors meet criterion to be an upper limit or conf int.
+            if prior_min != 'bayes':
+                is_limit = determine_if_limit(core.get_param(param_nm),
+                                              threshold=0.1, minval=MinVal)
+            else:
+                is_limit = (gorilla_bf(core.get_param(param_nm))<1.5)
 
-    #Plot two kinds of points and append to given axis.
-    axis.errorbar(f1, median, fmt='o', color=Color, zorder=8,
-                  yerr=[median-minval, maxval-median],
-                  fillstyle = Fillstyle)#'C0'
-    axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
-                  color=Color, zorder=8, fillstyle=Fillstyle)
+            if is_limit:
+                f2.append(F[n])
+                x = core.get_param_confint(param_nm, onesided=True, interval=95)
+                ul.append(x)
+            else:
+                f1.append(F[n])
+                # median.append(core.get_param_median(param_nm))
+                hist, binedges = np.histogram(core.get_param(param_nm),bins=100)
+
+                median.append(binedges[np.argmax(hist)])
+                x,y = core.get_param_confint(param_nm, onesided=False, interval=ci)
+                minval.append(x)
+                maxval.append(y)
+
+        #Make lists into numpy arrays
+        f1 = np.array(f1)
+        median = np.array(median)
+        minval = np.array(minval)
+        maxval = np.array(maxval)
+        f2 = np.array(f2)
+        ul = np.array(ul)
+
+        #Plot two kinds of points and append to given axis.
+        axis.errorbar(f1, median, fmt='o', color=Color, zorder=8,
+                      yerr=[median-minval, maxval-median],
+                      fillstyle = Fillstyle)#'C0'
+        axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
+                      color=Color, zorder=8, fillstyle=Fillstyle)
 
 
 def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,

@@ -54,9 +54,13 @@ def gorilla_bf(array, max=-4, min=-10, nbins=None):
     prior = 1/(max-min)
     if nbins is None:
         nbins=int(max-min)
-    hist,_ = np.histogram(array, bins=nbins, density=True)
+    bins = np.linspace(min,max,nbins+1)
+    hist,_ = np.histogram(array, bins=bins, density=True)
 
-    return prior/hist[0]
+    if hist[0] == 0:
+        return np.nan
+    else:
+        return prior/hist[0]
 
 def get_rn_freqs(core):
     """
@@ -534,7 +538,8 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
             f1, f2, ul, coeff = [], [], [], []
             for n in range(nfreqs):
                 param_nm = parname_root +  '_' + str(n)
-                is_limit = (gorilla_bf(core.get_param(param_nm))<1.0)
+                gbf = gorilla_bf(core.get_param(param_nm))
+                is_limit = (gbf<1.0 if gbf is not np.nan else False)
                 if is_limit:
                     f2.append(F[n])
                     x = core.get_param_confint(param_nm, onesided=True,
@@ -579,7 +584,8 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
                 is_limit = determine_if_limit(core.get_param(param_nm),
                                               threshold=0.1, minval=MinVal)
             else:
-                is_limit = (gorilla_bf(core.get_param(param_nm))<1.5)
+                gbf = gorilla_bf(core.get_param(param_nm))
+                is_limit = (gbf<1.0 if gbf is not np.nan else False)
 
             if is_limit:
                 f2.append(F[n])

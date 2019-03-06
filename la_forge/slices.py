@@ -218,9 +218,9 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
             plt.semilogy(Nyears,10**simulations[ii],lw=0.1,c='gray',alpha=0.4)
 
         plt.semilogy(Nyears,10**simul_mean,c='gray',
-                 alpha=0.7,lw=2,label='Simulation Mean')
+                 alpha=0.7,lw=2,label='Simulation Median')
         plt.semilogy(Nyears,10**upper_90_ci,c='gray',ls='--',
-                 alpha=0.7,label='90% Confidence Interval')
+                 alpha=0.7,label='90\% Confidence Interval')
         plt.semilogy(Nyears,10**lower_90_ci,c='gray',ls='--',alpha=0.7)
 
     try:
@@ -373,10 +373,12 @@ def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
     plt.close()
 
 def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
-                  title='', log=True, Xlim=None, Ylim = None,
+                  title='', log=True, Xlim=None, Ylim = None, markers=None,
                   cmap='gist_rainbow', publication_params=False, save=False,
                   show=True,  arrow_len=60, standalone=True):
 
+    if markers is None:
+        markers = ['o' for ii in range(len(bayes_fac))]
     for ii, arr in enumerate(bayes_fac):
         bayes = []
         bf_ll = []
@@ -389,17 +391,24 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
         bayes = np.array(bayes)
         bf_ll = np.array(bf_ll)
 
-        plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2],
-                     linestyle='none',marker='o',color=colors[ii],
+        ax=plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2]*10,
+                     linestyle='none',marker=markers[ii],color=colors[ii],
                      label=labels[ii])
         if bf_ll.size!=0:
-            plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
-                         lolims=True,linestyle='none',marker='o',
+            ax=plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
+                         lolims=True,linestyle='none',marker=markers[ii],
                          color=colors[ii],fillstyle='none')
 
     plt.axhline(y=1,linestyle='--',color='k',linewidth=1)
 
     if log: plt.yscale("log", nonposy='clip')
+
+    # # get handles
+    # handles, labels = ax.get_legend_handles_labels()
+    # # remove the errorbars
+    # handles = [h[0] for h in handles]
+    #     # use them in the legend
+    # plt.legend(handles, labels, loc='upper left',numpoints=1)
 
     plt.legend(loc='upper left')
     plt.xticks(Nyears[::2])

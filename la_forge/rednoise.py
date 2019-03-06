@@ -229,7 +229,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         Colors = cm(np.arange(NUM_COLORS)/NUM_COLORS)
 
     for ii, (c,rn_type) in enumerate(zip(cores,rn_types)):
-
+        if all([pulsar not in par for par in c.params]):
+            raise ValueError('Pulsar not in any parameter names.')
         ###Free Spectral Plotting
         if pulsar + rn_type +  '_log10_rho_0' in c.params:
             Color = Colors[color_idx]
@@ -724,3 +725,89 @@ def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
 
         axis.plot(F, np.log10(rho), color=Color, lw=1., ls='-', zorder=4,
                   alpha=0.01)
+
+def plot_piecewise_powerlaw(core, axis, amp_par, gam1_par, gam2_par,
+                            f_split_par, verbose=True, Color='k', Linestyle='-',
+                            n_realizations=0, Tspan=None, to_resid=True):
+    """
+    Plots a power law line from the given parmeters in units of residual
+    time.
+
+    Parameters
+    ----------
+
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+
+    amp_par : str
+        Name of red noise powerlaw amplitude parameter.
+
+    gam1_par : str
+        Name of 1st red noise powerlaw spectral index parameter (gamma1).
+
+    gam2_par : str
+        Name of 2nd red noise powerlaw spectral index parameter (gamma2).
+
+    f_split_par : str
+        Name of red noise powerlaw frequency split parameter (freq_split).
+
+    verbose : bool, optional
+
+    n_realizations : int, optional
+        Number of realizations to plot.
+
+    Color : list, optional
+        Color to make the plot.
+
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
+    F , nfreqs = get_rn_freqs(core)
+
+    if Tspan is None:
+        T = 1/np.amin(F)
+    else:
+        T = Tspan
+
+    if n_realizations>0:
+        # sort data in descending order of lnlike
+        if 'lnlike' in core.params:
+            lnlike_idx = core.params.index('lnlike')
+        else:
+            lnlike_idx = -4
+
+        sorted_idx = core.chain[:,lnlike_idx].argsort()[::-1]
+        sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
+
+        sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
+        sorted_gam1 = core.get_param(gam1_par, to_burn=False)[sorted_idx]
+        sorted_gam2 = core.get_param(gam2_par, to_burn=False)[sorted_idx]
+        sorted_fsplit = core.get_param(f_split_par, to_burn=False)[sorted_idx]
+        for idx in range(n_realizations):
+            rho = utils.compute_rho(sorted_Amp[idx],
+                                    sorted_gam[idx], F, T)
+            axis.plot(F, np.log10(rho), color=Color, lw=0.4,
+                        ls='-', zorder=6, alpha=0.03)
+
+
+    log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
+
+    if verbose:
+        print('Plotting Powerlaw RN Params:'
+              'Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
+        print('Red noise parameters: log10_A = '
+              '{0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))
+
+    if to_resid:
+        rho = utils.compute_rho(log10_A, gamma, F, T)
+    else:
+        rho = utils.compute_rho(log10_A, gamma, F, T)
+
+    axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)

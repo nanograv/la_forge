@@ -224,3 +224,8 @@ def rn_power(amp, gamma=None, freqs=None, T=None, sum_freqs=True):
         return np.sum(power, axis=1)
     else:
         return power
+
+def powerlaw(freqs, log10_A=-16, gamma=5):
+    df = np.diff(np.concatenate((np.array([0]), freqs)))
+    return ((10**log10_A)**2 / 12.0 / np.pi**2 *
+            fyr**(gamma-3) * freqs**(-gamma) * np.repeat(df, 2))

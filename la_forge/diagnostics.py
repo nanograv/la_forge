@@ -19,7 +19,8 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
                 save=False, show=True, linewidth=0.1,
-                log=False,xticks=[],title_y=1.04, **kwargs):
+                log=False,title_y=1.04,hist_kwargs={},
+                plot_kwargs={}, **kwargs):
 
     """Function to plot histograms of cores."""
     if pars is not None:
@@ -48,7 +49,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         psr_name = psr_name[:10]
 
     nrows = int(L // ncols)
-    if ncols%L > 0: nrows +=1
+    if L%ncols > 0: nrows +=1
 
     fig = plt.figure()#figsize=[15,5*nrows])
     for ii, p in enumerate(params):
@@ -59,13 +60,13 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 for c in core:
                     plt.hist(c.get_param(p), bins=bins,
                              density=True, log=log,
-                              histtype='step', lw=1.5, **kwargs)
+                              histtype='step', **hist_kwargs)
             else:
                 plt.hist(core.get_param(p), bins=bins,
                          density=True, log=log,
-                         histtype='step', lw=1.5, **kwargs)
+                         histtype='step', **hist_kwargs)
         else:
-            plt.plot(core.get_param(p,to_burn=False), lw=linewidth, **kwargs)
+            plt.plot(core.get_param(p,to_burn=False), lw=linewidth, **plot_kwargs)
 
         if (titles is None) and (fancy_par_names is None):
             par_name = p.replace(psr_name+'_','')
@@ -75,17 +76,20 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         elif fancy_par_names is not None:
             axis.set_title(fancy_par_names[ii])
 
-        # axis.set_xlabel(x_par.decode())
-        # axis.set_ylabel(y_par.decode())
-        axis.set_yticks([])#
-        axis.set_xticks(xticks)
+        axis.set_yticks([])
+        xticks = kwargs.get('xticks')
+        if xticks is not None:
+            axis.set_xticks(xticks)
 
-    #
     if suptitle is None:
         suptitle = 'PSR {0} Noise Parameters'.format(psr_name)
 
     fig.suptitle(suptitle, y=title_y, fontsize=16)
     fig.tight_layout(pad=0.4)
+
+    xlabel = kwargs.get('xlabel')
+    if xlabel is not None: fig.text(0.5, -0.02, xlabel, ha='center',usetex=False)
+
 
     if save:
         plt.savefig(save, bbox_inches='tight')

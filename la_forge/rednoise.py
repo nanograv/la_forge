@@ -120,7 +120,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            labels=None,legend_loc=None,leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
                            freq_xtra=None, free_spec_min=None, free_spec_ci=95,
-                           free_spec_violin=False,
+                           free_spec_violin=False, ncol=None,
                            plot_density=None, plot_contours=None):
 
     """
@@ -374,10 +374,13 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
     else:
         if legend_loc is None: legend_loc=(-0.15,-0.15)
 
+    if ncol is None:
+        ncol=len(labels)
+
     # leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
     #                bbox_to_anchor=Bbox_anchor, ncol=len(labels))
     leg = fig.legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
-                        ncol=len(labels))#, bbox_to_anchor=Bbox_anchor)
+                        ncol=ncol)#, bbox_to_anchor=Bbox_anchor)
     leg.get_frame().set_alpha(leg_alpha)
     # fig.subplots_adjust(bottom=0.4)
 
@@ -385,7 +388,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
     if plotpath is not None:
         plt.savefig(plotpath, additional_artists=[leg], bbox_inches='tight')
-        print('Figure saved to ' + plotpath)
+        if verbose:
+            print('Figure saved to ' + plotpath)
 
     if show_figure:
         plt.show()

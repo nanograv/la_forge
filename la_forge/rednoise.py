@@ -679,7 +679,7 @@ def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,
     amp_idx = core.params.index(amp_par)
     gam_idx = core.params.index(gam_par)
     alpha_idxs = [core.params.index(alpha_parname_root+'_{0}'.format(i))
-                  for i in range(30)]
+                  for i in range(nfreqs)]
 
     for n in range(n_realizations):
         log10_A = sorted_data[n,amp_idx]

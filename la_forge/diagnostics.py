@@ -39,6 +39,8 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
 
     if isinstance(core,list):
         fancy_par_names=core[0].fancy_par_names
+    else:
+        fancy_par_names=core.fancy_par_names
 
     L = len(params)
 
@@ -51,7 +53,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     nrows = int(L // ncols)
     if L%ncols > 0: nrows +=1
 
-    fig = plt.figure()#figsize=[15,5*nrows])
+    fig = plt.figure(figsize=[15,4*nrows])
     for ii, p in enumerate(params):
         cell = ii+1
         axis = fig.add_subplot(nrows, ncols, cell)

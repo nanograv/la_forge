@@ -146,7 +146,8 @@ def compute_rho(log10_A, gamma, f, T):
     Converts from power to residual RMS.
     """
 
-    return np.sqrt((10**log10_A)**2 / (12.0*np.pi**2) * fyr**(gamma-3) * f**(-gamma) / T)
+    return np.sqrt((10**log10_A)**2 / (12.0*np.pi**2)
+                    * fyr**(gamma-3) * f**(-gamma) / T)
 
 def convert_pal2_pars(p2_par):
     p2 = p2_par.split('_')
@@ -189,16 +190,42 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
 
         if n >= ntol:
             mask.append(ii)
-    # Parse various answers depending on how good we can calculate the SD BF
+    # Parse various answers depending on how well
+    # we can calculate the SD BF
     # WARNING
     if all([val!=np.inf for val in bf]):
-        return np.mean(np.array(bf)[mask]), np.std(np.array(bf)[mask])
+        return (np.mean(np.array(bf)[mask]),
+                np.std(np.array(bf)[mask]))
     elif all([val==np.inf for val in bf]):
         post = 1 / N / smallest_dA
         print('Not enough samples at low amplitudes.\n'
-              'Can only set lower limit on Savage-Dickey Bayes Factor!!')
+              'Can only set lower limit on Savage-Dickey'
+              'Bayes Factor!!')
         return prior/post, np.nan
     else:
         print('Not enough samples in all bins.'
               'Calculating mean by ignoring np.nan.')
-        return np.nanmean(np.array(bf)[mask]), np.nanstd(np.array(bf)[mask])
+        return (np.nanmean(np.array(bf)[mask]),
+                np.nanstd(np.array(bf)[mask]))
+
+fyr = 1/(365.25*24*3600)
+def rn_power(amp, gamma=None, freqs=None, T=None, sum_freqs=True):
+    """Calculate the power in a red noise signal assuming the
+    P=A^2(f/f_yr)^-gamma form. """
+    if gamma is None and freqs is None and amp.ndim>1:
+        if T is None:
+            raise ValueError('Must provide timespan for power calculation.')
+        power = (10**amp)**2 * T
+    else:
+        power = (10**amp[:,np.newaxis])**2 \
+                * (np.array(freqs)/fyr)**-gamma[:,np.newaxis] \
+                * (1/fyr)**3 /(12*np.pi**2)
+    if sum_freqs:
+        return np.sum(power, axis=1)
+    else:
+        return power
+
+def powerlaw(freqs, log10_A=-16, gamma=5):
+    df = np.diff(np.concatenate((np.array([0]), freqs)))
+    return ((10**log10_A)**2 / 12.0 / np.pi**2 *
+            fyr**(gamma-3) * freqs**(-gamma) * np.repeat(df, 2))

@@ -23,7 +23,7 @@ fyr = 1./secperyr
 def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     """
     Function to determine if an array or list of values is sufficiently
-        seperate from the minimum value.
+        separate from the minimum value.
 
     Parameters
     ----------
@@ -39,12 +39,28 @@ def determine_if_limit(vals, threshold=0.1, minval=-10, lower_q=0.3):
     lower_q: float
         Percentile value to evaluate lower bound.
     """
-    lowerbound = np.percentile(vals,q=lower_q)
+    lowerbound = np.percentile(vals, q=lower_q)
 
     if lowerbound > minval + threshold:
         return False
     else:
         return True
+
+def gorilla_bf(array, max=-4, min=-10, nbins=None):
+    """
+    Function to determine if the smallest amplitude bin is more or less probable
+    than the prior.
+    """
+    prior = 1/(max-min)
+    if nbins is None:
+        nbins=int(max-min)
+    bins = np.linspace(min,max,nbins+1)
+    hist,_ = np.histogram(array, bins=bins, density=True)
+
+    if hist[0] == 0:
+        return np.nan
+    else:
+        return prior/hist[0]
 
 def get_rn_freqs(core):
     """
@@ -103,7 +119,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            n_tproc_realizations=1000, Colors=None, bins=30,
                            labels=None,legend_loc=None,leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
-                           freq_xtra=None, free_spec_min=None,
+                           freq_xtra=None, free_spec_min=None, free_spec_ci=95,
+                           free_spec_violin=False, ncol=None,
                            plot_density=None, plot_contours=None):
 
     """
@@ -212,7 +229,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         Colors = cm(np.arange(NUM_COLORS)/NUM_COLORS)
 
     for ii, (c,rn_type) in enumerate(zip(cores,rn_types)):
-
+        if all([pulsar not in par for par in c.params]):
+            raise ValueError('Pulsar not in any parameter names.')
         ###Free Spectral Plotting
         if pulsar + rn_type +  '_log10_rho_0' in c.params:
             Color = Colors[color_idx]
@@ -225,8 +243,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             par_root = pulsar + rn_type +  '_log10_rho'
 
             plot_free_spec(c, axes[0], Tspan=Tspan, parname_root=par_root,
-                           prior_min=None, Color=Color, Fillstyle=Fillstyle,
-                           verbose=verbose)
+                           prior_min=free_spec_min, Color=Color,
+                           ci=free_spec_ci, Fillstyle=Fillstyle,
+                           verbose=verbose, violin=free_spec_violin)
 
             lines.append(plt.Line2D([0], [0], color=Color, linestyle='None',
                          marker='o', fillstyle=Fillstyle))
@@ -310,7 +329,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                               bins=bins, ax=axes[1], plot_datapoints=False,
                               plot_density=plot_density[ii],
                               plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color)
+                              no_fill_contours=True, color=Color,
+                              levels=(0.39346934, 0.86466472, 0.988891,))
                 ax1_ylim_pl = axes[1].get_ylim()
 
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2,
@@ -328,10 +348,10 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
     if freq_xtra is not None:
         if isinstance(freq_xtra, float):
-            axes[0].axvline(freq_xtra, color='0.3', ls='--')
+            axes[0].axvline(freq_xtra, color='0.3', ls=':')
         elif isinstance(freq_xtra,list) or isinstance(freq_xtra,array):
             for xfreq in freq_xtra:
-                axes[0].axvline(xfreq, color='0.3', ls='--')
+                axes[0].axvline(xfreq, color='0.3', ls=':')
 
     axes[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
     axes[0].set_ylabel('log10 RMS (s)')
@@ -344,24 +364,32 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         axes[1].set_xlabel(pulsar + '_gamma')
         axes[1].set_ylabel(pulsar + '_log10_A')
         axes[1].set_xlim((0,7))
-        if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
-            ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
-            ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
-            axes[1].set_ylim((ymin,ymax))
+        axes[1].set_ylim((-15.5,-11.2))
+        # if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
+        #     ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
+        #     ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
+        #     axes[1].set_ylim((ymin,ymax))
 
         if legend_loc is None: legend_loc=(-0.45,-0.15)
     else:
         if legend_loc is None: legend_loc=(-0.15,-0.15)
 
-    leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
-                   bbox_to_anchor=Bbox_anchor, ncol=len(labels))
+    if ncol is None:
+        ncol=len(labels)
+
+    # leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
+    #                bbox_to_anchor=Bbox_anchor, ncol=len(labels))
+    leg = fig.legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
+                        ncol=ncol)#, bbox_to_anchor=Bbox_anchor)
     leg.get_frame().set_alpha(leg_alpha)
+    # fig.subplots_adjust(bottom=0.4)
 
     plt.tight_layout()
 
     if plotpath is not None:
-        plt.savefig(plotpath,additional_artists=[leg], bbox_inches='tight')
-        print('Figure saved to ' + plotpath)
+        plt.savefig(plotpath, additional_artists=[leg], bbox_inches='tight')
+        if verbose:
+            print('Figure saved to ' + plotpath)
 
     if show_figure:
         plt.show()
@@ -448,10 +476,11 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
 
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
 
-def plot_free_spec(core, axis, parname_root, prior_min=None,
-                   Color='k', Fillstyle='full', verbose=True, Tspan=None):
+def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
+                   violin=False, Color='k', Fillstyle='full',
+                   verbose=True, Tspan=None):
     """
-    Plots red noise free spectral parmeters in units of residual time.
+    Plots red noise free spectral parameters in units of residual time.
     Determines whether the posteriors should be considered as a fit a parameter
     or as upper limits of the given parameter and plots accordingly.
 
@@ -469,14 +498,12 @@ def plot_free_spec(core, axis, parname_root, prior_min=None,
     parname_root : str
         Name of red noise free spectral coefficient parameters.
 
-    prior_min : float
+    prior_min : float, None, 'bayes'
         Minimum value for uniform or log-uniform prior used in search over free
-        spectral coefficients.
+        spectral coefficients. If 'bayes' is used then a gorilla_bf calculation is
+        done to determine if confidence interval should be plotted.
 
     verbose : bool, optional
-
-    n_realizations : int, optional
-        Number of realizations to plot.
 
     Color : str, optional
         Color of the free spectral coefficient markers.
@@ -500,49 +527,99 @@ def plot_free_spec(core, axis, parname_root, prior_min=None,
         print('Plotting Free Spectral RN Params:'
               'Tspan = {0:.1f} yrs   f_min = {1:.1e}'.format(T/secperyr, 1./T))
 
-    f1, median, minval, maxval = [], [], [], []
-    f2, ul = [], []
+    if violin:
+        if prior_min is None:
+            start_idx = core.params.index(parname_root +  '_0')
+            end_idx = core.params.index(parname_root +  '_' + str(nfreqs-1))+1
+            parts = axis.violinplot(core.chain[core.burn:,start_idx:end_idx],
+                                    positions=F, widths=F*0.07,
+                                    showextrema=False)
+            for pc in parts['bodies']:
+                pc.set_facecolor(Color)
+                #pc.set_edgecolor('black')
+                pc.set_alpha(0.6)
 
-    # Find smallest sample for setting upper limit check.
-    min_sample = np.amin([core.get_param(parname_root + '_' + str(n)).min()
-                          for n in range(nfreqs)])
-    if prior_min is not None:
-        MinVal = prior_min
-    elif min_sample < -9:
-        MinVal = -10
+        elif prior_min is 'bayes':
+            f1, f2, ul, coeff = [], [], [], []
+            for n in range(nfreqs):
+                param_nm = parname_root +  '_' + str(n)
+                gbf = gorilla_bf(core.get_param(param_nm))
+                is_limit = (gbf<1.0 if gbf is not np.nan else False)
+                if is_limit:
+                    f2.append(F[n])
+                    x = core.get_param_confint(param_nm, onesided=True,
+                                               interval=95)
+                    ul.append(x)
+                else:
+                    f1.append(F[n])
+                    idx = core.params.index(parname_root +  '_' + str(n))
+                    coeff.append(core.chain[core.burn:,idx])
+
+            f1 = np.array(f1)
+            f2 = np.array(f2)
+            parts = axis.violinplot(coeff, positions=f1, widths=f1*0.07,
+                                    showextrema=False)
+            axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
+                          color=Color, zorder=8, fillstyle=Fillstyle)
+
+            for pc in parts['bodies']:
+                pc.set_facecolor(Color)
+                #pc.set_edgecolor('black')
+                pc.set_alpha(0.6)
     else:
-        MinVal = -9
+        f1, median, minval, maxval = [], [], [], []
+        f2, ul = [], []
 
-    for n in range(nfreqs):
-        param_nm = parname_root +  '_' + str(n)
+        if prior_min != 'bayes':
+            # Find smallest sample for setting upper limit check.
+            min_sample = np.amin([core.get_param(parname_root + '_' + str(n)).min()
+                                  for n in range(nfreqs)])
+            if prior_min is not None:
+                MinVal = prior_min
+            elif min_sample < -9:
+                MinVal = -10
+            else:
+                MinVal = -9
 
-        # Sort whether posteriors meet criterion to be an upper limit or conf int.
-        if determine_if_limit(core.get_param(param_nm)[core.burn:],
-                              threshold=0.1, minval=MinVal):
-            f2.append(F[n])
-            x = core.get_param_confint(param_nm, onesided=True, interval=95)
-            ul.append(x)
-        else:
-            f1.append(F[n])
-            median.append(core.get_param_median(param_nm))
-            x,y = core.get_param_confint(param_nm, onesided=False, interval=95)
-            minval.append(x)
-            maxval.append(y)
+        for n in range(nfreqs):
+            param_nm = parname_root +  '_' + str(n)
 
-    #Make lists into numpy arrays
-    f1 = np.array(f1)
-    median = np.array(median)
-    minval = np.array(minval)
-    maxval = np.array(maxval)
-    f2 = np.array(f2)
-    ul = np.array(ul)
+            # Sort whether posteriors meet criterion to be an upper limit or conf int.
+            if prior_min != 'bayes':
+                is_limit = determine_if_limit(core.get_param(param_nm),
+                                              threshold=0.1, minval=MinVal)
+            else:
+                gbf = gorilla_bf(core.get_param(param_nm))
+                is_limit = (gbf<1.0 if gbf is not np.nan else False)
 
-    #Plot two kinds of points and append to given axis.
-    axis.errorbar(f1, median, fmt='o', color=Color, zorder=8,
-                  yerr=[median-minval, maxval-median],
-                  fillstyle = Fillstyle)#'C0'
-    axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
-                  color=Color, zorder=8, fillstyle=Fillstyle)
+            if is_limit:
+                f2.append(F[n])
+                x = core.get_param_confint(param_nm, onesided=True, interval=95)
+                ul.append(x)
+            else:
+                f1.append(F[n])
+                # median.append(core.get_param_median(param_nm))
+                hist, binedges = np.histogram(core.get_param(param_nm),bins=100)
+
+                median.append(binedges[np.argmax(hist)])
+                x,y = core.get_param_confint(param_nm, onesided=False, interval=ci)
+                minval.append(x)
+                maxval.append(y)
+
+        #Make lists into numpy arrays
+        f1 = np.array(f1)
+        median = np.array(median)
+        minval = np.array(minval)
+        maxval = np.array(maxval)
+        f2 = np.array(f2)
+        ul = np.array(ul)
+
+        #Plot two kinds of points and append to given axis.
+        axis.errorbar(f1, median, fmt='o', color=Color, zorder=8,
+                      yerr=[median-minval, maxval-median],
+                      fillstyle = Fillstyle)#'C0'
+        axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
+                      color=Color, zorder=8, fillstyle=Fillstyle)
 
 
 def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,
@@ -602,7 +679,7 @@ def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,
     amp_idx = core.params.index(amp_par)
     gam_idx = core.params.index(gam_par)
     alpha_idxs = [core.params.index(alpha_parname_root+'_{0}'.format(i))
-                  for i in range(30)]
+                  for i in range(nfreqs)]
 
     for n in range(n_realizations):
         log10_A = sorted_data[n,amp_idx]
@@ -652,3 +729,89 @@ def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
 
         axis.plot(F, np.log10(rho), color=Color, lw=1., ls='-', zorder=4,
                   alpha=0.01)
+
+def plot_piecewise_powerlaw(core, axis, amp_par, gam1_par, gam2_par,
+                            f_split_par, verbose=True, Color='k', Linestyle='-',
+                            n_realizations=0, Tspan=None, to_resid=True):
+    """
+    Plots a power law line from the given parmeters in units of residual
+    time.
+
+    Parameters
+    ----------
+
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+
+    amp_par : str
+        Name of red noise powerlaw amplitude parameter.
+
+    gam1_par : str
+        Name of 1st red noise powerlaw spectral index parameter (gamma1).
+
+    gam2_par : str
+        Name of 2nd red noise powerlaw spectral index parameter (gamma2).
+
+    f_split_par : str
+        Name of red noise powerlaw frequency split parameter (freq_split).
+
+    verbose : bool, optional
+
+    n_realizations : int, optional
+        Number of realizations to plot.
+
+    Color : list, optional
+        Color to make the plot.
+
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
+    F , nfreqs = get_rn_freqs(core)
+
+    if Tspan is None:
+        T = 1/np.amin(F)
+    else:
+        T = Tspan
+
+    if n_realizations>0:
+        # sort data in descending order of lnlike
+        if 'lnlike' in core.params:
+            lnlike_idx = core.params.index('lnlike')
+        else:
+            lnlike_idx = -4
+
+        sorted_idx = core.chain[:,lnlike_idx].argsort()[::-1]
+        sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
+
+        sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
+        sorted_gam1 = core.get_param(gam1_par, to_burn=False)[sorted_idx]
+        sorted_gam2 = core.get_param(gam2_par, to_burn=False)[sorted_idx]
+        sorted_fsplit = core.get_param(f_split_par, to_burn=False)[sorted_idx]
+        for idx in range(n_realizations):
+            rho = utils.compute_rho(sorted_Amp[idx],
+                                    sorted_gam[idx], F, T)
+            axis.plot(F, np.log10(rho), color=Color, lw=0.4,
+                        ls='-', zorder=6, alpha=0.03)
+
+
+    log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
+
+    if verbose:
+        print('Plotting Powerlaw RN Params:'
+              'Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
+        print('Red noise parameters: log10_A = '
+              '{0:.2f}, gamma = {1:.2f}'.format(log10_A, gamma))
+
+    if to_resid:
+        rho = utils.compute_rho(log10_A, gamma, F, T)
+    else:
+        rho = utils.compute_rho(log10_A, gamma, F, T)
+
+    axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)

@@ -27,18 +27,40 @@ Nyears.append(11.4)
 
 class SlicesCore(Core):
     """
-    A class to make a core that only contains the GW statistics of a set of
-    time slices. Currently this supports a list of strings for multiple columns
-    of a given txt file or a single string.
+    A class to make a la_forge.core.Core object that contains a subset of
+    parameters from different chains. Currently this supports a list of strings
+    for multiple columns of a given txt file or a single string.
+
+    Parameters
+    ----------
     """
     def __init__(self, label, slicedirs=None, params=None,
                  verbose=True, par_names=None, fancy_par_names=None,
-                  burn=None, parfile = 'pars.npy'):
+                 burn=None, parfile = 'pars.npy'):
         """
         Parameters
         ----------
 
+        label : str
+            Label for this chain.
 
+        slicedirs : list
+            Directories where the various chain files can be found.
+
+        params : list, list of lists
+            Parameter names to extract from chains. If list of parameter names
+            is provided this set of parameters will be extracted from each
+            directory. If list of list, main list must be the same length as
+            `slicedirs`, but inner lists may be arbitrary length. The parameters
+            in each inner list will be extracted.
+
+        parfile : str
+            Name of parameter list file in the directories that corresponds to
+            columns of the chains.
+
+        burn : int
+            Burn in length for chains. Will autmatically be set to 1/4 of chain
+            length if none is provided.
         """
 
         self.slicedirs = slicedirs
@@ -171,8 +193,8 @@ def calculate_err_lines(UL_array):
 def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
                   Title=None,simulations=None,simulation_stats=None,
                   Xlim=(2.8,11.5),Ylim = (1e-15,3e-13),cmap='gist_rainbow',
-                  publication_params=False, save=False,show=True,
-                  print_color=False):
+                  publication_params=False, save=False, show=True,
+                  print_color=False, standalone=True):
     """arrays is a list of arrays."""
 
     if mjd is not None:
@@ -180,11 +202,13 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
     else:
         time = Nyears
 
-    if not publication_params:
-        plt.figure(figsize=[12,8])
-    else:
-        set_publication_params()
-        plt.figure()
+    if standalone:
+        if not publication_params:
+            plt.figure(figsize=[12,8])
+        else:
+            set_publication_params()
+            plt.figure()
+
     NUM_COLORS = len(arrays)
     cm = plt.get_cmap(cmap)
 
@@ -194,9 +218,9 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
             plt.semilogy(Nyears,10**simulations[ii],lw=0.1,c='gray',alpha=0.4)
 
         plt.semilogy(Nyears,10**simul_mean,c='gray',
-                 alpha=0.7,lw=2,label='Simulation Mean')
+                 alpha=0.7,lw=2,label='Simulation Median')
         plt.semilogy(Nyears,10**upper_90_ci,c='gray',ls='--',
-                 alpha=0.7,label='90% Confidence Interval')
+                 alpha=0.7,label='90\% Confidence Interval')
         plt.semilogy(Nyears,10**lower_90_ci,c='gray',ls='--',alpha=0.7)
 
     try:
@@ -258,12 +282,13 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
     plt.xlim(Xlim[0],Xlim[1])
     plt.ylim(Ylim[0],Ylim[1])
 
-    if save:
-        plt.savefig(save, bbox_inches='tight')
-    if show:
-        plt.show()
+    if standalone:
+        if save:
+            plt.savefig(save, bbox_inches='tight')
+        if show:
+            plt.show()
 
-    plt.close()
+        plt.close()
 
 
 
@@ -276,7 +301,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
 def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
                   title='', suptitle='', cmap='gist_rainbow', fontsize=17,
                   publication_params=False, save=False, show=True, thin=1,
-                  plot_datapoints=True,
+                  plot_datapoints=True,xlabel='',ylabel='',
                   plot_density=False, plot_contours=True, no_fill_contours=True,
                   data_kwargs={'alpha':0.008,
                                'color':(0.12156, 0.466667, 0.70588, 1.0)},
@@ -338,8 +363,8 @@ def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
     'weight': 'normal',
     'size': 16,
     }
-    fig.text(0.5, -0.02, x_par, ha='center',usetex=False)
-    fig.text(-0.02, 0.5, y_par, va='center', rotation='vertical', usetex=False)
+    fig.text(0.5, -0.02, xlabel, ha='center',usetex=False)
+    fig.text(-0.02, 0.5, ylabel, va='center', rotation='vertical', usetex=False)
     if save:
         plt.savefig(save, bbox_inches='tight')
     if show:
@@ -348,10 +373,12 @@ def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
     plt.close()
 
 def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
-                  title='', log=True, Xlim=None, Ylim = None,
+                  title='', log=True, Xlim=None, Ylim = None, markers=None,
                   cmap='gist_rainbow', publication_params=False, save=False,
-                  show=True,  arrow_len=60):
+                  show=True,  arrow_len=60, standalone=True):
 
+    if markers is None:
+        markers = ['o' for ii in range(len(bayes_fac))]
     for ii, arr in enumerate(bayes_fac):
         bayes = []
         bf_ll = []
@@ -364,17 +391,24 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
         bayes = np.array(bayes)
         bf_ll = np.array(bf_ll)
 
-        plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2],
-                     linestyle='none',marker='o',color=colors[ii],
+        ax=plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2]*10,
+                     linestyle='none',marker=markers[ii],color=colors[ii],
                      label=labels[ii])
         if bf_ll.size!=0:
-            plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
-                         lolims=True,linestyle='none',marker='o',
+            ax=plt.errorbar(bf_ll[:,0],bf_ll[:,1],yerr=arrow_len,
+                         lolims=True,linestyle='none',marker=markers[ii],
                          color=colors[ii],fillstyle='none')
 
     plt.axhline(y=1,linestyle='--',color='k',linewidth=1)
 
     if log: plt.yscale("log", nonposy='clip')
+
+    # # get handles
+    # handles, labels = ax.get_legend_handles_labels()
+    # # remove the errorbars
+    # handles = [h[0] for h in handles]
+    #     # use them in the legend
+    # plt.legend(handles, labels, loc='upper left',numpoints=1)
 
     plt.legend(loc='upper left')
     plt.xticks(Nyears[::2])
@@ -382,12 +416,13 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
     plt.ylabel(r'$log_{10}\mathcal{B}$')
     plt.title(title)
 
-    if save:
-        plt.savefig(save, bbox_inches='tight')
-    if show:
-        plt.show()
+    if standalone:
+        if save:
+            plt.savefig(save, bbox_inches='tight')
+        if show:
+            plt.show()
 
-    plt.close()
+        plt.close()
 
 ################## Plot Parameters ############################
 def figsize(scale):

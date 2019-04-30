@@ -70,12 +70,12 @@ class Core(object):
             else:
                 if os.path.isfile(chaindir + '/pars.txt'):
                     self.params = list(np.loadtxt(chaindir + '/pars.txt',
-                                                  dtype='str'))
+                                                  dtype='S').astype('U'))
                 elif os.path.isfile(chaindir + '/pars.npy'):
                     self.params = list(np.load(chaindir + '/pars.npy'))
                 elif os.path.isfile(chaindir + '/params.txt'):
                     self.params = list(np.loadtxt(chaindir + '/params.txt',
-                                                  dtype='str'))
+                                                  dtype='S').astype('U'))
                 elif params is not None:
                     self.params = params
                 else:

@@ -62,7 +62,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 for c in core:
                     plt.hist(c.get_param(p), bins=bins,
                              density=True, log=log,
-                              histtype='step', **hist_kwargs)
+                             histtype='step', **hist_kwargs)
             else:
                 plt.hist(core.get_param(p), bins=bins,
                          density=True, log=log,
@@ -78,7 +78,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         elif fancy_par_names is not None:
             axis.set_title(fancy_par_names[ii])
 
-        axis.set_yticks([])
+        # axis.set_yticks([])
         xticks = kwargs.get('xticks')
         if xticks is not None:
             axis.set_xticks(xticks)

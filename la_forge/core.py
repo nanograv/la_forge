@@ -132,6 +132,12 @@ class Core(object):
         else:
             return self.chain[:,self.params.index(param)]
 
+    def get_mlv_param(self, param):
+        """
+        Returns maximum likelihood value of samples for the parameter given.
+        """
+        return self.mlv_params[self.params.index(param)]
+
     def get_param_median(self, param):
         """Returns median of parameter given.
         """

@@ -9,6 +9,8 @@ from astropy.table import Table
 
 from . import utils
 
+__all__ = ['Core','HyperModelCore','load_Core']
+
 ### Convenience function to load a Core object
 
 def load_Core(filepath):

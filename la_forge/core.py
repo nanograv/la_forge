@@ -9,6 +9,8 @@ from astropy.table import Table
 
 from . import utils
 
+__all__ = ['Core','HyperModelCore','load_Core']
+
 ### Convenience function to load a Core object
 
 def load_Core(filepath):
@@ -131,6 +133,12 @@ class Core(object):
             return self.chain[self.burn:,self.params.index(param)]
         else:
             return self.chain[:,self.params.index(param)]
+
+    def get_mlv_param(self, param):
+        """
+        Returns maximum likelihood value of samples for the parameter given.
+        """
+        return self.mlv_params[self.params.index(param)]
 
     def get_param_median(self, param):
         """Returns median of parameter given.

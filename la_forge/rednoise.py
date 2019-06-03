@@ -310,7 +310,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             tproc_adapt_ct += 1
             color_idx += 1
 
-        ### Piece-wise Power Law Plotting
+        ### Broken Power Law Plotting
         elif pulsar + rn_type + '_log10_fb' in c.params:
             pass
             amp_par = pulsar + rn_type + '_log10_A'
@@ -323,7 +323,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             #     del_par = 0
 
             Color = Colors[color_idx]
-            plot_piecewise_powerlaw(c, axes[0], amp_par, gam_par, del_par,
+            plot_broken_powerlaw(c, axes[0], amp_par, gam_par, del_par,
                                     fb_par, verbose=True, Color=Color,
                                     Linestyle='-',
                                     n_realizations=n_bplaw_realizations,
@@ -409,9 +409,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         #     ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
         #     axes[1].set_ylim((ymin,ymax))
 
-        if legend_loc is None: legend_loc=(0.45,0.05)
+        if legend_loc is None: legend_loc='lower center'
     else:
-        if legend_loc is None: legend_loc=(0.15,0.05)
+        if legend_loc is None: legend_loc='lower center'
 
     if ncol is None:
         ncol=len(labels)
@@ -419,11 +419,11 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
     # leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
     #                bbox_to_anchor=Bbox_anchor, ncol=len(labels))
     # legend_loc
-    leg = fig.legend(lines,labels,loc='lower center',fontsize=12,fancybox=True,
+    leg = fig.legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
                         ncol=ncol)#, bbox_to_anchor=Bbox_anchor)
     leg.get_frame().set_alpha(leg_alpha)
     fig.tight_layout()
-    fig.subplots_adjust(bottom=0.21)
+    fig.subplots_adjust(bottom=0.22)
 
     if plotpath is not None:
         plt.savefig(plotpath, additional_artists=[leg], bbox_inches='tight')
@@ -769,11 +769,11 @@ def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
         axis.plot(F, np.log10(rho), color=Color, lw=1., ls='-', zorder=4,
                   alpha=0.01)
 
-def plot_piecewise_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb,
+def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
                             kappa=0.1, verbose=True, Color='k', Linestyle='-',
                             n_realizations=0, Tspan=None, to_resid=True):
     """
-    Plots a power law line from the given parmeters in units of residual
+    Plots a broken power law line from the given parameters in units of residual
     time.
 
     Parameters
@@ -800,6 +800,9 @@ def plot_piecewise_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb,
 
     log10_fb : str
         Name of red noise powerlaw frequency split parameter (freq_split).
+
+    kappa : float, optional
+        Transition parameter.
 
     verbose : bool, optional
 
@@ -836,7 +839,7 @@ def plot_piecewise_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb,
 
         sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
         sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
-        sorted_log10_fb = core.get_param(log10_fb, to_burn=False)[sorted_idx]
+        sorted_log10_fb = core.get_param(log10_fb_par,to_burn=False)[sorted_idx]
         if del_par in core.params:
             sorted_del = core.get_param(del_par, to_burn=False)[sorted_idx]
         else:
@@ -851,8 +854,7 @@ def plot_piecewise_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb,
             axis.plot(F, np.log10(rho), color=Color, lw=0.4,
                         ls='-', zorder=6, alpha=0.03)
 
-
-    # log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam1_par)
+    #log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam1_par)
 
     if verbose:
         print('Plotting Powerlaw RN Params:'
@@ -864,5 +866,4 @@ def plot_piecewise_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb,
     hcf = (10**sorted_Amp[0] * (F / fyr) ** ((3-sorted_gam[0])/2) *
           (1 + (F / 10**sorted_log10_fb[0]) ** (1/kappa)) ** exp)
     rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
-    print(exp)
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)

@@ -168,11 +168,15 @@ def store_chains(filepaths, idxs , verbose=True):
         ch_path = path+'/chain_1.txt'
         if isinstance(idx,(list,np.ndarray)):
             for id in idx:
-                 chains.append(get_col(id, ch_path))
+                chains.append(get_col(id, ch_path))
         else:
             chains.append(get_col(idx, ch_path))
         if verbose:
-            print('\r{0} is loaded.'.format(ch_path),end='',flush=True)
+            if sys.version_info[0]<3:
+                print('\r{0} is loaded.'.format(ch_path),end='')
+                sys.stdout.flush()
+            else:
+                print('\r{0} is loaded.'.format(ch_path),end='',flush=True)
 
     if verbose: print('\n')
 

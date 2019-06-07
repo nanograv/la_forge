@@ -19,7 +19,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
                 save=False, show=True, linewidth=0.1,
-                log=False,title_y=1.04,hist_kwargs={},
+                log=False, title_y=1.04, hist_kwargs={},
                 plot_kwargs={}, **kwargs):
 
     """Function to plot histograms of cores."""

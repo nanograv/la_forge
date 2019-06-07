@@ -317,10 +317,6 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             gam_par = pulsar + rn_type + '_gamma'
             fb_par = pulsar + rn_type + '_log10_fb'
             del_par = pulsar + rn_type + '_delta'
-            # if pulsar+rn_type+'_delta' in c.params:
-            #
-            # else:
-            #     del_par = 0
 
             Color = Colors[color_idx]
             plot_broken_powerlaw(c, axes[0], amp_par, gam_par, del_par,
@@ -340,7 +336,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
             # Track lines and labels for legend
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
-            if make_labels is True: labels.append('Piece-wise Power Law')
+            if make_labels is True: labels.append('Broken Power Law')
             tproc_adapt_ct += 1
             color_idx += 1
 

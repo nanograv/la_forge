@@ -5,6 +5,7 @@ from __future__ import division, print_function
 import matplotlib.pyplot as plt
 import numpy as np
 import os.path
+import copy
 # import corner
 # from collections import OrderedDict
 # from enterprise_extensions import model_utils
@@ -18,8 +19,8 @@ __all__ = ['plot_chains']
 def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
-                save=False, show=True, linewidth=0.1,
-                log=False, title_y=1.04, hist_kwargs={},
+                save=False, show=True, linewidth=0.5,
+                log=False, title_y=1.01, hist_kwargs={},
                 plot_kwargs={}, **kwargs):
 
     """Function to plot histograms of cores."""
@@ -44,11 +45,14 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
 
     L = len(params)
 
-    psr_name = params[0]
-    if psr_name[0] == 'B':
-        psr_name = psr_name[:8]
-    elif psr_name[0] == 'J':
-        psr_name = psr_name[:10]
+    if L<19 and suptitle is None:
+        psr_name = copy.deepcopy(params[0])
+        if psr_name[0] == 'B':
+            psr_name = psr_name[:8]
+        elif psr_name[0] == 'J':
+            psr_name = psr_name[:10]
+    else:
+        psr_name = None
 
     nrows = int(L // ncols)
     if L%ncols > 0: nrows +=1
@@ -71,7 +75,10 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
             plt.plot(core.get_param(p,to_burn=False), lw=linewidth, **plot_kwargs)
 
         if (titles is None) and (fancy_par_names is None):
-            par_name = p.replace(psr_name+'_','')
+            if psr_name is not None:
+                par_name = p.replace(psr_name+'_','')
+            else:
+                par_name = p
             axis.set_title(par_name)
         elif titles is not None:
             axis.set_title(titles[ii])
@@ -86,9 +93,10 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     if suptitle is None:
         suptitle = 'PSR {0} Noise Parameters'.format(psr_name)
 
-    fig.suptitle(suptitle, y=title_y, fontsize=16)
-    fig.tight_layout(pad=0.4)
 
+    fig.tight_layout()#pad=0.4)
+    fig.suptitle(suptitle, y=title_y, fontsize=18)#
+    # fig.subplots_adjust(top=0.96)
     xlabel = kwargs.get('xlabel')
     if xlabel is not None: fig.text(0.5, -0.02, xlabel, ha='center',usetex=False)
 

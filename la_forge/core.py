@@ -128,11 +128,18 @@ class Core(object):
     def get_param(self, param, to_burn=True):
         """
         Returns array of samples for the parameter given.
+
+        `param` can either be a single list or list of strings.
         """
-        if to_burn:
-            return self.chain[self.burn:,self.params.index(param)]
+        if isinstance(param,(list,np.ndarray)):
+            idx = [self.params.index(p) for p in param]
         else:
-            return self.chain[:,self.params.index(param)]
+            idx = self.params.index(param)
+            
+        if to_burn:
+            return self.chain[self.burn:,idx]
+        else:
+            return self.chain[:,idx]
 
     def get_mlv_param(self, param):
         """

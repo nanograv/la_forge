@@ -271,7 +271,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         # else:
         #     plt.xlabel('Years')
 
-        plt.ylabel(r'$log_{10}A_{gwb}$')
+        plt.ylabel(r'$A_{gwb}$')
         plt.legend(loc='upper right',framealpha=1.0)
 
     if mjd is not None:
@@ -285,7 +285,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
 
     if standalone:
         if save:
-            plt.savefig(save, bbox_inches='tight')
+            plt.savefig(save, bbox_inches='tight',dpi=400)
         if show:
             plt.show()
 
@@ -392,7 +392,7 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
         bayes = np.array(bayes)
         bf_ll = np.array(bf_ll)
 
-        ax=plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2]*10,
+        ax=plt.errorbar(bayes[:,0],bayes[:,1],yerr=bayes[:,2],
                      linestyle='none',marker=markers[ii],color=colors[ii],
                      label=labels[ii])
         if bf_ll.size!=0:
@@ -414,12 +414,12 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
     plt.legend(loc='upper left')
     plt.xticks(Nyears[::2])
     plt.xlabel('Years')
-    plt.ylabel(r'$log_{10}\mathcal{B}$')
+    plt.ylabel(r'$\mathcal{B}_{12a}$')
     plt.title(title)
 
     if standalone:
         if save:
-            plt.savefig(save, bbox_inches='tight')
+            plt.savefig(save, bbox_inches='tight',dpi=400)
         if show:
             plt.show()
 

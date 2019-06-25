@@ -193,6 +193,7 @@ def calculate_err_lines(UL_array):
 
 def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
                   Title=None,simulations=None,simulation_stats=None,
+                  linestyle=None,
                   Xlim=(2.8,11.5),Ylim = (1e-15,3e-13),cmap='gist_rainbow',
                   publication_params=False, save=False, show=True,
                   print_color=False, standalone=True):
@@ -202,6 +203,9 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         time = mjd
     else:
         time = Nyears
+
+    if linestyle is None:
+        linestyle = ['-','--',':','-.']
 
     if standalone:
         if not publication_params:
@@ -224,9 +228,9 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
                  alpha=0.7,label='90\% Confidence Interval')
         plt.semilogy(Nyears,10**lower_90_ci,c='gray',ls='--',alpha=0.7)
 
-    try:
-        arrays[0].shape[1]
-        for ii,array in enumerate(arrays):
+    for ii,array in enumerate(arrays):
+        try:
+            arrays[0].shape[1]
             L = array.shape[0]
             if colors:
                 Color = colors[ii]
@@ -236,13 +240,12 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
             if array[0,0]<0:
                 array = 10**np.array(array)
 
-            plt.semilogy(time[:L], array[:,0], label=labels[ii], color=Color)
+            plt.semilogy(time[:L], array[:,0], label=labels[ii],
+                         linestyle=linestyle[ii], color=Color)
             if to_err:
                 lower , upper = calculate_err_lines(array)
                 plt.fill_between(time[:L], lower, upper, color=Color,alpha=0.4)
-    except:
-
-        for ii,array in enumerate(arrays):
+        except:
             L = array.shape[0]
             if colors:
                 Color = colors[ii]
@@ -252,7 +255,9 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
             if array[0,0]<0:
                 array = 10**np.array(array)
 
-            plt.semilogy(time[:L], array, label=labels[ii], color=Color)
+            plt.semilogy(time[:L], array, linestyle=linestyle[ii],
+                         label=labels[ii], color=Color)# 'o',fillstyle='none',
+
 
     if not publication_params:
         plt.title(Title,fontsize=17)
@@ -261,7 +266,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         # else:
         #     plt.xlabel('Years', fontsize=16)
 
-        plt.ylabel(r'$log_{10}A_{gwb}$', fontsize=16)
+        plt.ylabel(r'$A_{gwb}$', fontsize=16)
         plt.legend(loc='upper right',fontsize=12,framealpha=1.0)
 
     else:
@@ -289,7 +294,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         if show:
             plt.show()
 
-        plt.close()
+    plt.close()
 
 
 
@@ -423,7 +428,7 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
         if show:
             plt.show()
 
-        plt.close()
+    plt.close()
 
 ################## Plot Parameters ############################
 def figsize(scale):

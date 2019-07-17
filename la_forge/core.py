@@ -135,7 +135,7 @@ class Core(object):
             idx = [self.params.index(p) for p in param]
         else:
             idx = self.params.index(param)
-            
+
         if to_burn:
             return self.chain[self.burn:,idx]
         else:
@@ -278,7 +278,9 @@ class Core(object):
         with open(filepath, "rb") as fin:
             self = pickle.load(fin)
 
-
+    def get_mlv_dict(self):
+        mlv = [self.get_mlv_param(p) for p in self.params]
+        return dict(zip(self.params,mlv))
 
 ##### Methods to act on Core objects
 

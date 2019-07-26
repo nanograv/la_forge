@@ -123,7 +123,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            freq_xtra=None, free_spec_min=None, free_spec_ci=95,
                            free_spec_violin=False, ncol=None,
                            plot_density=None, plot_contours=None,
-                           add_2d_scatter=None):
+                           add_2d_scatter=None,
+                           levels=(0.39346934, 0.86466472, 0.988891,)):
 
     """
     Function to plot various red noise parameters in the same figure.
@@ -362,7 +363,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                               plot_density=plot_density[ii],
                               plot_contours=plot_contours[ii],
                               no_fill_contours=True, color=Color,
-                              levels=(0.39346934, 0.86466472, 0.988891,))
+                              levels=levels)
                 ax1_ylim_pl = axes[1].get_ylim()
 
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2,

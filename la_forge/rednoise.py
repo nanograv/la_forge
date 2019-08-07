@@ -116,14 +116,14 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            plot_2d_hist=True, verbose=True, Tspan=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
-                           n_tproc_realizations=1000,
+                           n_tproc_realizations=100,
                            n_bplaw_realizations=100, Colors=None, bins=30,
                            labels=None,legend_loc=None,leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
                            freq_xtra=None, free_spec_min=None, free_spec_ci=95,
                            free_spec_violin=False, ncol=None,
                            plot_density=None, plot_contours=None,
-                           add_2d_scatter=None,
+                           add_2d_scatter=None, scale='log',
                            levels=(0.39346934, 0.86466472, 0.988891,)):
 
     """
@@ -389,9 +389,12 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
     axes[0].set_title('Red Noise Spectrum: ' + pulsar + ' ' + title_suffix)
     axes[0].set_ylabel('log10 RMS (s)')
     axes[0].set_xlabel('Frequency (Hz)')
-    axes[0].grid(which='both', ls='--')
-    axes[0].set_xscale('log')
-    axes[0].set_ylim((-10,-4))
+    # axes[0].grid(which='both', ls='--')
+    axes[0].grid(which='major')
+    axes[0].set_xscale(scale)
+    axes[0].set_yscale(scale)
+    axes[0].set_ylim((1e-10,1e-4))
+
     if plot_2d_hist:
         axes[1].set_title('Red Noise Amplitude Posterior: ' + pulsar)
         axes[1].set_xlabel(pulsar + '_gamma')
@@ -493,7 +496,7 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
         for idx in range(n_realizations):
             rho = utils.compute_rho(sorted_Amp[idx],
                                     sorted_gam[idx], F, T)
-            axis.plot(F, np.log10(rho), color=Color, lw=0.4,
+            axis.plot(F, rho, color=Color, lw=0.4,
                         ls='-', zorder=6, alpha=0.03)
 
 
@@ -510,7 +513,7 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
     else:
         rho = utils.compute_rho(log10_A, gamma, F, T)
 
-    axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
+    axis.plot(F, rho, color=Color, lw=1.5, ls=Linestyle, zorder=6)
 
 def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
                    violin=False, Color='k', Fillstyle='full',
@@ -567,7 +570,7 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
         if prior_min is None:
             start_idx = core.params.index(parname_root +  '_0')
             end_idx = core.params.index(parname_root +  '_' + str(nfreqs-1))+1
-            parts = axis.violinplot(core.chain[core.burn:,start_idx:end_idx],
+            parts = axis.violinplot(10**core.chain[core.burn:,start_idx:end_idx],
                                     positions=F, widths=F*0.07,
                                     showextrema=False)
             for pc in parts['bodies']:
@@ -593,9 +596,9 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
 
             f1 = np.array(f1)
             f2 = np.array(f2)
-            parts = axis.violinplot(coeff, positions=f1, widths=f1*0.07,
+            parts = axis.violinplot(10**coeff, positions=f1, widths=f1*0.07,
                                     showextrema=False)
-            axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
+            axis.errorbar(f2, 10**ul, yerr=0.2, uplims=True, fmt='o',
                           color=Color, zorder=8, fillstyle=Fillstyle)
 
             for pc in parts['bodies']:
@@ -644,17 +647,17 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
 
         #Make lists into numpy arrays
         f1 = np.array(f1)
-        median = np.array(median)
-        minval = np.array(minval)
-        maxval = np.array(maxval)
+        median = 10**np.array(median)
+        minval = 10**np.array(minval)
+        maxval = 10**np.array(maxval)
         f2 = np.array(f2)
-        ul = np.array(ul)
+        ul = 10**np.array(ul)
 
         #Plot two kinds of points and append to given axis.
         axis.errorbar(f1, median, fmt='o', color=Color, zorder=8,
                       yerr=[median-minval, maxval-median],
                       fillstyle = Fillstyle)#'C0'
-        axis.errorbar(f2, ul, yerr=0.2, uplims=True, fmt='o',
+        axis.errorbar(f2, ul, yerr=ul*0.5, uplims=True, fmt='o',
                       color=Color, zorder=8, fillstyle=Fillstyle)
 
 
@@ -727,7 +730,7 @@ def plot_tprocess(core, axis, alpha_parname_root, amp_par, gam_par,
 
         rho1 = np.array([ rho[i]*alphas[i] for i in range(nfreqs) ])
 
-        axis.plot(F, np.log10(rho1), color=Color, lw=1., ls='-',
+        axis.plot(F, rho1, color=Color, lw=1., ls='-',
                   zorder=4, alpha=0.01)
 
 def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
@@ -763,7 +766,7 @@ def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
         f_idx = int(np.rint(nfreq))
         rho[f_idx] = rho[f_idx] * alpha
 
-        axis.plot(F, np.log10(rho), color=Color, lw=1., ls='-', zorder=4,
+        axis.plot(F, rho, color=Color, lw=1., ls='-', zorder=4,
                   alpha=0.01)
 
 def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
@@ -848,7 +851,7 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
             hcf = (10**sorted_Amp[idx] * (F / fyr) ** ((3-sorted_gam[idx])/2) *
                   (1 + (F / 10**sorted_log10_fb[idx]) ** (1/kappa)) ** exp)
             rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
-            axis.plot(F, np.log10(rho), color=Color, lw=0.4,
+            axis.plot(F, rho, color=Color, lw=0.4,
                         ls='-', zorder=6, alpha=0.03)
 
     #log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam1_par)
@@ -863,4 +866,4 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
     hcf = (10**sorted_Amp[0] * (F / fyr) ** ((3-sorted_gam[0])/2) *
           (1 + (F / 10**sorted_log10_fb[0]) ** (1/kappa)) ** exp)
     rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
-    axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
+    axis.plot(F, rho, color=Color, lw=1.5, ls=Linestyle, zorder=6)

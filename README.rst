@@ -17,7 +17,8 @@ La Forge
 .. image:: ./visor.png
         :target: https://www.deviantart.com/sjvernon/art/Geordi-La-Forge-Star-Trek-Next-Generation-Visor-646311950
         :alt: Graphic Credit: Stewart Vernon, via Deviant Art
-
+        :align: center
+        
 Graphic Credit: Stewart Vernon, via Deviant Art
 
 Python package for conveniently plotting results from pulsar timing array bayesian analyses. Many of the functions are best used with enterprise_ outputs.

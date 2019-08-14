@@ -8,7 +8,7 @@ import pytest
 
 from la_forge import core
 from la_forge import diagnostics
-from la_forge import red_noise
+from la_forge import rednoise
 from la_forge import slices
 from la_forge import utils
 

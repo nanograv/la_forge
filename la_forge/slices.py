@@ -8,11 +8,16 @@ import os.path
 import sys
 import corner
 from collections import OrderedDict
-from enterprise_extensions import model_utils
+
 
 from . import utils
 from .core import Core
 from . import rednoise as rn
+try:
+    from enterprise_extensions import model_utils
+    ent_ext_present = True
+except ImportError:
+    ent_ext_present = False
 
 __all__ = ['SlicesCore',
            'get_idx',
@@ -118,7 +123,13 @@ class SlicesCore(Core):
         self.ul = np.zeros((len(self.params),2))
         for ii, yr in enumerate(self.params):
             try:
-                self.ul[ii,:] = model_utils.ul(self.chain[self.burn:,ii],q=q)
+                if ent_ext_present:
+                    self.ul[ii,:] = model_utils.ul(self.chain[self.burn:,ii],
+                                                   q=q)
+                else:
+                    err_msg = 'Must install enterprise_extensions to'
+                    err_msg += ' use this functionality.'
+                    raise ImportError(err_msg)
             except ZeroDivisionError:
                 self.ul[ii,:] = (np.percentile(self.chain[self.burn:,ii],q=q),np.nan)
         return self.ul

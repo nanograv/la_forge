@@ -255,8 +255,8 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
             if array[0,0]<0:
                 array = 10**np.array(array)
 
-            plt.semilogy(time[:L], array, linestyle=linestyle[ii],
-                         label=labels[ii], color=Color)# 'o',fillstyle='none',
+            plt.semilogy(time[:L], array,'o', fillstyle='none', linestyle=linestyle[ii],
+                         label=labels[ii], color=Color)#
 
 
     if not publication_params:
@@ -266,7 +266,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         # else:
         #     plt.xlabel('Years', fontsize=16)
 
-        plt.ylabel(r'$A_{gwb}$', fontsize=16)
+        plt.ylabel(r'$A_{\rm GWB}$', fontsize=16)
         plt.legend(loc='upper right',fontsize=12,framealpha=1.0)
 
     else:
@@ -276,7 +276,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         # else:
         #     plt.xlabel('Years')
 
-        plt.ylabel(r'$A_{gwb}$')
+        plt.ylabel(r'$A_{\rm GWB}$')
         plt.legend(loc='upper right',framealpha=1.0)
 
     if mjd is not None:
@@ -419,7 +419,7 @@ def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
     plt.legend(loc='upper left')
     plt.xticks(Nyears[::2])
     plt.xlabel('Years')
-    plt.ylabel(r'$\mathcal{B}_{12a}$')
+    plt.ylabel(r'$\mathcal{B}_{01}$')
     plt.title(title)
 
     if standalone:

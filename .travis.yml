@@ -22,8 +22,8 @@ deploy:
     repo: Hazboun6/la_forge
     tags: true
 install:
-    - pip install git+https://github.com/nanograv/enterprise@master
-    - pip install git+https://github.com/stevertaylor/enterprise_extensions@master
+    - pip install git+https://github.com/nanograv/enterprise.git
+    - pip install git+https://github.com/stevertaylor/enterprise_extensions.git
     - pip install -U tox-travis
 language: python
 python:

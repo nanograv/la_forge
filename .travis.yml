@@ -23,6 +23,7 @@ deploy:
     tags: true
 install:
     - pip install -U tox-travis
+    - pip install git+https://github.com/nanograv/enterprise@master
     - pip install git+https://github.com/stevertaylor/enterprise_extensions@master
 language: python
 python:

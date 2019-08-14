@@ -6,7 +6,11 @@
 import pytest
 
 
-from la_forge import la_forge
+from la_forge import core
+from la_forge import diagnostics
+from la_forge import red_noise
+from la_forge import slices
+from la_forge import utils
 
 
 @pytest.fixture

@@ -323,7 +323,7 @@ class HyperModelCore(Core):
 
         model_core = Core(label=self.label+'_{0}'.format(N), chain=model_chain,
                           params=model_pars, verbose=False)
-
-        model_core.set_rn_freqs(freqs=self.rn_freqs)
+        if self.rn_fregs is not None:
+            model_core.set_rn_freqs(freqs=self.rn_freqs)
 
         return model_core

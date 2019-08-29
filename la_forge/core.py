@@ -212,7 +212,7 @@ class Core(object):
         psr : str, optional
             Puslar name, used when get the time span by loading
             `enterprise.Pulsar()` as in the documentation of `partimdir`
-            above. It is assumed that tere is only one par and tim file in
+            above. It is assumed that there is only one par and tim file in
             the directory with this pulsar name in the file name.
 
         freq_path : str, optional
@@ -323,7 +323,7 @@ class HyperModelCore(Core):
 
         model_core = Core(label=self.label+'_{0}'.format(N), chain=model_chain,
                           params=model_pars, verbose=False)
-        if self.rn_fregs is not None:
+        if self.rn_freqs is not None:
             model_core.set_rn_freqs(freqs=self.rn_freqs)
 
         return model_core

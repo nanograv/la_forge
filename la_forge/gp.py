@@ -50,10 +50,36 @@ except ImportError:
 DM_K = float(2.41e-16)
 
 class Signal_Reconstruction():
-
+    '''
+    Class for building Gaussian process realizations from enterprise models.
+    '''
     def __init__(self, psrs, pta, chain=None, burn=None,
-                 p_list='all',core=None):
+                 p_list='all', core=None):
+        '''
+        Parameters
+        ----------
 
+        psrs : list
+            A list of enterprise.pulsar.Pulsar objects.
+
+        pta : enterprise.signal_base.PTA
+            The PTA object from enterprise that contains the signals for making
+            realizations.
+
+        chain : array
+            Array which contains chain samples from Bayesian analysis.
+
+        burn : int
+            Length of burn.
+
+        p_list : list of str, optional
+            A list of pulsar names that dictates which pulsar signals to
+            reproduce.
+
+        core : la_forge.core.Core, optional
+            A core which contains the same information as the chain of samples.
+
+        '''
         if not isinstance(psrs,list):
             psrs = [psrs]
 

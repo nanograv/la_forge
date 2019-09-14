@@ -211,8 +211,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
     elif plot_contours is None:
         plot_contours = np.ones_like(cores,dtype=bool)
 
-    ax1_ylim_pl = None
-    ax1_ylim_tp = None
+    ax1_ylim = []
 
     free_spec_ct = 0
     tproc_ct = 0
@@ -276,7 +275,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                               plot_density=plot_density[ii],
                               plot_contours=plot_contours[ii],
                               no_fill_contours=True, color=Color)
-                ax1_ylim_tp = axes[1].get_ylim()
+                ax1_ylim.append(list(axes[1].get_ylim()))
 
             # Track lines and labels for legend
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
@@ -303,7 +302,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                               plot_density=plot_density[ii],
                               plot_contours=plot_contours[ii],
                               no_fill_contours=True, color=Color)
-                ax1_ylim_tp = axes[1].get_ylim()
+                ax1_ylim.append(list(axes[1].get_ylim()))
 
             # Track lines and labels for legend
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
@@ -318,10 +317,12 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             gam_par = pulsar + rn_type + '_gamma'
             fb_par = pulsar + rn_type + '_log10_fb'
             del_par = pulsar + rn_type + '_delta'
+            kappa_par = pulsar + rn_type + '_kappa'
 
             Color = Colors[color_idx]
             plot_broken_powerlaw(c, axes[0], amp_par, gam_par, del_par,
-                                    fb_par, verbose=True, Color=Color,
+                                    fb_par, kappa_par,
+                                    verbose=True, Color=Color,
                                     Linestyle='-',
                                     n_realizations=n_bplaw_realizations,
                                     Tspan=None, to_resid=True)
@@ -333,7 +334,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                               plot_density=plot_density[ii],
                               plot_contours=plot_contours[ii],
                               no_fill_contours=True, color=Color)
-                ax1_ylim_tp = axes[1].get_ylim()
+                ax1_ylim.append(list(axes[1].get_ylim()))
 
             # Track lines and labels for legend
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
@@ -364,7 +365,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                               plot_contours=plot_contours[ii],
                               no_fill_contours=True, color=Color,
                               levels=levels)
-                ax1_ylim_pl = axes[1].get_ylim()
+                ax1_ylim.append(list(axes[1].get_ylim()))
 
             lines.append(plt.Line2D([0], [0],color=Color,linewidth=2,
                                     linestyle=Linestyle))
@@ -397,10 +398,14 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         axes[1].set_xlabel(pulsar + '_gamma')
         axes[1].set_ylabel(pulsar + '_log10_A')
         axes[1].set_xlim((0,7))
-        axes[1].set_ylim((-15.5,-11.2))
+        # axes[1].set_ylim((-16.0,-11.2))
         if add_2d_scatter is not None:
             for pos in add_2d_scatter:
                 axes[1].plot(pos[0],pos[1],'x',color='k')
+        if len(ax1_ylim)>0:
+            ymin = min(ax1_ylim[:,0])
+            ymax = max(ax1_ylim[:,1])
+            axes[1].set_ylim((ymin,ymax))
         # if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
         #     ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
         #     ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
@@ -767,8 +772,8 @@ def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
                   alpha=0.01)
 
 def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
-                            kappa=0.1, verbose=True, Color='k', Linestyle='-',
-                            n_realizations=0, Tspan=None, to_resid=True):
+                         kappa_par, verbose=True, Color='k', Linestyle='-',
+                         n_realizations=0, Tspan=None, to_resid=True):
     """
     Plots a broken power law line from the given parameters in units of residual
     time.
@@ -798,8 +803,8 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
     log10_fb : str
         Name of red noise powerlaw frequency split parameter (freq_split).
 
-    kappa : float, optional
-        Transition parameter.
+    kappa : float
+        Break transition parameter.
 
     verbose : bool, optional
 
@@ -842,11 +847,16 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
         else:
             sorted_del = np.zeros_like(sorted_gam)
 
+        if kappa_par in core.params:
+            sorted_kappa = core.get_param(kappa_par, to_burn=False)[sorted_idx]
+        else:
+            sorted_kappa = 0.1*np.ones_like(sorted_gam)
+
         df = np.diff(np.concatenate((np.array([0]), F)))
         for idx in range(n_realizations):
-            exp = kappa * (sorted_gam[idx] - sorted_del[idx]) / 2
+            exp = sorted_kappa[idx] * (sorted_gam[idx] - sorted_del[idx]) / 2
             hcf = (10**sorted_Amp[idx] * (F / fyr) ** ((3-sorted_gam[idx])/2) *
-                  (1 + (F / 10**sorted_log10_fb[idx]) ** (1/kappa)) ** exp)
+                  (1 + (F / 10**sorted_log10_fb[idx]) ** (1/sorted_kappa[idx])) ** exp)
             rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
             axis.plot(F, np.log10(rho), color=Color, lw=0.4,
                         ls='-', zorder=6, alpha=0.03)
@@ -859,8 +869,8 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
         print('Red noise parameters: log10_A = '
               '{0:.2f}, gamma = {1:.2f}'.format(sorted_Amp[0], sorted_gam[0]))
 
-    exp = kappa * (sorted_gam[0] - sorted_del[0]) / 2
+    exp = sorted_kappa[0] * (sorted_gam[0] - sorted_del[0]) / 2
     hcf = (10**sorted_Amp[0] * (F / fyr) ** ((3-sorted_gam[0])/2) *
-          (1 + (F / 10**sorted_log10_fb[0]) ** (1/kappa)) ** exp)
+          (1 + (F / 10**sorted_log10_fb[0]) ** (1/sorted_kappa[0])) ** exp)
     rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)

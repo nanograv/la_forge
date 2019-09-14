@@ -402,7 +402,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         if add_2d_scatter is not None:
             for pos in add_2d_scatter:
                 axes[1].plot(pos[0],pos[1],'x',color='k')
+
         if len(ax1_ylim)>0:
+            ax1_ylim = np.array(ax1_ylim)
             ymin = min(ax1_ylim[:,0])
             ymax = max(ax1_ylim[:,1])
             axes[1].set_ylim((ymin,ymax))

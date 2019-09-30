@@ -150,7 +150,7 @@ class Core(object):
     def get_param_median(self, param):
         """Returns median of parameter given.
         """
-        return np.median(self.get_param(param)[self.burn:])
+        return np.median(self.get_param(param))
 
     def get_param_confint(self, param, onesided=False, interval=68):
         """Returns confidence interval of parameter givenself.
@@ -167,12 +167,12 @@ class Core(object):
             Width of interval in percent. Default set to 68%.
         """
         if onesided:
-            return np.percentile(self.get_param(param)[self.burn:], q=interval)
+            return np.percentile(self.get_param(param), q=interval)
         else:
             lower_q = (100-interval)/2
-            lower  = np.percentile(self.get_param(param)[self.burn:],
+            lower  = np.percentile(self.get_param(param),
                                    q = lower_q)
-            upper  = np.percentile(self.get_param(param)[self.burn:],
+            upper  = np.percentile(self.get_param(param),
                                    q = 100-lower_q)
             return lower, upper
 

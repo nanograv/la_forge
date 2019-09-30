@@ -19,7 +19,7 @@ __all__ = ['plot_chains']
 def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
-                linestyle=None, truths=None,
+                linestyle=None, plot_mlv=False,
                 save=False, show=True, linewidth=0.5,
                 log=False, title_y=1.01, hist_kwargs={},
                 plot_kwargs={}, **kwargs):
@@ -43,6 +43,10 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         fancy_par_names=core[0].fancy_par_names
         if linestyle is None:
             linestyle = ['-' for ii in range(len(core))]
+        if isinstance(plot_mlv,list):
+            pass
+        else:
+            plot_mlv = [plot_mlv for ii in range(len(core))]
     else:
         fancy_par_names=core.fancy_par_names
 
@@ -71,19 +75,22 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         if hist:
             if isinstance(core,list):
                 for jj,c in enumerate(core):
-                    plt.hist(c.get_param(p), bins=bins,
-                             density=True, log=log,linestyle=linestyle[jj],
-                             histtype='step', **hist_kwargs)
-                    if truths is not None:
+                    phist=plt.hist(c.get_param(p), bins=bins,
+                                   density=True, log=log,
+                                   linestyle=linestyle[jj],
+                                   histtype='step', **hist_kwargs)
+                    if plot_mlv[jj]:
+                        pcol=phist[-1].get_color()
                         plt.axvline(c.get_mlv_param(p),linewidth=1.5,
-                                    color='C0')
+                                    color=pcol)
             else:
-                plt.hist(core.get_param(p), bins=bins,
-                         density=True, log=log,
-                         histtype='step', **hist_kwargs)
-                if truths is not None:
+                phist=plt.hist(core.get_param(p), bins=bins,
+                               density=True, log=log,
+                               histtype='step', **hist_kwargs)
+                if plot_mlv:
+                    pcol = phist[-1].get_color()
                     plt.axvline(c.get_mlv_param(p),linewidth=1.5,
-                                color='C0')
+                                color=pcol)
         else:
             plt.plot(core.get_param(p,to_burn=False), lw=linewidth,
                      **plot_kwargs)

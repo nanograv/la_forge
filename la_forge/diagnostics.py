@@ -19,7 +19,7 @@ __all__ = ['plot_chains']
 def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
-                linestyle=None,
+                linestyle=None, truths=None,
                 save=False, show=True, linewidth=0.5,
                 log=False, title_y=1.01, hist_kwargs={},
                 plot_kwargs={}, **kwargs):
@@ -74,10 +74,16 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                     plt.hist(c.get_param(p), bins=bins,
                              density=True, log=log,linestyle=linestyle[jj],
                              histtype='step', **hist_kwargs)
+                    if truths is not None:
+                        plt.axvline(c.get_mlv_param(p),linewidth=1.5,
+                                    color='C0')
             else:
                 plt.hist(core.get_param(p), bins=bins,
                          density=True, log=log,
                          histtype='step', **hist_kwargs)
+                if truths is not None:
+                    plt.axvline(c.get_mlv_param(p),linewidth=1.5,
+                                color='C0')
         else:
             plt.plot(core.get_param(p,to_burn=False), lw=linewidth,
                      **plot_kwargs)

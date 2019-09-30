@@ -43,6 +43,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         fancy_par_names=core[0].fancy_par_names
         if linestyle is None:
             linestyle = ['-' for ii in range(len(core))]
+
         if isinstance(plot_mlv,list):
             pass
         else:
@@ -80,17 +81,17 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                                    linestyle=linestyle[jj],
                                    histtype='step', **hist_kwargs)
                     if plot_mlv[jj]:
-                        pcol=phist[-1].get_color()
-                        plt.axvline(c.get_mlv_param(p),linewidth=1.5,
-                                    color=pcol)
+                        pcol=phist[-1][-1].get_edgecolor()
+                        plt.axvline(c.get_mlv_param(p),linewidth=1,
+                                    color=pcol,linestyle='--')
             else:
                 phist=plt.hist(core.get_param(p), bins=bins,
                                density=True, log=log,
                                histtype='step', **hist_kwargs)
                 if plot_mlv:
-                    pcol = phist[-1].get_color()
-                    plt.axvline(c.get_mlv_param(p),linewidth=1.5,
-                                color=pcol)
+                    pcol=phist[-1][-1].get_edgecolor()
+                    plt.axvline(c.get_mlv_param(p),linewidth=1,
+                                color=pcol,linestyle='--')
         else:
             plt.plot(core.get_param(p,to_burn=False), lw=linewidth,
                      **plot_kwargs)

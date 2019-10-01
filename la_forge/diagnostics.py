@@ -124,7 +124,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
 
 
     if save:
-        plt.savefig(save, bbox_inches='tight')
+        plt.savefig(save, dpi=300, bbox_inches='tight')
     if show:
         plt.show()
 

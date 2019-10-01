@@ -83,8 +83,12 @@ class Core(object):
                 else:
                     raise ValueError('Must set a parameter list if '
                                      'none provided in directory.')
-
-                self.chain = np.loadtxt(chaindir + '/chain_1.txt')
+                if os.path.isfile(chaindir + '/chain_1.txt'):
+                    self.chain = np.loadtxt(chaindir + '/chain_1.txt')
+                    self.chainpath = chaindir + '/chain_1.txt'
+                elif os.path.isfile(chaindir + '/chain_1.0.txt'):
+                    self.chain = np.loadtxt(chaindir + '/chain_1.0.txt')
+                    self.chainpath = chaindir + '/chain_1.0.txt'
         elif chain is not None and params is not None:
             self.chain = chain
             self.params = params

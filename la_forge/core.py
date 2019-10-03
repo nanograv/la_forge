@@ -70,15 +70,6 @@ class Core(object):
                 table = Table(myfile[1].data)
                 self.params = table.colnames
                 self.chain = np.array([table[p] for p in self.params]).T
-            elif pt_chains:
-                self.chainpaths = glob.glob(chaindir+'/chain*.txt')
-                if os.path.isfile(chaindir + '/chain_1.0.txt'):
-                    self.chain = np.loadtxt(chaindir + '/chain_1.0.txt')
-                    self.hot_chains = {}
-                    for chp in self.chainpaths[1:]:
-                        ch = np.loadtxt(chp)
-                        ky = chp.split('/')[-1].split('_')[-1].split('.')[0]
-                        self.hot_chains.update({ky:ch})
             else:
                 if os.path.isfile(chaindir + '/pars.txt'):
                     self.params = list(np.loadtxt(chaindir + '/pars.txt',
@@ -99,6 +90,14 @@ class Core(object):
                 elif os.path.isfile(chaindir + '/chain_1.0.txt'):
                     self.chain = np.loadtxt(chaindir + '/chain_1.0.txt')
                     self.chainpath = chaindir + '/chain_1.0.txt'
+                    if pt_chains:
+                        self.chainpaths = glob.glob(chaindir+'/chain*.txt')
+                        self.hot_chains = {}
+                        for chp in self.chainpaths[1:]:
+                            ch = np.loadtxt(chp)
+                            ky = chp.split('/')[-1].split('_')[-1].split('.')[0]
+                            self.hot_chains.update({ky:ch})
+                            
         elif chain is not None and params is not None:
             self.chain = chain
             self.params = params

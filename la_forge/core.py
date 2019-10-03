@@ -55,7 +55,8 @@ class Core(object):
         loaded automatically if in the chain directory given above.
     """
     def __init__(self, label, chaindir=None, burn=None, verbose=True,
-                 fancy_par_names=None, chain=None, params=None):
+                 fancy_par_names=None, chain=None, params=None,
+                 pt_chains=False):
         """
 
         """
@@ -69,6 +70,15 @@ class Core(object):
                 table = Table(myfile[1].data)
                 self.params = table.colnames
                 self.chain = np.array([table[p] for p in self.params]).T
+            elif pt_chains:
+                self.chainpaths = glob.glob(chaindir+'/chain*.txt')
+                if os.path.isfile(chaindir + '/chain_1.0.txt'):
+                    self.chain = np.loadtxt(chaindir + '/chain_1.0.txt')
+                    self.hot_chains = {}
+                    for chp in self.chainpaths[1:]:
+                        ch = np.loadtxt(chp)
+                        ky = chp.split('/')[-1].split('_')[-1].split('.')[0]
+                        self.hot_chains.update({ky:ch})
             else:
                 if os.path.isfile(chaindir + '/pars.txt'):
                     self.params = list(np.loadtxt(chaindir + '/pars.txt',
@@ -99,7 +109,7 @@ class Core(object):
             self.params.extend(['lnlike'])
             if verbose:
                 print('Appending PTMCMCSampler sampling parameters to end of'
-                      ' parameter list. If unwanted please provide a parameter'
+                      ' parameter list.\nIf unwanted please provide a parameter'
                       ' list.')
 
         if burn is None:

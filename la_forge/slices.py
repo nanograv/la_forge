@@ -142,7 +142,8 @@ class SlicesCore(Core):
                                             ntol = ntol, nsamples=nsamples,
                                             logAmin = logAmin,
                                             logAmax = logAmax,
-                                            smallest_dA=0.01, largest_dA=0.1)
+                                            smallest_dA=smallest_dA,
+                                            largest_dA=largest_dA)
         return self.bf
 
 def get_idx(par, filename):
@@ -389,11 +390,17 @@ def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
 
     plt.close()
 
-def plot_slice_bf(bayes_fac, mjd=False, colors=None, labels=None,
+def plot_slice_bf(bayes_fac, Nyears=None, mjd=False, colors=None, labels=None,
                   title='', log=True, Xlim=None, Ylim = None, markers=None,
                   cmap='gist_rainbow', publication_params=False, save=False,
                   show=True,  arrow_len=60, standalone=True):
 
+    if Nyears is None:
+        Nyears = [3.0 + ii*0.5 for ii in range(17)]
+        Nyears.append(11.4)
+    else:
+        pass
+        
     if markers is None:
         markers = ['o' for ii in range(len(bayes_fac))]
     for ii, arr in enumerate(bayes_fac):

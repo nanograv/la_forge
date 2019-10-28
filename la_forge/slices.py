@@ -297,7 +297,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         plt.xticks(Nyears[0::2])
 
     if Yticks is not None:
-        plt.xticks(Yticks)
+        plt.yticks(Yticks)
     else:
         pass
 

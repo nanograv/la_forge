@@ -91,13 +91,13 @@ class Core(object):
                     self.chain = np.loadtxt(chaindir + '/chain_1.0.txt')
                     self.chainpath = chaindir + '/chain_1.0.txt'
                     if pt_chains:
-                        self.chainpaths = glob.glob(chaindir+'/chain*.txt')
+                        self.chainpaths = sorted(glob.glob(chaindir+'/chain*.txt'))
                         self.hot_chains = {}
                         for chp in self.chainpaths[1:]:
                             ch = np.loadtxt(chp)
                             ky = chp.split('/')[-1].split('_')[-1].split('.')[0]
                             self.hot_chains.update({ky:ch})
-                            
+
         elif chain is not None and params is not None:
             self.chain = chain
             self.params = params

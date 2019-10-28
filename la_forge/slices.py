@@ -205,7 +205,7 @@ def calculate_err_lines(UL_array):
 
 def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
                   Title=None,simulations=None,simulation_stats=None,
-                  linestyle=None,
+                  linestyle=None, Yticks=None,
                   Xlim=(2.8,11.5),Ylim = (1e-15,3e-13),cmap='gist_rainbow',
                   publication_params=False, save=False, show=True,
                   print_color=False, standalone=True):
@@ -295,6 +295,11 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         plt.xticks(mjd[0::2])
     else:
         plt.xticks(Nyears[0::2])
+
+    if Yticks is not None:
+        plt.xticks(Yticks)
+    else:
+        pass
 
     plt.grid(which='both')
     plt.xlim(Xlim[0],Xlim[1])
@@ -400,7 +405,7 @@ def plot_slice_bf(bayes_fac, Nyears=None, mjd=False, colors=None, labels=None,
         Nyears.append(11.4)
     else:
         pass
-        
+
     if markers is None:
         markers = ['o' for ii in range(len(bayes_fac))]
     for ii, arr in enumerate(bayes_fac):

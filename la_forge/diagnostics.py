@@ -3,6 +3,7 @@
 
 from __future__ import division, print_function
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import numpy as np
 import os.path
 import copy
@@ -16,13 +17,15 @@ from .core import Core
 
 __all__ = ['plot_chains']
 
+
 def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
                 linestyle=None, plot_mlv=False,
                 save=False, show=True, linewidth=1,
                 log=False, title_y=1.01, hist_kwargs={},
-                plot_kwargs={}, **kwargs):
+                plot_kwargs={}, legend_labels=None,
+                legend_loc=None, **kwargs):
 
     """Function to plot histograms of cores."""
     if pars is not None:
@@ -80,6 +83,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                                    density=True, log=log, linewidth=linewidth,
                                    linestyle=linestyle[jj],
                                    histtype='step', **hist_kwargs)
+
                     if plot_mlv[jj]:
                         pcol=phist[-1][-1].get_edgecolor()
                         plt.axvline(c.get_mlv_param(p),linewidth=1,
@@ -115,6 +119,13 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     if suptitle is None:
         suptitle = 'PSR {0} Noise Parameters'.format(psr_name)
 
+    if legend_labels is not None:
+        patches = []
+        colors = ['C{0}'.format(ii) for ii in range(len(legend_labels))]
+        for ii, lab in enumerate(legend_labels):
+            patches.append(mpatches.Patch(color=colors[ii], label=lab))
+
+        fig.legend(handles=patches, loc=legend_loc)
 
     fig.tight_layout(pad=0.4)
     fig.suptitle(suptitle, y=title_y, fontsize=18)#

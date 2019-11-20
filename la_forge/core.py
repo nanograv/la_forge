@@ -318,6 +318,7 @@ class HyperModelCore(Core):
                          fancy_par_names=fancy_par_names,
                          chain=chain, params=params)
         self.param_dict = param_dict
+        self.nmodels = len(list(param_dict.keys()))
         #HyperModelCore, self
 
     def model_core(self,nmodel):

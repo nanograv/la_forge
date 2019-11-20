@@ -20,7 +20,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
                 linestyle=None, plot_mlv=False,
-                save=False, show=True, linewidth=0.5,
+                save=False, show=True, linewidth=1,
                 log=False, title_y=1.01, hist_kwargs={},
                 plot_kwargs={}, **kwargs):
 
@@ -77,7 +77,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
             if isinstance(core,list):
                 for jj,c in enumerate(core):
                     phist=plt.hist(c.get_param(p), bins=bins,
-                                   density=True, log=log,
+                                   density=True, log=log, linewidth=linewidth,
                                    linestyle=linestyle[jj],
                                    histtype='step', **hist_kwargs)
                     if plot_mlv[jj]:
@@ -86,7 +86,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                                     color=pcol,linestyle='--')
             else:
                 phist=plt.hist(core.get_param(p), bins=bins,
-                               density=True, log=log,
+                               density=True, log=log, linewidth=linewidth,
                                histtype='step', **hist_kwargs)
                 if plot_mlv:
                     pcol=phist[-1][-1].get_edgecolor()
@@ -129,3 +129,57 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         plt.show()
 
     plt.close()
+
+
+def noise_flower(hmc, psrname=None, key=None, norm2max=False):
+    """
+    hmc : la_forge.core.HyperModelCore
+    """
+    # Number of models
+    nmodels = core.nmodels
+
+    if psrname is None:
+        pos_names = [p.split('_') for p in hmc.params
+                     if p.split('_')[0] in ['B','J']]
+        psrname = pos_names[0]
+    # Label dictionary
+    mod_letter_dict = dict(zip(range(1, 27), string.ascii_uppercase))
+    mod_letters = [mod_letter_dict[ii+1] for ii in range(nmodels)]
+
+    # Histogram
+    n, _ = np.histogram(hmc.get_param('nmodel',to_burn=True),
+                        bins=np.linspace(-0.5,nmodels-0.5,nmodels+1),
+                        normed=True)
+    if norm2max:
+        n /= n.max()
+
+    ax = plt.subplot(111, polar=True)
+    bars = ax.bar(2.0 * np.pi * mod_index / nmodels, n,
+                  width= 0.9 * 2 * np.pi / nmodels,
+                  bottom=np.sort(n)[1]/2.)
+
+    # Use custom colors and opacity
+    for r, bar in zip(n, bars):
+        bar.set_facecolor(plt.cm.Blues(r / 1.))
+
+    # Pretty formatting
+    ax.set_xticks(np.linspace(0., 2 * np.pi, nmodels+1)[:-1])
+    labels=[ii + '=' + str(round(jj,2)) for ii,jj in zip(mod_letters,n)]
+    ax.set_xticklabels(labels, fontsize=8, rotation=0, color='grey')
+    ax.grid(alpha=0.2)
+    ax.tick_params(labelsize=8, labelcolor='grey')
+
+    textstr = 'Model Legend\n\n'
+    textstr += 'Key = {}\n'.format(key)
+    textstr += '\n'.join(['{0}={1}'.format(mod_letters[ii],model_dict[ii])
+                          for ii in range(nmodels)])
+    props = dict(boxstyle='round', facecolor='C3', alpha=0.1)
+    plt.text(0.0, 2.0*n.max(), textstr, color='grey',
+             bbox=props, verticalalignment='center')
+
+    fig = matplotlib.pyplot.gcf()
+    fig.set_size_inches(2.5, 2.5)
+
+    plt.box(on=None)
+    plt.title(psrname, color='grey')
+    plt.show()

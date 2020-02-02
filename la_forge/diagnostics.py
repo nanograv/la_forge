@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 import os.path
-import copy
+import copy, string
 # import corner
 # from collections import OrderedDict
 # from enterprise_extensions import model_utils
@@ -15,7 +15,7 @@ from . import utils
 from .core import Core
 # from . import rednoise as rn
 
-__all__ = ['plot_chains']
+__all__ = ['plot_chains','noise_flower']
 
 
 def plot_chains(core, hist=True, pars=None, exclude=None,
@@ -147,20 +147,20 @@ def noise_flower(hmc, psrname=None, key=None, norm2max=False):
     hmc : la_forge.core.HyperModelCore
     """
     # Number of models
-    nmodels = core.nmodels
+    nmodels = hmc.nmodels
 
     if psrname is None:
-        pos_names = [p.split('_') for p in hmc.params
-                     if p.split('_')[0] in ['B','J']]
+        pos_names = [p.split('_')[0] for p in hmc.params
+                     if p.split('_')[0][0] in ['B','J']]
         psrname = pos_names[0]
     # Label dictionary
     mod_letter_dict = dict(zip(range(1, 27), string.ascii_uppercase))
     mod_letters = [mod_letter_dict[ii+1] for ii in range(nmodels)]
-
+    mod_index = np.arange(nmodels)
     # Histogram
     n, _ = np.histogram(hmc.get_param('nmodel',to_burn=True),
                         bins=np.linspace(-0.5,nmodels-0.5,nmodels+1),
-                        normed=True)
+                        density=True)
     if norm2max:
         n /= n.max()
 
@@ -177,20 +177,22 @@ def noise_flower(hmc, psrname=None, key=None, norm2max=False):
     ax.set_xticks(np.linspace(0., 2 * np.pi, nmodels+1)[:-1])
     labels=[ii + '=' + str(round(jj,2)) for ii,jj in zip(mod_letters,n)]
     ax.set_xticklabels(labels, fontsize=8, rotation=0, color='grey')
-    ax.grid(alpha=0.2)
-    ax.tick_params(labelsize=8, labelcolor='grey')
+    ax.grid(alpha=0.4)
+    ax.tick_params(labelsize=8, labelcolor='k')
+    ax.set_yticklabels([])
 
     textstr = 'Model Legend\n\n'
-    textstr += 'Key = {}\n'.format(key)
-    textstr += '\n'.join(['{0}={1}'.format(mod_letters[ii],model_dict[ii])
+    # textstr += 'Key = {}\n'.format(key)
+    textstr += '\n'.join(['{0}={1}'.format(mod_letters[ii],key[ii])
                           for ii in range(nmodels)])
     props = dict(boxstyle='round', facecolor='C3', alpha=0.1)
     plt.text(0.0, 2.0*n.max(), textstr, color='grey',
              bbox=props, verticalalignment='center')
 
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(2.5, 2.5)
 
     plt.box(on=None)
-    plt.title(psrname, color='grey')
+    plt.title(psrname, loc='right', color='k',y=1.04,
+              bbox=dict(facecolor='none', edgecolor='blue'))
     plt.show()

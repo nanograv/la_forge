@@ -142,7 +142,8 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     plt.close()
 
 
-def noise_flower(hmc, psrname=None, key=None, norm2max=False):
+def noise_flower(hmc, psrname=None, key=None, norm2max=False,
+                 show=True, plot_path=None):
     """
     hmc : la_forge.core.HyperModelCore
     """
@@ -195,4 +196,7 @@ def noise_flower(hmc, psrname=None, key=None, norm2max=False):
     plt.box(on=None)
     plt.title(psrname, loc='right', color='k',y=1.04,
               bbox=dict(facecolor='none', edgecolor='blue'))
-    plt.show()
+    if plot_path is not None:
+        plt.savefig(plot_path,bbox_inches='tight',dpi=300)
+    if show:
+        plt.show()

@@ -302,7 +302,7 @@ class HyperModelCore(Core):
     A class to make cores for the chains made by the enterprise_extensions
     HyperModel framework.
     """
-    def __init__(self, label, param_dict, chaindir=None, burn=None,
+    def __init__(self, label, param_dict=None, chaindir=None, burn=None,
                  verbose=True, fancy_par_names=None, chain=None, params=None):
         """
         Parameters
@@ -317,7 +317,15 @@ class HyperModelCore(Core):
                          verbose=verbose,
                          fancy_par_names=fancy_par_names,
                          chain=chain, params=params)
-        self.param_dict = param_dict
+        if param_dict is None:
+            try:
+                with open(chaindir+'/model_params.json' , 'r') as fin:
+                    param_dict = json.dump(fin)
+            except:
+                raise ValueError('Must provide parameter dictionary!!')
+        else:
+            self.param_dict = param_dict
+            
         self.nmodels = len(list(param_dict.keys()))
         #HyperModelCore, self
 

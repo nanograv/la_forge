@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 import numpy as np
 import os.path
-import sys, pickle
+import sys, pickle, json
 import glob
 
 from astropy.io import fits
@@ -317,16 +317,17 @@ class HyperModelCore(Core):
                          verbose=verbose,
                          fancy_par_names=fancy_par_names,
                          chain=chain, params=params)
+
         if param_dict is None:
             try:
                 with open(chaindir+'/model_params.json' , 'r') as fin:
-                    param_dict = json.dump(fin)
+                    self.param_dict = json.load(fin)
             except:
                 raise ValueError('Must provide parameter dictionary!!')
         else:
             self.param_dict = param_dict
-            
-        self.nmodels = len(list(param_dict.keys()))
+
+        self.nmodels = len(list(self.param_dict.keys()))
         #HyperModelCore, self
 
     def model_core(self,nmodel):

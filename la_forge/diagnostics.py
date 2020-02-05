@@ -145,7 +145,26 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
 def noise_flower(hmc, psrname=None, key=None, norm2max=False,
                  show=True, plot_path=None):
     """
+    Parameters
+    ----------
+
     hmc : la_forge.core.HyperModelCore
+
+    psrname : str, optional
+        Name of pulsar. Only used in making the title of the plot.
+
+    key : list of str, optional
+        Labels for each of the models in the selection process.
+
+    norm2max : bool, optional
+        Whether to normalize the values to the maximum `nmodel` residency.
+
+    show : bool, optional
+        Whether to show the plot.
+
+    plot_path : str
+        Enter a file path to save the plot to file. 
+
     """
     # Number of models
     nmodels = hmc.nmodels

@@ -27,7 +27,53 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 plot_kwargs={}, legend_labels=None,
                 legend_loc=None, **kwargs):
 
-    """Function to plot histograms of cores."""
+    """Function to plot histograms or traces of chains from cores.
+
+    Parameters
+    ----------
+    core : `la_forge.core.Core`
+
+    hist : bool, optional
+        Whether to plot histograms. If False then traces of the chains will be
+        plotted.
+
+    pars : list of str, optional
+        List of the parameters to be plotted.
+
+    exclude : list of str, optional
+        List of the parameters to be excluded from plot.
+
+    ncols : int, optional
+        Number of columns of subplots to use.
+
+    bins : int, optional
+        Number of bins to use in histograms.
+
+    suptitle : str, optional
+        Title to use for the plots.
+
+    color : str or list of str, optional
+        Color to use for histograms.
+
+    publication_params=False,
+
+    titles=None,
+
+    linestyle : str,
+
+    plot_mlv=False,
+
+    save=False,
+    show=True,
+    linewidth=1,
+    log=False,
+    title_y=1.01,
+    hist_kwargs={},
+    plot_kwargs={},
+    legend_labels=None,
+    legend_loc=None,
+
+    """
     if pars is not None:
         params = pars
     elif exclude is not None:
@@ -142,13 +188,23 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     plt.close()
 
 
-def noise_flower(hmc, psrname=None, key=None, norm2max=False,
+def noise_flower(hmc,
+                 colLabels=['Add','Your', 'Noise'],
+                 cellText=[['Model','Labels','Here']],
+                 colWidths=None,
+                 psrname=None, norm2max=False,
                  show=True, plot_path=None):
     """
     Parameters
     ----------
 
     hmc : la_forge.core.HyperModelCore
+
+    colLabels : list, optional
+        Table column headers for legend.
+
+    cellText : nested list, 2d array, optional
+        Table entries. Column number must match `colLabels`.
 
     psrname : str, optional
         Name of pulsar. Only used in making the title of the plot.
@@ -163,7 +219,7 @@ def noise_flower(hmc, psrname=None, key=None, norm2max=False,
         Whether to show the plot.
 
     plot_path : str
-        Enter a file path to save the plot to file. 
+        Enter a file path to save the plot to file.
 
     """
     # Number of models
@@ -173,6 +229,7 @@ def noise_flower(hmc, psrname=None, key=None, norm2max=False,
         pos_names = [p.split('_')[0] for p in hmc.params
                      if p.split('_')[0][0] in ['B','J']]
         psrname = pos_names[0]
+
     # Label dictionary
     mod_letter_dict = dict(zip(range(1, 27), string.ascii_uppercase))
     mod_letters = [mod_letter_dict[ii+1] for ii in range(nmodels)]
@@ -184,7 +241,8 @@ def noise_flower(hmc, psrname=None, key=None, norm2max=False,
     if norm2max:
         n /= n.max()
 
-    ax = plt.subplot(111, polar=True)
+    fig = plt.figure(figsize=[8,4])
+    ax = fig.add_subplot(121, polar=True)
     bars = ax.bar(2.0 * np.pi * mod_index / nmodels, n,
                   width= 0.9 * 2 * np.pi / nmodels,
                   bottom=np.sort(n)[1]/2.)
@@ -196,25 +254,28 @@ def noise_flower(hmc, psrname=None, key=None, norm2max=False,
     # Pretty formatting
     ax.set_xticks(np.linspace(0., 2 * np.pi, nmodels+1)[:-1])
     labels=[ii + '=' + str(round(jj,2)) for ii,jj in zip(mod_letters,n)]
-    ax.set_xticklabels(labels, fontsize=8, rotation=0, color='grey')
+    ax.set_xticklabels(labels, fontsize=11, rotation=0, color='grey')
     ax.grid(alpha=0.4)
-    ax.tick_params(labelsize=8, labelcolor='k')
+    ax.tick_params(labelsize=10, labelcolor='k')
     ax.set_yticklabels([])
 
-    textstr = 'Model Legend\n\n'
-    # textstr += 'Key = {}\n'.format(key)
-    textstr += '\n'.join(['{0}={1}'.format(mod_letters[ii],key[ii])
-                          for ii in range(nmodels)])
-    props = dict(boxstyle='round', facecolor='C3', alpha=0.1)
-    plt.text(0.0, 2.0*n.max(), textstr, color='grey',
-             bbox=props, verticalalignment='center')
+    plt.box(on=None)
 
-    fig = plt.gcf()
-    fig.set_size_inches(2.5, 2.5)
+    ax2 = fig.add_subplot(122)
+    ax2.xaxis.set_visible(False)
+    ax2.yaxis.set_visible(False)
+    table = ax2.table(cellText=cellText,
+                      colLabels=colLabels,
+                      colWidths=colWidths,
+                      loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1.05,1.05)
 
     plt.box(on=None)
-    plt.title(psrname, loc='right', color='k',y=1.04,
-              bbox=dict(facecolor='none', edgecolor='blue'))
+    ax2.set_title('PSR ' + psrname + '\n Noise Model Selection' ,
+                  color='k', y=0.8, fontsize=13,
+                  bbox=dict(facecolor='C3', edgecolor='k',alpha=0.2))
     if plot_path is not None:
         plt.savefig(plot_path,bbox_inches='tight',dpi=300)
     if show:

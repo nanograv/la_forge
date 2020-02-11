@@ -321,7 +321,13 @@ class HyperModelCore(Core):
         if param_dict is None:
             try:
                 with open(chaindir+'/model_params.json' , 'r') as fin:
-                    self.param_dict = json.load(fin)
+                    param_dict = json.load(fin)
+
+                if any([isinstance(ky,str) for ky in param_dict]):
+                    self.param_dict = {}
+                    for ky, val in param_dict.items():
+                        self.param_dict.update({int(ky):val})
+
             except:
                 raise ValueError('Must provide parameter dictionary!!')
         else:

@@ -148,7 +148,7 @@ def compute_rho(log10_A, gamma, f, T):
 
     return np.sqrt((10**log10_A)**2 / (12.0*np.pi**2)
                     * fyr**(gamma-3) * f**(-gamma) / T)
-                    
+
 
 def convert_pal2_pars(p2_par):
     p2 = p2_par.split('_')
@@ -167,11 +167,13 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
               nsamples=100, smallest_dA=0.01, largest_dA=0.1):
     """
     Computes the Savage Dickey Bayes Factor and uncertainty. Based on code in
-    enterprise_extensions.
+    enterprise_extensions. Expanded to include more options for when there are
+    very few samples at lower amplitudes.
 
     :param samples: MCMC samples of GWB (or common red noise) amplitude
     :param ntol: Tolerance on number of samples in bin
-
+    :param logAmin: Minimum log amplitude being considered.
+    :param logAmax: Maximum log amplitude being considered.
     :returns: (bayes factor, 1-sigma bayes factor uncertainty)
     """
 

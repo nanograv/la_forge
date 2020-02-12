@@ -47,7 +47,7 @@ except ImportError:
             return sl.cho_solve(self.cf, np.eye(len(self.cf[0])))
 
 ###### Constants #######
-DM_K = float(2.41e-16)
+DM_K = float(2.41e-4)
 
 class Signal_Reconstruction():
     '''
@@ -74,7 +74,7 @@ class Signal_Reconstruction():
 
         p_list : list of str, optional
             A list of pulsar names that dictates which pulsar signals to
-            reproduce.
+            reproduce. Useful when looking at a full PTA.
 
         core : la_forge.core.Core, optional
             A core which contains the same information as the chain of samples.
@@ -99,8 +99,9 @@ class Signal_Reconstruction():
         else:
             self.burn = burn
 
-        self.mle_ind = np.argmax(chain[:, -4])
-        self.mle_params = self.sample_posterior(self.mle_ind)
+        self.DM_K = DM_K
+        self.mlv_idx = np.argmax(chain[:, -4])
+        self.mlv_params = self.sample_posterior(self.mlv_idx)
 
         ret = {}
 
@@ -135,7 +136,7 @@ class Signal_Reconstruction():
                 raise KeyError('Pulsar name from signal collection does '
                                'not match name from provided list.')
 
-            phi_dim = sc.get_phi(params=self.mle_params).shape[0]
+            phi_dim = sc.get_phi(params=self.mlv_params).shape[0]
             if pname not in p_list:
                 pass
             else:
@@ -149,7 +150,7 @@ class Signal_Reconstruction():
                                  if sig.signal_type
                                  in ['basis','common basis']]
 
-                phi_sum = np.sum([sig.get_phi(self.mle_params).shape[0]
+                phi_sum = np.sum([sig.get_phi(self.mlv_params).shape[0]
                                   for sig in basis_signals])
                 if phi_dim == phi_sum:
                     shared_bases=False
@@ -160,7 +161,7 @@ class Signal_Reconstruction():
 
                 for sig in basis_signals:
                     if sig.signal_type in ['basis','common basis']:
-                        basis = sig.get_basis(params=self.mle_params)
+                        basis = sig.get_basis(params=self.mlv_params)
                         nb = basis.shape[1]
                         sig._construct_basis()
                         if isinstance(sig._labels,dict):
@@ -217,17 +218,19 @@ class Signal_Reconstruction():
         self.p_idx = p_idx
 
     def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=False,
-                           mle=False, idx=None, condition=False, eps=1e-16):
+                           mlv=False, idx=None, condition=False, eps=1e-16):
         """
         Parameters
         ----------
         gp_type : str, {'achrom_rn','gw','DM','FD','all'}
-            Type of gaussian process signal to be reconstructed.
+            Type of gaussian process signal to be reconstructed. In addition
+            any GP in `psr.fitpars` or `Signal_Reconstruction.gp_types` may be
+            called.
 
         det_signal : bool
             Whether to include the deterministic signals in the reconstruction.
 
-        mle : bool
+        mlv : bool
             Whether to use the maximum likelihood value for the reconstruction.
 
         idx : int, optional
@@ -241,8 +244,8 @@ class Signal_Reconstruction():
 
         if idx is None:
             idx = np.random.randint(self.burn, self.chain.shape[0])
-        elif mle:
-            idx = self.mle_ind
+        elif mlv:
+            idx = self.mlv_idx
 
         # get parameter dictionary
         params = self.sample_posterior(idx)
@@ -409,7 +412,7 @@ class Signal_Reconstruction():
             # u,s,vT = np.linalg.svd(phi)
             # s_inv=np.diagflat(1/s)
             # phiinv = np.dot(np.dot(vT.T,s_inv),u.T)
-            print('NP Inv')
+            # print('NP Inv')
             # q,r = np.linalg.qr(phi,mode='complete')
             # phiinv = np.dot(np.linalg.inv(r),q.T)
             phiinv = np.linalg.inv(phi)

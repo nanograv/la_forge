@@ -105,7 +105,10 @@ class Core(object):
             raise ValueError('Must declare parameters with chain.')
 
         if self.chain.shape[1] > len(self.params):
-            self.params.extend(['lnlike'])
+            self.params.extend(['lnlike',
+                                'lnprior',
+                                'chain_accept',
+                                'pt_chain_accept'])
             if verbose:
                 print('Appending PTMCMCSampler sampling parameters to end of'
                       ' parameter list.\nIf unwanted please provide a parameter'
@@ -343,12 +346,22 @@ class HyperModelCore(Core):
         """
         N = nmodel
         model_pars = self.param_dict[N]
+
+        if 'lnlike' in self.params:
+            model_pars = list(model_pars)
+            model_pars.extend(['lnlike',
+                               'lnprior',
+                               'chain_accept',
+                               'pt_chain_accept'])
         par_idx = []
         N_idx = self.params.index('nmodel')
         for par in model_pars:
             par_idx.append(self.params.index(par))
 
         model_chain = self.chain[np.rint(self.chain[:,N_idx])==N,:][:,par_idx]
+
+        if model_chain.size == 0:
+            raise ValueError('There are no samples with this model index.')
 
         model_core = Core(label=self.label+'_{0}'.format(N), chain=model_chain,
                           params=model_pars, verbose=False)

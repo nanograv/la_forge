@@ -102,7 +102,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
 
     L = len(params)
 
-    if L<19 and suptitle is None:
+    if suptitle is None:
         psr_name = copy.deepcopy(params[0])
         if psr_name[0] == 'B':
             psr_name = psr_name[:8]
@@ -163,7 +163,12 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
             axis.set_xticks(xticks)
 
     if suptitle is None:
-        suptitle = 'PSR {0} Noise Parameters'.format(psr_name)
+        guess_times = np.array([psr_name in p for p in params], dtype=int)
+        yes = np.sum(guess_times)
+        if yes/guess_times.size > 0.5:
+            suptitle = 'PSR {0} Noise Parameters'.format(psr_name)
+        else:
+            suptitle = 'Parameter Posteriors    '
 
     if legend_labels is not None:
         patches = []

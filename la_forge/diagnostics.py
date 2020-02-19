@@ -186,7 +186,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
 
 
     if save:
-        plt.savefig(save, dpi=300, bbox_inches='tight')
+        plt.savefig(save, dpi=150, bbox_inches='tight')
     if show:
         plt.show()
 
@@ -282,6 +282,6 @@ def noise_flower(hmc,
                   color='k', y=0.8, fontsize=13,
                   bbox=dict(facecolor='C3', edgecolor='k',alpha=0.2))
     if plot_path is not None:
-        plt.savefig(plot_path,bbox_inches='tight',dpi=300)
+        plt.savefig(plot_path, bbox_inches='tight', dpi=150)
     if show:
         plt.show()

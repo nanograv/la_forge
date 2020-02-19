@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 import glob
 import numpy as np
+import scipy.stats as sps
 from scipy import interpolate as interp
 from scipy.ndimage import filters as filter
 
@@ -268,3 +269,78 @@ def weighted_quantile(values, quantiles, sample_weight=None,
     else:
         weighted_quantiles /= np.sum(sample_weight)
     return np.interp(quantiles, weighted_quantiles, values)
+
+def quantize_fast(toas, residuals, toaerrs, dt=0.1):# flags=None,
+    r"""
+    Function to quantize and average TOAs by observation epoch. Used especially
+    for NANOGrav multiband data.
+
+    Based on `[3]`_.
+
+    .. _[3]: https://github.com/vallis/libstempo/blob/master/libstempo/toasim.py
+
+    Parameters
+    ----------
+
+    toas : array
+
+    residuals : array
+
+    toaerrs : array
+
+    dt : float
+        Coarse graining time [sec].
+    """
+    isort = np.argsort(toas)
+
+    bucket_ref = [toas[isort[0]]]
+    bucket_ind = [[isort[0]]]
+    for i in isort[1:]:
+        if toas[i] - bucket_ref[-1] < dt:
+            bucket_ind[-1].append(i)
+        else:
+            bucket_ref.append(toas[i])
+            bucket_ind.append([i])
+
+    averesids = np.array([np.average(residuals[l],
+                                     weights=np.power(toaerrs[l],-2))
+                          for l in bucket_ind],'d')
+    avetoas = np.array([np.mean(toas[l]) for l in bucket_ind],'d')
+    avetoaerrs = np.array([sps.hmean(toaerrs[l]) for l in bucket_ind],'d')
+    output = np.array([avetoas, averesids, avetoaerrs]).T
+    return output
+
+def epoch_ave_resid(psr, correction=None):
+    """
+    Epoch averaged residuals organized by receiver.
+
+    Parameters
+    ----------
+    psr :  `enterprise.pulsar.Pulsar`
+
+    Returns
+    -------
+    fe_resids : dict of arrays
+        Dictionary where each entry is an array of epoch averaged TOAS,
+        residuals and TOA errors. Keys are the various receivers.
+
+    fe_mask : dict of arrays
+        Dictionary where each entry is an array that asks as a mask for the
+        receiver used as a key.
+    """
+    ng_frontends=['327', '430', 'Rcvr_800', 'Rcvr1_2', 'L-wide','S-wide']
+    fe_masks = {}
+    fe_resids = {}
+    psr_fe = np.unique(psr.flags['fe'])
+    if correction is None:
+        resids = psr.residuals
+    else:
+        resids = psr.residuals - correction
+
+    for fe in ng_frontends:
+        if fe in psr_fe:
+            fe_masks[fe] = np.array(psr.flags['fe']==fe)
+            mk = fe_masks[fe]
+            fe_resids[fe] = quantize_fast(psr.toas[mk],resids[mk],
+                                          psr.toaerrs[mk], dt=10)
+    return fe_resids, fe_masks

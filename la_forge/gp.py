@@ -270,9 +270,15 @@ class Signal_Reconstruction():
 
             # Red noise pieces
             psr = self.psrs[p_ct]
-            if gp_type == 'DM':
-                tm_key = [ky for ky in self.gp_idx[psrname].keys() if 'timing' in ky][0]
-                dmind = np.array([ct for ct, p in enumerate(psr.fitpars) if 'DM' in p])
+            if gp_type == 'none' and det_signal:
+                pass
+            elif gp_type == 'none' and not det_signal:
+                raise ValueError('Must return a GP or deterministic signal.')
+            elif gp_type == 'DM':
+                tm_key = [ky for ky in self.gp_idx[psrname].keys()
+                          if 'timing' in ky][0]
+                dmind = np.array([ct for ct, p in enumerate(psr.fitpars)
+                                  if 'DM' in p])
                 idx = self.gp_idx[psrname][tm_key][dmind]
                 wave[psrname] += np.dot(T[:,dmind], b[dmind])
 

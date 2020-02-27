@@ -143,7 +143,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                     plt.axvline(c.get_mlv_param(p),linewidth=1,
                                 color=pcol,linestyle='--')
         else:
-            plt.plot(core.get_param(p,to_burn=False), lw=linewidth,
+            plt.plot(core.get_param(p,to_burn=True), lw=linewidth,
                      **plot_kwargs)
 
         if (titles is None) and (fancy_par_names is None):

@@ -98,6 +98,29 @@ class Core(object):
                             ky = chp.split('/')[-1].split('_')[-1].split('.')[0]
                             self.hot_chains.update({ky:ch})
 
+            jump_paths = glob.glob(chaindir+'*jump*.txt')
+            self.jumps={}
+            for path in jump_paths:
+                if path.split('/')[-1]=='jumps.txt':
+                    dtype = str
+                else:
+                    dtype = np.float
+                ky = path.split('/')[-1].split('.')[0]
+                self.jumps[ky] = np.loadtxt(path, dtype=dtype)
+
+            try:
+                prior_path = glob.glob(chaindir+'priors.txt')[0]
+                self.priors = np.loadtxt(prior_path, dtype=str, delimiter='/t')
+            except FileNotFoundError:
+                pass
+
+            try:
+                cov_path = glob.glob(chaindir+'cov.npy')[0]
+                self.cov = np.load(cov_path)
+            except FileNotFoundError:
+                pass
+
+
         elif chain is not None and params is not None:
             self.chain = chain
             self.params = params
@@ -140,6 +163,8 @@ class Core(object):
             self.mlv_idx = np.argmax(self.get_param('lnlike',to_burn=True))
             self.mlv_idx += self.burn
             self.mlv_params = self.chain[self.mlv_idx,:]
+
+
 
     def get_param(self, param, to_burn=True):
         """

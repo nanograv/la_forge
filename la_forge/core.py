@@ -111,13 +111,13 @@ class Core(object):
             try:
                 prior_path = glob.glob(chaindir+'priors.txt')[0]
                 self.priors = np.loadtxt(prior_path, dtype=str, delimiter='/t')
-            except FileNotFoundError:
+            except (FileNotFoundError, IndexError):
                 pass
 
             try:
                 cov_path = glob.glob(chaindir+'cov.npy')[0]
                 self.cov = np.load(cov_path)
-            except FileNotFoundError:
+            except (FileNotFoundError, IndexError):
                 pass
 
 

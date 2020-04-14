@@ -151,6 +151,15 @@ def compute_rho(log10_A, gamma, f, T):
                     * fyr**(gamma-3) * f**(-gamma) / T)
 
 
+def compute_rho_flat(log10_A, gamma, log10_B, f, T):
+    """
+    Converts from power to residual RMS.
+    """
+
+    return np.sqrt(((10**log10_A)**2 / (12.0*np.pi**2)
+                    * fyr**(gamma-3) * f**(-gamma) + 10**log10_B) / T)
+
+
 def convert_pal2_pars(p2_par):
     p2 = p2_par.split('_')
     psr = p2[-1]

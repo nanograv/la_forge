@@ -95,7 +95,7 @@ class Core(object):
                         self.hot_chains = {}
                         for chp in self.chainpaths[1:]:
                             ch = np.loadtxt(chp)
-                            ky = chp.split('/')[-1].split('_')[-1].split('.')[0]
+                            ky = chp.split('/')[-1].split('_')[-1].replace('.txt','')
                             self.hot_chains.update({ky:ch})
 
             jump_paths = glob.glob(chaindir+'*jump*.txt')

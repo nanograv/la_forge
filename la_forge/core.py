@@ -128,8 +128,8 @@ class Core(object):
             raise ValueError('Must declare parameters with chain.')
 
         if self.chain.shape[1] > len(self.params):
-            self.params.extend(['lnlike',
-                                'lnprior',
+            self.params.extend(['lnpost',
+                                'lnlike',
                                 'chain_accept',
                                 'pt_chain_accept'])
             if verbose:

@@ -159,12 +159,6 @@ class Core(object):
                   'noise figures.\n'
                   'Please use core.set_rn_freqs() to set, if needed.')
 
-        if 'lnlike' in self.params:
-            self.mlv_idx = np.argmax(self.get_param('lnlike',to_burn=True))
-            self.mlv_idx += self.burn
-            self.mlv_params = self.chain[self.mlv_idx,:]
-
-
 
     def get_param(self, param, to_burn=True):
         """
@@ -182,11 +176,11 @@ class Core(object):
         else:
             return self.chain[:,idx]
 
-    def get_mlv_param(self, param):
+    def get_map_param(self, param):
         """
-        Returns maximum likelihood value of samples for the parameter given.
+        Returns maximum a posteri value of samples for the parameter given.
         """
-        return self.mlv_params[self.params.index(param)]
+        return self.map_params[self.params.index(param)]
 
     def get_param_median(self, param):
         """Returns median of parameter given.
@@ -319,9 +313,28 @@ class Core(object):
         with open(filepath, "rb") as fin:
             self = pickle.load(fin)
 
-    def get_mlv_dict(self):
-        mlv = [self.get_mlv_param(p) for p in self.params]
-        return dict(zip(self.params,mlv))
+    def get_map_dict(self):
+        map = [self.get_map_param(p) for p in self.params]
+        return dict(zip(self.params,map))
+
+    @property
+    def map_idx(self):
+        """Maximum a posteri parameter values"""
+        if not hasattr(self, '_map_idx'):
+            if 'lnpost' in self.params:
+                self._map_idx = np.argmax(self.get_param('lnpost',to_burn=True))
+            else:
+                raise ValueError('No posterior values given.')
+
+        return self._map_idx
+
+    @property
+    def map_params(self):
+        """Inverse Noise Weighted Transmission Function."""
+        if not hasattr(self, '_map_params'):
+            self._map_params = self.chain[self.map_idx,:]
+
+        return self._map_params
 
 ##### Methods to act on Core objects
 
@@ -394,3 +407,131 @@ class HyperModelCore(Core):
             model_core.set_rn_freqs(freqs=self.rn_freqs)
 
         return model_core
+
+class TimingCore(Core):
+    """
+    A class for cores that use the enterprise_extensions timing framework. The
+    Cores for timing objects need special attention because they are sampled
+    in a standard format, rather than using the real parameter ranges. These
+    Cores allow for automatic handling of the parameters.
+    """
+    def __init__(self, label, chaindir=None, burn=None, verbose=True,
+                 fancy_par_names=None, chain=None, params=None,
+                 pt_chains=False, tm_pars_path=None):
+        """
+        Parameters
+        ----------
+
+        tm_pars_path : str
+            Path to a pickled dictionary of original timing parameter values
+            and errors where the entries are of the form:
+            {'par_name':(value,error)}
+            Default is chaindir+'orig_timing_pars.pkl'. If no file found a
+            warning is given that no conversions can be done.
+        """
+        super().__init__(label=label,
+                         chaindir=chaindir, burn=burn,
+                         verbose=verbose,
+                         fancy_par_names=fancy_par_names,
+                         chain=chain, params=params, pt_chains=False)
+
+        if tm_pars_path is None:
+            tm_pars_path = self.chaindir + '/orig_timing_pars.pkl'
+
+        self.tm_pars_path = tm_pars_path
+        self.tm_pars_orig = None
+        try:
+            with open(tm_pars_path, 'rb') as fin:
+                self.tm_pars_orig = pickle.load(fin)
+        except:
+            err_msg = 'No file found at path {0}. '.format(tm_pars_path)
+            err_msg += 'Timing parameters can not be converted'
+            print(err_msg)
+
+        non_normalize_pars = ['PX', 'SINI']
+        self._norm_tm_par_idxs = [self.params.index(p) for p in self.params
+                                  if ('timing' in p and not np.any([nm in p for nm in non_normalize_pars]))]
+
+    def get_param(self, param, to_burn=True, tm_convert=True):
+        """
+        Returns array of samples for the parameter given.
+
+        `param` can either be a single list or list of strings.
+        """
+
+        if isinstance(param,(list,np.ndarray)):
+            idx = [self.params.index(p) for p in param]
+            if tm_convert and not np.any([id in self._norm_tm_par_idxs for id in idx]):
+                tm_convert = False
+            pidxs = [id for id in idx if id in self._norm_tm_par_idxs]
+        else:
+            idx = self.params.index(param)
+            if tm_convert and idx not in self._norm_tm_par_idxs:
+                tm_convert = False
+
+            if idx in self._norm_tm_par_idxs:
+                pidxs = idx
+
+        if tm_convert:
+            if self.tm_pars_orig is None:
+                raise ValueError('Original timing parameter dictionary not set.')
+
+            if to_burn:
+                chain = self.chain[self.burn:,idx]
+            else:
+                chain =  self.chain[:,idx]
+            if isinstance(pidxs,(list,np.ndarray)):
+
+                for pidx in pidxs:
+                    n = idx.index(pidx)
+                    par = self.params[pidx]
+                    val, err = self.tm_pars_orig[self._get_real_tm_par_name(par)]
+                    chain[n] = chain[n]*err + val
+            else:
+                par = self.params[pidxs]
+                val, err = self.tm_pars_orig[self._get_real_tm_par_name(par)]
+                chain = chain*err + val
+
+            return chain
+
+        else:
+            if to_burn:
+                return self.chain[self.burn:,idx]
+            else:
+                return self.chain[:,idx]
+
+    def mass_function(self, PB, A1):
+        """
+        Computes Keplerian mass function, given projected size and orbital period.
+        Inputs:
+            - PB = orbital period [days]
+            - A1 = projected semimajor axis [lt-s]
+        Output:
+            - mass function [solar mass]
+        """
+        T_sun = 4.925490947e-6 # conversion from solar masses to seconds
+        nb = 2 * np.pi / PB / 86400
+        return nb**2 * A1**3 / T_sun
+
+    def mass_pulsar(self):
+        """
+        Computes the companion mass from the Keplerian mass function. This
+        function uses a Newton-Raphson method since the equation is
+        transcendental.
+        """
+        mp_pars = ['PB', 'A1', 'M2', 'SINI']
+        x = {}
+        for p in self.params:
+            tmp = self._get_real_tm_par_name(p)
+            if tmp in mp_pars:
+                x[tmp] = self.get_param(p, tm_convert=True)
+
+        PB, A1, M2, SINI = x['PB'], x['A1'], x['M2'], x['SINI']    
+        mf = self.mass_function(PB, A1)
+        return np.sqrt((M2 * SINI)**3 / mf) - M2
+
+    def _get_real_tm_par_name(self, param):
+        if 'DMX' in param:
+            return '_'.join(param.split('_')[-2:])
+        else:
+            return param.split('_')[-1]

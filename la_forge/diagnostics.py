@@ -24,7 +24,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 linestyle=None, plot_mlv=False,
                 save=False, show=True, linewidth=1,
                 log=False, title_y=1.01, hist_kwargs={},
-                plot_kwargs={}, legend_labels=None,
+                plot_kwargs={}, legend_labels=None, real_tm_pars=True,
                 legend_loc=None, **kwargs):
 
     """Function to plot histograms or traces of chains from cores.
@@ -125,8 +125,9 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         if hist:
             if isinstance(core,list):
                 for jj,c in enumerate(core):
-                    phist=plt.hist(c.get_param(p), bins=bins,
-                                   density=True, log=log, linewidth=linewidth,
+                    phist=plt.hist(c.get_param(p, tm_convert=real_tm_pars),
+                                   bins=bins,density=True, log=log,
+                                   linewidth=linewidth,
                                    linestyle=linestyle[jj],
                                    histtype='step', **hist_kwargs)
 
@@ -135,16 +136,17 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                         plt.axvline(c.get_mlv_param(p),linewidth=1,
                                     color=pcol,linestyle='--')
             else:
-                phist=plt.hist(core.get_param(p), bins=bins,
-                               density=True, log=log, linewidth=linewidth,
+                phist=plt.hist(core.get_param(p, tm_convert=real_tm_pars),
+                               bins=bins,density=True, log=log,
+                               linewidth=linewidth,
                                histtype='step', **hist_kwargs)
                 if plot_mlv:
                     pcol=phist[-1][-1].get_edgecolor()
-                    plt.axvline(c.get_mlv_param(p),linewidth=1,
+                    plt.axvline(c.get_map_param(p),linewidth=1,
                                 color=pcol,linestyle='--')
         else:
-            plt.plot(core.get_param(p,to_burn=True), lw=linewidth,
-                     **plot_kwargs)
+            plt.plot(core.get_param(p,to_burn=True, tm_convert=real_tm_pars),
+                     lw=linewidth, **plot_kwargs)
 
         if (titles is None) and (fancy_par_names is None):
             if psr_name is not None:

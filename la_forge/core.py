@@ -408,6 +408,9 @@ class HyperModelCore(Core):
 
         return model_core
 
+#--------------------------------------------#
+#---------------Timing Core------------------#
+#--------------------------------------------#
 class TimingCore(Core):
     """
     A class for cores that use the enterprise_extensions timing framework. The
@@ -424,8 +427,11 @@ class TimingCore(Core):
 
         tm_pars_path : str
             Path to a pickled dictionary of original timing parameter values
-            and errors where the entries are of the form:
-            {'par_name':(value,error)}
+            and errors, and whether the parameter was sampled in physical units
+            ('physical') or normalized ones ('normalized'), and the entries are
+            of the form:
+            ```{'par_name':[value,error,param type]},```
+            where value is the par file
             Default is chaindir+'orig_timing_pars.pkl'. If no file found a
             warning is given that no conversions can be done.
         """
@@ -445,10 +451,15 @@ class TimingCore(Core):
                 self.tm_pars_orig = pickle.load(fin)
         except:
             err_msg = 'No file found at path {0}. '.format(tm_pars_path)
-            err_msg += 'Timing parameters can not be converted'
-            print(err_msg)
+            err_msg += 'Timing parameters can not be converted.'
+            err_msg += 'A normal Core would work better.'
+            raise ValueError(err_msg)
 
-        non_normalize_pars = ['PX', 'SINI']
+        non_normalize_pars = []
+        for par,(val,err,ptype) in self.tm_pars_orig.items():
+            if ptype=='physical':
+                non_normalize_pars.append(par)
+
         self._norm_tm_par_idxs = [self.params.index(p) for p in self.params
                                   if ('timing' in p and not np.any([nm in p for nm in non_normalize_pars]))]
 
@@ -485,11 +496,11 @@ class TimingCore(Core):
                 for pidx in pidxs:
                     n = idx.index(pidx)
                     par = self.params[pidx]
-                    val, err = self.tm_pars_orig[self._get_real_tm_par_name(par)]
+                    val, err, _ = self.tm_pars_orig[self._get_real_tm_par_name(par)]
                     chain[n] = chain[n]*err + val
             else:
                 par = self.params[pidxs]
-                val, err = self.tm_pars_orig[self._get_real_tm_par_name(par)]
+                val, err, _ = self.tm_pars_orig[self._get_real_tm_par_name(par)]
                 chain = chain*err + val
 
             return chain
@@ -526,7 +537,7 @@ class TimingCore(Core):
             if tmp in mp_pars:
                 x[tmp] = self.get_param(p, tm_convert=True)
 
-        PB, A1, M2, SINI = x['PB'], x['A1'], x['M2'], x['SINI']    
+        PB, A1, M2, SINI = x['PB'], x['A1'], x['M2'], x['SINI']
         mf = self.mass_function(PB, A1)
         return np.sqrt((M2 * SINI)**3 / mf) - M2
 

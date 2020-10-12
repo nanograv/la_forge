@@ -148,6 +148,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                     plt.axvline(c.get_map_param(p),linewidth=1,
                                 color=pcol,linestyle='--')
         else:
+            gpar_kwargs= _get_gpar_kwargs(core,real_tm_pars)
             plt.plot(core.get_param(p,to_burn=True, **gpar_kwargs),
                      lw=linewidth, **plot_kwargs)
 

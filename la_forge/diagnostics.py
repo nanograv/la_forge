@@ -7,12 +7,13 @@ import matplotlib.patches as mpatches
 import numpy as np
 import os.path
 import copy, string
+import inspect
 # import corner
 # from collections import OrderedDict
 # from enterprise_extensions import model_utils
 
 from . import utils
-from .core import Core
+from .core import Core, HyperModelCore, TimingCore
 # from . import rednoise as rn
 
 __all__ = ['plot_chains','noise_flower']
@@ -125,7 +126,8 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         if hist:
             if isinstance(core,list):
                 for jj,c in enumerate(core):
-                    phist=plt.hist(c.get_param(p, tm_convert=real_tm_pars),
+                    gpar_kwargs= _get_gpar_kwargs(c,real_tm_pars)
+                    phist=plt.hist(c.get_param(p, **gpar_kwargs),
                                    bins=bins,density=True, log=log,
                                    linewidth=linewidth,
                                    linestyle=linestyle[jj],
@@ -136,7 +138,8 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                         plt.axvline(c.get_mlv_param(p),linewidth=1,
                                     color=pcol,linestyle='--')
             else:
-                phist=plt.hist(core.get_param(p, tm_convert=real_tm_pars),
+                gpar_kwargs= _get_gpar_kwargs(core,real_tm_pars)
+                phist=plt.hist(core.get_param(p, **gpar_kwargs),
                                bins=bins,density=True, log=log,
                                linewidth=linewidth,
                                histtype='step', **hist_kwargs)
@@ -145,7 +148,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                     plt.axvline(c.get_map_param(p),linewidth=1,
                                 color=pcol,linestyle='--')
         else:
-            plt.plot(core.get_param(p,to_burn=True, tm_convert=real_tm_pars),
+            plt.plot(core.get_param(p,to_burn=True, **gpar_kwargs),
                      lw=linewidth, **plot_kwargs)
 
         if (titles is None) and (fancy_par_names is None):
@@ -287,3 +290,14 @@ def noise_flower(hmc,
         plt.savefig(plot_path, bbox_inches='tight', dpi=150)
     if show:
         plt.show()
+
+def _get_gpar_kwargs(core, real_tm_pars):
+    '''
+    Convenience function to return a kwargs dictionary if their is a call
+    to convert timing parameters.
+    '''
+    if real_tm_pars and 'tm_convert'in inspect.getfullargspec(core.get_param)[0]:
+        gpar_kwargs = {'tm_convert':real_tm_pars}
+    else:
+        gpar_kwargs = {}
+    return gpar_kwargs

@@ -1,6 +1,6 @@
-numpy>=1.11
+numpy>=1.17
 scipy>=1.0.0
 matplotlib>=2.0.0
-astropy>=2.2
+astropy>=3.0
 corner
 six

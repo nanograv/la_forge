@@ -297,7 +297,7 @@ def _get_gpar_kwargs(core, real_tm_pars):
     Convenience function to return a kwargs dictionary if their is a call
     to convert timing parameters.
     '''
-    if real_tm_pars and 'tm_convert'in inspect.getfullargspec(core.get_param)[0]:
+    if 'tm_convert'in inspect.getfullargspec(core.get_param)[0]:
         gpar_kwargs = {'tm_convert':real_tm_pars}
     else:
         gpar_kwargs = {}

@@ -554,4 +554,7 @@ class TimingCore(Core):
             return param.split('_')[-1]
 
     def _get_ent_tm_par_name(self, param):
-        return [p for p in self.params if param in p][0]
+        if 'DMX' in param:
+            return [p for p in self.params if param=='_'.join(p.split('_')[-2:])][0]
+        else:
+            return [p for p in self.params if param==p.split('_')[-1]][0]

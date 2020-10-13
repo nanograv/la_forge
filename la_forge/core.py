@@ -465,7 +465,9 @@ class TimingCore(Core):
 
     def get_param(self, param, to_burn=True, tm_convert=True):
         """
-        Returns array of samples for the parameter given.
+        Returns array of samples for the parameter given. Will convert timing
+        parameters to physical units based on `TimingCore.tm_pars_orig` entries.
+        Will also accept shortened timing model parameter names, like `PX`.
 
         `param` can either be a single list or list of strings.
         """
@@ -538,10 +540,8 @@ class TimingCore(Core):
         """
         mp_pars = ['PB', 'A1', 'M2', 'SINI']
         x = {}
-        for p in self.params:
-            tmp = self._get_real_tm_par_name(p)
-            if tmp in mp_pars:
-                x[tmp] = self.get_param(p, tm_convert=True)
+        for p in mp_pars:
+            x[p] = self.get_param(p, tm_convert=True)
 
         PB, A1, M2, SINI = x['PB'], x['A1'], x['M2'], x['SINI']
         mf = self.mass_function(PB, A1)

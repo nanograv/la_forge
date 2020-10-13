@@ -469,13 +469,19 @@ class TimingCore(Core):
 
         `param` can either be a single list or list of strings.
         """
+        tm_pars = list(self.tm_pars_orig.keys())
 
         if isinstance(param,(list,np.ndarray)):
+            if np.any([p in tm_pars for p in param]):
+                param = [self._get_ent_tm_par_name(p)
+                         if p in tm_pars else p for p in param]
             idx = [self.params.index(p) for p in param]
             if tm_convert and not np.any([id in self._norm_tm_par_idxs for id in idx]):
                 tm_convert = False
             pidxs = [id for id in idx if id in self._norm_tm_par_idxs]
         else:
+            if param in tm_pars:
+                param = self._get_ent_tm_par_name(param)
             idx = self.params.index(param)
             if tm_convert and idx not in self._norm_tm_par_idxs:
                 tm_convert = False
@@ -546,3 +552,6 @@ class TimingCore(Core):
             return '_'.join(param.split('_')[-2:])
         else:
             return param.split('_')[-1]
+
+    def _get_ent_tm_par_name(self, param):
+        return [p for p in self.params if param in p][0]

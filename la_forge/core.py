@@ -336,7 +336,9 @@ class Core(object):
 
         return self._map_params
 
-##### Methods to act on Core objects
+#--------------------------------------------#
+#---------------HyperModel Core--------------#
+#--------------------------------------------#
 
 class HyperModelCore(Core):
     """
@@ -387,8 +389,8 @@ class HyperModelCore(Core):
 
         if 'lnlike' in self.params:
             model_pars = list(model_pars)
-            model_pars.extend(['lnlike',
-                               'lnprior',
+            model_pars.extend(['lnpost',
+                               'lnlike',
                                'chain_accept',
                                'pt_chain_accept'])
         par_idx = []

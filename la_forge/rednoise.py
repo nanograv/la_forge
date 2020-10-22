@@ -123,7 +123,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            freq_xtra=None, free_spec_min=None, free_spec_ci=95,
                            free_spec_violin=False, ncol=None,
                            plot_density=None, plot_contours=None,
-                           add_2d_scatter=None,
+                           add_2d_scatter=None, bplaw_kwargs={},
                            levels=(0.39346934, 0.86466472, 0.988891,)):
 
     """
@@ -325,7 +325,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                                     verbose=True, Color=Color,
                                     Linestyle='-',
                                     n_realizations=n_bplaw_realizations,
-                                    Tspan=None, to_resid=True)
+                                    Tspan=None, to_resid=True, **bplaw_kwargs)
 
             if plot_2d_hist:
                 corner.hist2d(c.get_param(gam_par)[c.burn:],

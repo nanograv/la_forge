@@ -775,7 +775,8 @@ def plot_adapt_tprocess(core, axis, alpha_par, nfreq_par, amp_par, gam_par,
 
 def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
                          kappa_par, verbose=True, Color='k', Linestyle='-',
-                         n_realizations=0, Tspan=None, to_resid=True):
+                         n_realizations=0, Tspan=None, to_resid=True,
+                         gam_val=None, del_val=None, kappa_val=None):
     """
     Plots a broken power law line from the given parameters in units of residual
     time.
@@ -805,8 +806,17 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
     log10_fb : str
         Name of red noise powerlaw frequency split parameter (freq_split).
 
-    kappa : float
-        Break transition parameter.
+    kappa_par : float
+        Break transition parameter name.
+
+    gam_val : float, optional
+        Set constant value for gamma, if not sampled over.
+
+    del_val : float, optional
+        Set constant value for delta, if not sampled over.
+
+    kappa_val : float, optional
+        Set constant value for kappa, if not sampled over.
 
     verbose : bool, optional
 
@@ -842,17 +852,33 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
         sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
 
         sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
-        sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
         sorted_log10_fb = core.get_param(log10_fb_par,to_burn=False)[sorted_idx]
+        if gam_par in core.params:
+            sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
+        elif gam_val is not None:
+            sorted_gam = gam_val*np.ones_like(sorted_Amp)
+        else:
+            err_msg = '{0} does not appear in param list, '.format(gam_par)
+            err_msg += 'nor is `gam_val` set.'
+            raise ValueError(err_msg)
+
         if del_par in core.params:
             sorted_del = core.get_param(del_par, to_burn=False)[sorted_idx]
+        elif del_val is not None:
+            sorted_del = del_val*np.ones_like(sorted_Amp)
         else:
-            sorted_del = np.zeros_like(sorted_gam)
+            err_msg = '{0} does not appear in param list, '.format(del_par)
+            err_msg += 'nor is `del_val` set.'
+            raise ValueError(err_msg)
 
         if kappa_par in core.params:
             sorted_kappa = core.get_param(kappa_par, to_burn=False)[sorted_idx]
+        elif kappa_val is not None:
+            sorted_kappa = kappa_val*np.ones_like(sorted_Amp)
         else:
-            sorted_kappa = 0.1*np.ones_like(sorted_gam)
+            err_msg = '{0} does not appear in param list, '.format(kappa_par)
+            err_msg += 'nor is `kappa_val` set.'
+            raise ValueError(err_msg)
 
         df = np.diff(np.concatenate((np.array([0]), F)))
         for idx in range(n_realizations):

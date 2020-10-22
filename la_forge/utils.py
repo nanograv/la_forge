@@ -305,18 +305,27 @@ def quantize_fast(toas, residuals, toaerrs, dt=0.1):# flags=None,
     averesids = np.array([np.average(residuals[l],
                                      weights=np.power(toaerrs[l],-2))
                           for l in bucket_ind],'d')
+    residRMS = np.array([np.sqrt(np.mean(np.square(residuals[l])))
+                         for l in bucket_ind],'d')
     avetoas = np.array([np.mean(toas[l]) for l in bucket_ind],'d')
     avetoaerrs = np.array([sps.hmean(toaerrs[l]) for l in bucket_ind],'d')
-    output = np.array([avetoas, averesids, avetoaerrs]).T
+    output = np.array([avetoas, averesids, avetoaerrs, residRMS]).T
     return output
 
-def epoch_ave_resid(psr, correction=None):
+def epoch_ave_resid(psr, correction=None, dt=10):
     """
     Epoch averaged residuals organized by receiver.
 
     Parameters
     ----------
     psr :  `enterprise.pulsar.Pulsar`
+
+    correction : array, optional
+        Numpy array which gives a correction to the residuals. Used for adding
+        various Gaussian process realizations or timing model perturbations.
+
+    dt : float
+        Coarse graining time [sec]. Sets filter size for TOAs.
 
     Returns
     -------
@@ -342,5 +351,5 @@ def epoch_ave_resid(psr, correction=None):
             fe_masks[fe] = np.array(psr.flags['fe']==fe)
             mk = fe_masks[fe]
             fe_resids[fe] = quantize_fast(psr.toas[mk],resids[mk],
-                                          psr.toaerrs[mk], dt=10)
+                                          psr.toaerrs[mk], dt=dt)
     return fe_resids, fe_masks

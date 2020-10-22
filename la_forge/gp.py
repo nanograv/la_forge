@@ -230,6 +230,7 @@ class Signal_Reconstruction():
             ['DM'] : Return the timing-model parts of dispersion model.
             [timing parameters] : Any of the timing parameters from the linear
                 timing model. A list is available as `psr.fitpars`.
+            ['timing'] : Return the entire timing model.
             ['gw'] : Gravitational wave signal. Works with common process in
                 full PTAs.
             ['none'] : Returns no Gaussian processes. Meant to be used for

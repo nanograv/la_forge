@@ -15,7 +15,7 @@ requirements = ['numpy>=1.11',
                 'scipy>1.0.0',
                 'matplotlib>=2.0.0',
                 'corner',
-                'astropy>=2.0.0',
+                'astropy>=3.0.0',
                 ]
 
 setup_requirements = ['pytest-runner', ]
@@ -47,6 +47,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/Hazboun6/la_forge',
-    version='0.2.0',
+    version='0.3.0',
     zip_safe=False,
 )

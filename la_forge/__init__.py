@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division,
 
 __author__ = """Jeffrey Shafiq Hazbboun"""
 __email__ = 'jeffrey.hazboun@gmail.com'
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 #
 # from .rednoise import plot_rednoise_spectrum
 # from . import utils

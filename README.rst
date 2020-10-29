@@ -13,6 +13,9 @@ La Forge
         :target: https://la-forge.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4152550.svg
+   :target: https://doi.org/10.5281/zenodo.4152550
+
 Pulsar Timing Array Bayesian Data Visualization
 
 .. image:: https://raw.githubusercontent.com/Hazboun6/la_forge/master/visor.png

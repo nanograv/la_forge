@@ -879,7 +879,7 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
 
         if kappa_par in core.params:
             sorted_kappa = core.get_param(kappa_par, to_burn=False)[sorted_idx]
-            kappa = core.get_param_median(kapp_par)
+            kappa = core.get_param_median(kappa_par)
         elif kappa_val is not None:
             sorted_kappa = kappa_val*np.ones_like(sorted_Amp)
             kappa = kappa_val

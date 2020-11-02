@@ -855,8 +855,10 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
         sorted_log10_fb = core.get_param(log10_fb_par,to_burn=False)[sorted_idx]
         if gam_par in core.params:
             sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
+            log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
         elif gam_val is not None:
             sorted_gam = gam_val*np.ones_like(sorted_Amp)
+            log10_A, gamma = sorted_Amp[0], gam_val
         else:
             err_msg = '{0} does not appear in param list, '.format(gam_par)
             err_msg += 'nor is `gam_val` set.'
@@ -889,16 +891,14 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
             axis.plot(F, np.log10(rho), color=Color, lw=0.4,
                         ls='-', zorder=6, alpha=0.03)
 
-    #log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam1_par)
-
     if verbose:
         print('Plotting Powerlaw RN Params:'
               'Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
         print('Red noise parameters: log10_A = '
               '{0:.2f}, gamma = {1:.2f}'.format(sorted_Amp[0], sorted_gam[0]))
 
-    exp = sorted_kappa[0] * (sorted_gam[0] - sorted_del[0]) / 2
-    hcf = (10**sorted_Amp[0] * (F / fyr) ** ((3-sorted_gam[0])/2) *
+    exp = sorted_kappa[0] * (gamma - sorted_del[0]) / 2
+    hcf = (10**log10_A * (F / fyr) ** ((3-gamma)/2) *
           (1 + (F / 10**sorted_log10_fb[0]) ** (1/sorted_kappa[0])) ** exp)
     rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)

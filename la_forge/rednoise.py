@@ -855,9 +855,11 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
         sorted_log10_fb = core.get_param(log10_fb_par,to_burn=False)[sorted_idx]
         if gam_par in core.params:
             sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
+            gamma = core.get_param_median(gam_par)
             # log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
         elif gam_val is not None:
             sorted_gam = gam_val*np.ones_like(sorted_Amp)
+            gamma = gam_val
             # log10_A, gamma = sorted_Amp[0], gam_val
         else:
             err_msg = '{0} does not appear in param list, '.format(gam_par)
@@ -866,8 +868,10 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
 
         if del_par in core.params:
             sorted_del = core.get_param(del_par, to_burn=False)[sorted_idx]
+            delta = core.get_param_median(del_par)
         elif del_val is not None:
             sorted_del = del_val*np.ones_like(sorted_Amp)
+            delta = del_val
         else:
             err_msg = '{0} does not appear in param list, '.format(del_par)
             err_msg += 'nor is `del_val` set.'
@@ -875,8 +879,10 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
 
         if kappa_par in core.params:
             sorted_kappa = core.get_param(kappa_par, to_burn=False)[sorted_idx]
+            kappa = core.get_param_median(kapp_par)
         elif kappa_val is not None:
             sorted_kappa = kappa_val*np.ones_like(sorted_Amp)
+            kappa = kappa_val
         else:
             err_msg = '{0} does not appear in param list, '.format(kappa_par)
             err_msg += 'nor is `kappa_val` set.'
@@ -898,9 +904,6 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
               '{0:.2f}, gamma = {1:.2f}'.format(sorted_Amp[0], sorted_gam[0]))
 
     log10_A = core.get_param_median(amp_par)
-    gamma = core.get_param_median(gam_par)
-    delta = core.get_param_median(del_par)
-    kappa = core.get_param_median(kapp_par)
     log10_fb = core.get_param_median(log10_fb_par)
 
     exp = kappa * (gamma - delta) / 2

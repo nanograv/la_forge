@@ -90,8 +90,8 @@ def getMax2d(samples1, samples2, weights=None, smooth=True, bins=[40, 40],
 
     # interpolation
     f = interp.interp2d(xedges, yedges, hist2d, kind='cubic')
-    xedges = np.linspace(xedges.min(), xedges.max(), 10000)
-    yedges = np.linspace(yedges.min(), yedges.max(), 10000)
+    xedges = np.linspace(xedges.min(), xedges.max(), 2000)
+    yedges = np.linspace(yedges.min(), yedges.max(), 2000)
     hist2d = f(xedges, yedges)
 
     # return xedges[np.argmax(hist2d)]

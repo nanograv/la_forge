@@ -73,6 +73,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     plot_kwargs={},
     legend_labels=None,
     legend_loc=None,
+    close=True
 
     """
     if pars is not None:
@@ -196,7 +197,10 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     if show:
         plt.show()
 
-    plt.close()
+    if close:
+        plt.close()
+    else:
+        print('Make sure to manually close...')
 
 
 def noise_flower(hmc,

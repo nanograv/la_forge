@@ -197,10 +197,11 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     if show:
         plt.show()
 
-    if close:
-        plt.close()
+    if 'close' in kwargs.keys():
+        if kwargs['close']:
+            plt.close()
     else:
-        print('Make sure to manually close...')
+        plt.close()
 
 
 def noise_flower(hmc,

@@ -124,7 +124,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            free_spec_violin=False, ncol=None,
                            plot_density=None, plot_contours=None,
                            add_2d_scatter=None, bplaw_kwargs={},
-                           levels=(0.39346934, 0.86466472, 0.988891,)):
+                           levels=(0.39346934, 0.86466472, 0.988891,),
+                           **kwargs):
 
     """
     Function to plot various red noise parameters in the same figure.

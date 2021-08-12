@@ -437,7 +437,11 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
     if show_figure:
         plt.show()
 
-    plt.close()
+    if 'close' in kwargs.keys():
+        if kwargs['close']:
+            plt.close()
+    else:
+        plt.close()
 
 
 ########## Red Noise Plotting Commands #########################

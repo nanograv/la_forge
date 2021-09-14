@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-
 """Top-level package for La Forge."""
 
 __author__ = """Jeffrey Shafiq Hazbboun"""

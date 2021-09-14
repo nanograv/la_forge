@@ -9,6 +9,7 @@ needed methods for building a sensitivity curve.
 
 .. automodule:: la_forge.core
     :members:
+    :inherited-members:
 
 Red Noise
 ---------
@@ -28,5 +29,17 @@ Gaussian Processes
 Diagnostics
 -----------
 .. automodule:: la_forge.diagnostics
+    :members:
+    :inherited-members:
+
+Slicing
+------------------
+.. automodule:: la_forge.slices
+    :members:
+    :inherited-members:
+
+Utilities
+------------------
+.. automodule:: la_forge.utils
     :members:
     :inherited-members:

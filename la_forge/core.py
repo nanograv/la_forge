@@ -9,7 +9,7 @@ from astropy.table import Table
 
 from . import utils
 
-__all__ = ['Core','HyperModelCore','load_Core']
+__all__ = ['Core','HyperModelCore','TimingCore','load_Core']
 
 ### Convenience function to load a Core object
 
@@ -22,44 +22,37 @@ def load_Core(filepath):
 class Core(object):
     """
     An object that stores the parameters and chains from a bayesian analysis
-        currently configured specifically for posteriors produced by
-        `PTMCMCSampler`.
+    currently configured specifically for posteriors produced by
+    `PTMCMCSampler`.
 
     Parameters
     ----------
-
     label : str
         Name of the core.
-
     chaindir : str
         Directory with chains and file with parameter names. Currently supports
         chains as {'chain_1.txt','chain.fit'} and parameters as
         {'pars.txt','params.txt','pars.npy'} . If chains are stored in a FITS
         file it is assumed that the parameters are listed as the column names.
-
     burn : int, optional
         Number of samples burned from beginning of chain. Used when calculating
         statistics and plotting histograms.
-
     fancy_par_names : list of str
         List of strings provided as names to be used when plotting parameters.
         Must be the same length as the parameter list associated with the
         chains.
-
     chain : array, optional
         Array that contains samples from an MCMC chain that is samples x param
         in shape. Loaded from file if dir given as `chaindir`.
-
     params : list, optional
         List of parameters that corresponds to the parameters in the chain. Is
         loaded automatically if in the chain directory given above.
+
     """
+
     def __init__(self, label, chaindir=None, burn=None, verbose=True,
                  fancy_par_names=None, chain=None, params=None,
-                 pt_chains=False):
-        """
-
-        """
+                 pt_chains=False, skiprows=0):
         self.label = label
         self.chaindir = chaindir
         self.fancy_par_names = fancy_par_names
@@ -85,16 +78,18 @@ class Core(object):
                     raise ValueError('Must set a parameter list if '
                                      'none provided in directory.')
                 if os.path.isfile(chaindir + '/chain_1.txt'):
-                    self.chain = np.loadtxt(chaindir + '/chain_1.txt')
+                    self.chain = np.loadtxt(chaindir + '/chain_1.txt',
+                                            skiprows=skiprows)
                     self.chainpath = chaindir + '/chain_1.txt'
                 elif os.path.isfile(chaindir + '/chain_1.0.txt'):
-                    self.chain = np.loadtxt(chaindir + '/chain_1.0.txt')
+                    self.chain = np.loadtxt(chaindir + '/chain_1.0.txt',
+                                            skiprows=skiprows)
                     self.chainpath = chaindir + '/chain_1.0.txt'
                     if pt_chains:
                         self.chainpaths = sorted(glob.glob(chaindir+'/chain*.txt'))
                         self.hot_chains = {}
                         for chp in self.chainpaths[1:]:
-                            ch = np.loadtxt(chp)
+                            ch = np.loadtxt(chp,skiprows=skiprows)
                             ky = chp.split('/')[-1].split('_')[-1].replace('.txt','')
                             self.hot_chains.update({ky:ch})
 
@@ -213,7 +208,10 @@ class Core(object):
 
     def set_burn(self, burn):
         """Set number of samples to burn."""
-        self.burn = int(burn)
+        if burn<1 and burn!=0:
+            self.burn = int(burn*self.chain.shape[0])
+        else:
+            self.burn = int(burn)
 
     def set_rn_freqs(self, freqs=None, Tspan=None, nfreqs=30,
                      log=False, partimdir=None, psr=None,
@@ -332,7 +330,7 @@ class Core(object):
     def map_params(self):
         """Inverse Noise Weighted Transmission Function."""
         if not hasattr(self, '_map_params'):
-            self._map_params = self.chain[self.map_idx,:]
+            self._map_params = self.chain[self.burn+self.map_idx,:]
 
         return self._map_params
 
@@ -346,7 +344,8 @@ class HyperModelCore(Core):
     HyperModel framework.
     """
     def __init__(self, label, param_dict=None, chaindir=None, burn=None,
-                 verbose=True, fancy_par_names=None, chain=None, params=None):
+                 verbose=True, fancy_par_names=None, chain=None, params=None,
+                 pt_chains=False):
         """
         Parameters
         ----------
@@ -359,7 +358,7 @@ class HyperModelCore(Core):
                          chaindir=chaindir, burn=burn,
                          verbose=verbose,
                          fancy_par_names=fancy_par_names,
-                         chain=chain, params=params)
+                         chain=chain, params=params, pt_chains=pt_chains)
 
         if param_dict is None:
             try:
@@ -436,6 +435,7 @@ class TimingCore(Core):
             where value is the par file
             Default is chaindir+'orig_timing_pars.pkl'. If no file found a
             warning is given that no conversions can be done.
+
         """
         super().__init__(label=label,
                          chaindir=chaindir, burn=burn,
@@ -524,11 +524,19 @@ class TimingCore(Core):
     def mass_function(self, PB, A1):
         """
         Computes Keplerian mass function, given projected size and orbital period.
-        Inputs:
-            - PB = orbital period [days]
-            - A1 = projected semimajor axis [lt-s]
-        Output:
-            - mass function [solar mass]
+
+        Parameters
+        ----------
+        PB : float
+            Orbital period [days]
+        A1 : float
+            Projected semimajor axis [lt-s]
+
+        Returns
+        -------
+        mass function
+            Mass function [solar mass]
+
         """
         T_sun = 4.925490947e-6 # conversion from solar masses to seconds
         nb = 2 * np.pi / PB / 86400
@@ -560,3 +568,78 @@ class TimingCore(Core):
             return [p for p in self.params if param=='_'.join(p.split('_')[-2:])][0]
         else:
             return [p for p in self.params if param==p.split('_')[-1]][0]
+
+# #--------------------------------------------#
+# #---------------Dropout Core-----------------#
+# #--------------------------------------------#
+#
+# class DropoutCore(Core):
+#     """
+#     A class to make cores for the chains made by the enterprise_extensions
+#     HyperModel framework.
+#     """
+#     def __init__(self, label, dropout_params=None, dp_model_params=None,
+#                  chaindir=None, burn=None,
+#                  verbose=True, fancy_par_names=None, chain=None, params=None):
+#         """
+#         Parameters
+#         ----------
+#
+#         param_dict : dict
+#             Dictionary of parameter lists, corresponding to the parameters in
+#             each sub-model of the hypermodel.
+#         """
+#         super().__init__(label=label,
+#                          chaindir=chaindir, burn=burn,
+#                          verbose=verbose,
+#                          fancy_par_names=fancy_par_names,
+#                          chain=chain, params=params)
+#
+#         if param_dict is None:
+#             try:
+#                 with open(chaindir+'/model_params.json' , 'r') as fin:
+#                     param_dict = json.load(fin)
+#
+#                 if any([isinstance(ky,str) for ky in param_dict]):
+#                     self.param_dict = {}
+#                     for ky, val in param_dict.items():
+#                         self.param_dict.update({int(ky):val})
+#
+#             except:
+#                 raise ValueError('Must provide parameter dictionary!!')
+#         else:
+#             self.param_dict = param_dict
+#
+#         self.nmodels = len(list(self.param_dict.keys()))
+#         #HyperModelCore, self
+#
+#     def dropout_core(self,params):
+#         """
+#         Return a core that only contains the parameters and samples from a
+#         set of dropout model.
+#         """
+#         N = nmodel
+#         model_pars = self.param_dict[N]
+#
+#         if 'lnlike' in self.params:
+#             model_pars = list(model_pars)
+#             model_pars.extend(['lnpost',
+#                                'lnlike',
+#                                'chain_accept',
+#                                'pt_chain_accept'])
+#         par_idx = []
+#         N_idx = self.params.index('nmodel')
+#         for par in model_pars:
+#             par_idx.append(self.params.index(par))
+#
+#         model_chain = self.chain[np.rint(self.chain[:,N_idx])==N,:][:,par_idx]
+#
+#         if model_chain.size == 0:
+#             raise ValueError('There are no samples with this model index.')
+#
+#         model_core = Core(label=self.label+'_{0}'.format(N), chain=model_chain,
+#                           params=model_pars, verbose=False)
+#         if self.rn_freqs is not None:
+#             model_core.set_rn_freqs(freqs=self.rn_freqs)
+#
+#         return model_core

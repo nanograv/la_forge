@@ -2,6 +2,7 @@
 
 from __future__ import division, print_function
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 import numpy as np
 import os.path
 import corner
@@ -118,12 +119,13 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
                            n_tproc_realizations=1000,
                            n_bplaw_realizations=100, Colors=None, bins=30,
-                           labels=None,legend_loc=None,leg_alpha=1.0,
+                           labels=None,legend=True,legend_loc=None,leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
                            freq_xtra=None, free_spec_min=None, free_spec_ci=95,
                            free_spec_violin=False, ncol=None,
                            plot_density=None, plot_contours=None,
                            add_2d_scatter=None, bplaw_kwargs={},
+                           return_plot=False, excess_noise=False,
                            levels=(0.39346934, 0.86466472, 0.988891,)):
 
     """
@@ -194,6 +196,14 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
     if plot_2d_hist:
         fig, axes = plt.subplots(1, 2, figsize=(12,4.2))
+    elif excess_noise:
+        axes = []
+        fig = plt.figure(figsize=(7,4))
+        ax1 = plt.subplot2grid((4, 4), (0, 0), colspan=4, rowspan=3, fig=fig)
+        ax2 = plt.subplot2grid((4, 4), (3, 0), colspan=4, rowspan=1,
+                               fig=fig)#, sharex=ax1)
+        axes.append(ax1)
+        axes.append(ax2)
     else:
         axes = []
         fig, ax = plt.subplots(1, 1, figsize=(6,4))
@@ -423,21 +433,34 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
     # leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
     #                bbox_to_anchor=Bbox_anchor, ncol=len(labels))
     # legend_loc
-    leg = fig.legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
-                        ncol=ncol)#, bbox_to_anchor=Bbox_anchor)
-    leg.get_frame().set_alpha(leg_alpha)
-    fig.tight_layout()
-    fig.subplots_adjust(bottom=0.22)
+    if legend:
+        leg = fig.legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
+                            ncol=ncol)#, bbox_to_anchor=Bbox_anchor)
+        leg.get_frame().set_alpha(leg_alpha)
+    if excess_noise:
+        fig.subplots_adjust(hspace=0.2)
+        axes[0].set_xlabel('')
+        axes[0].set_xticks([])
+    else:
+        fig.tight_layout()
+        fig.subplots_adjust(bottom=0.22)
 
     if plotpath is not None:
-        plt.savefig(plotpath, additional_artists=[leg], bbox_inches='tight')
+        if legend:
+            plt.savefig(plotpath, additional_artists=[leg], bbox_inches='tight')
+        else:
+            plt.savefig(plotpath, bbox_inches='tight')
         if verbose:
             print('Figure saved to ' + plotpath)
 
     if show_figure:
         plt.show()
 
-    plt.close()
+    if return_plot:
+        return axes,fig
+    else:
+        plt.close()
+
 
 
 ########## Red Noise Plotting Commands #########################
@@ -520,7 +543,7 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
 
 def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
-                   violin=False, Color='k', Fillstyle='full',
+                   violin=False, Color='k', Fillstyle='full',plot_ul=False,
                    verbose=True, Tspan=None):
     """
     Plots red noise free spectral parameters in units of residual time.
@@ -635,16 +658,16 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
                 gbf = gorilla_bf(core.get_param(param_nm))
                 is_limit = (gbf<1.0 if gbf is not np.nan else False)
 
-            if is_limit:
+            if is_limit and plot_ul:
                 f2.append(F[n])
                 x = core.get_param_confint(param_nm, onesided=True, interval=95)
                 ul.append(x)
             else:
                 f1.append(F[n])
-                # median.append(core.get_param_median(param_nm))
-                hist, binedges = np.histogram(core.get_param(param_nm),bins=100)
-
-                median.append(binedges[np.argmax(hist)])
+                median.append(core.get_param_median(param_nm))
+                # hist, binedges = np.histogram(core.get_param(param_nm),bins=100)
+                #
+                # median.append(binedges[np.argmax(hist)])
                 x,y = core.get_param_confint(param_nm, onesided=False, interval=ci)
                 minval.append(x)
                 maxval.append(y)

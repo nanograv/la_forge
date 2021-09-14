@@ -87,7 +87,6 @@ class SlicesCore(Core):
                 file = dir + '/' + parfile
                 idxs.append(get_idx(params, file))
                 # chain_params.append(par)
-
         chain_list = store_chains(slicedirs, idxs, verbose=verbose)
 
         #Make all chains the same length by truncating to length of shortest.
@@ -100,7 +99,8 @@ class SlicesCore(Core):
         for ii, ch in enumerate(chain_list):
             # print(type(ch))
             # print(ch)
-            chain[:,ii] = ch[:min_ch_len]
+            start = ch.shape[0] - min_ch_len
+            chain[:,ii] = ch[start:]
 
         if sys.version_info[0]<3:
             try:
@@ -156,7 +156,6 @@ def get_idx(par, filename):
         except:
             new_name = filename[:-3] +'txt'
             par_list = list(np.loadtxt(new_name,dtype='S').astype('U'))
-
     if isinstance(par,list):
         idx = []
         for p in par:
@@ -168,13 +167,19 @@ def get_idx(par, filename):
 def get_col(col,filename):
     if col<0:
         col -= 1
-    L = [x.split('\t')[col] for x in open(filename).readlines()]
+    try:
+        L = [x.split('\t')[col] for x in open(filename).readlines()]
+    except IndexError:
+        L = [x.split(' ')[col] for x in open(filename).readlines()]
     return np.array(L).astype(float)
 
 def store_chains(filepaths, idxs , verbose=True):
     chains= []
     for idx, path in zip(idxs, filepaths):
-        ch_path = path+'/chain_1.txt'
+        if os.path.exists(path+'/chain_1.txt'):
+            ch_path = path+'/chain_1.txt'
+        elif os.path.exists(path+'/chain_1.0.txt'):
+            ch_path = path+'/chain_1.0.txt'
         if isinstance(idx,(list,np.ndarray)):
             for id in idx:
                 chains.append(get_col(id, ch_path))

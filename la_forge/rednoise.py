@@ -321,12 +321,27 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             kappa_par = pulsar + rn_type + '_kappa'
 
             Color = Colors[color_idx]
-            plot_broken_powerlaw(c, axes[0], amp_par, gam_par, del_par,
-                                    fb_par, kappa_par,
-                                    verbose=True, Color=Color,
-                                    Linestyle='-',
-                                    n_realizations=n_bplaw_realizations,
-                                    Tspan=None, to_resid=True, **bplaw_kwargs)
+            if pulsar + rn_type + '_beta' in c.params:
+                fb_par = pulsar + rn_type + '_log10_fb_1'
+                fb_2_par = pulsar + rn_type + '_log10_fb_2'
+                beta_par = pulsar + rn_type + '_beta'
+                kappa_par = pulsar + rn_type + '_kappa_1'
+                kappa_2_par = pulsar + rn_type + '_kappa_2'
+                
+                plot_extra_broken_powerlaw(core, axis, amp_par, gam_par, del_par, beta_par,
+                                           fb_par, log10_fb_2_par,
+                                           kappa_par, kappa_2_par,
+                                           verbose=True, Color=Color,
+                                            Linestyle='-',
+                                            n_realizations=n_bplaw_realizations,
+                                            Tspan=None, to_resid=True, **bplaw_kwargs)
+            else:
+                plot_broken_powerlaw(c, axes[0], amp_par, gam_par, del_par,
+                                        fb_par, kappa_par,
+                                        verbose=True, Color=Color,
+                                        Linestyle='-',
+                                        n_realizations=n_bplaw_realizations,
+                                        Tspan=None, to_resid=True, **bplaw_kwargs)
 
             if plot_2d_hist:
                 corner.hist2d(c.get_param(gam_par)[c.burn:],
@@ -587,7 +602,7 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
                 #pc.set_edgecolor('black')
                 pc.set_alpha(0.6)
 
-        elif prior_min is 'bayes':
+        elif prior_min == 'bayes':
             f1, f2, ul, coeff = [], [], [], []
             for n in range(nfreqs):
                 param_nm = parname_root +  '_' + str(n)
@@ -914,5 +929,171 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
     exp = kappa * (gamma - delta) / 2
     hcf = (10**log10_A * (F / fyr) ** ((3-gamma)/2) *
           (1 + (F / 10**log10_fb) ** (1/kappa)) ** exp)
+    rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
+    axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
+
+def plot_extra_broken_powerlaw(core, axis, amp_par, gam_par, del_par, beta_par,
+                               log10_fb_1_par, log10_fb_2_par,
+                               kappa_1_par, kappa_2_par,
+                               verbose=True, Color='k', Linestyle='-',
+                               n_realizations=0, Tspan=None, to_resid=True,
+                               gam_val=None, del_val=None, beta_val=None,
+                               kappa_1_val=None,kappa_2_val=None):
+    """
+    Plots a broken power law line from the given parameters in units of residual
+    time.
+    Parameters
+    ----------
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+    amp_par : str
+        Name of red noise powerlaw amplitude parameter.
+    gam_par : str
+        Name of 2nd (middle freq) red noise powerlaw spectral index parameter
+        (gamma1).
+    del_par : str
+        Name of 3rd (highest freq) red noise powerlaw spectral index parameter
+        (gamma2).
+    beta_par : str
+        Name of 1st (lowest freq) red noise powerlaw spectral index parameter
+        (gamma3).
+    log10_fb_1 : str
+        Name of 1st red noise powerlaw frequency split parameter (freq_split).
+    log10_fb_2 : str
+        Name of 2nd red noise powerlaw frequency split parameter (freq_split).
+    kappa_1_par : float
+        1st Break transition parameter name.
+    kappa_2_par : float
+        2nd Break transition parameter name.
+    gam_val : float, optional
+        Set constant value for gamma, if not sampled over.
+    del_val : float, optional
+        Set constant value for delta, if not sampled over.
+    kappa_val : float, optional
+        Set constant value for kappa, if not sampled over.
+    verbose : bool, optional
+    n_realizations : int, optional
+        Number of realizations to plot.
+    Color : list, optional
+        Color to make the plot.
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
+    F , nfreqs = get_rn_freqs(core)
+
+    if Tspan is None:
+        T = 1/np.amin(F)
+    else:
+        T = Tspan
+
+    if n_realizations==0:
+        n_realizations = 1
+
+    if n_realizations>0:
+        # sort data in descending order of lnlike
+        if 'lnlike' in core.params:
+            lnlike_idx = core.params.index('lnlike')
+        else:
+            lnlike_idx = -4
+
+        sorted_idx = core.chain[:,lnlike_idx].argsort()[::-1]
+        sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
+
+        sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
+        sorted_log10_fb_1 = core.get_param(log10_fb_1_par,to_burn=False)[sorted_idx]
+        sorted_log10_fb_2 = core.get_param(log10_fb_2_par,to_burn=False)[sorted_idx]
+        
+        if gam_par in core.params:
+            sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
+            gamma = core.get_param_median(gam_par)
+            # log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
+        elif gam_val is not None:
+            sorted_gam = gam_val*np.ones_like(sorted_Amp)
+            gamma = gam_val
+            # log10_A, gamma = sorted_Amp[0], gam_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(gam_par)
+            err_msg += 'nor is `gam_val` set.'
+            raise ValueError(err_msg)
+
+        if del_par in core.params:
+            sorted_del = core.get_param(del_par, to_burn=False)[sorted_idx]
+            delta = core.get_param_median(del_par)
+        elif del_val is not None:
+            sorted_del = del_val*np.ones_like(sorted_Amp)
+            delta = del_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(del_par)
+            err_msg += 'nor is `del_val` set.'
+            raise ValueError(err_msg)
+            
+        if beta_par in core.params:
+            sorted_beta = core.get_param(beta_par, to_burn=False)[sorted_idx]
+            beta = core.get_param_median(beta_par)
+        elif beta_par is not None:
+            sorted_beta = beta_val*np.ones_like(sorted_Amp)
+            beta = beta_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(beta_par)
+            err_msg += 'nor is `beta_par` set.'
+            raise ValueError(err_msg)
+
+        if kappa_1_par in core.params:
+            sorted_kappa_1 = core.get_param(kappa_1_par, to_burn=False)[sorted_idx]
+            kappa_1 = core.get_param_median(kappa_1_par)
+        elif kappa_1_val is not None:
+            sorted_kappa_1 = kappa_1_val*np.ones_like(sorted_Amp)
+            kappa_1 = kappa_1_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(kappa_1_par)
+            err_msg += 'nor is `kappa_1_val` set.'
+            raise ValueError(err_msg)
+            
+        if kappa_2_par in core.params:
+            sorted_kappa_2 = core.get_param(kappa_2_par, to_burn=False)[sorted_idx]
+            kappa_2 = core.get_param_median(kappa_2_par)
+        elif kappa_2_val is not None:
+            sorted_kappa_2 = kappa_2_val*np.ones_like(sorted_Amp)
+            kappa_2 = kappa_2_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(kappa_2_par)
+            err_msg += 'nor is `kappa_2_val` set.'
+            raise ValueError(err_msg)
+
+        df = np.diff(np.concatenate((np.array([0]), F)))
+        
+        for idx in range(n_realizations):
+            outer_piece = (10**sorted_Amp[idx]) * ((F / fyr) ** ((3-sorted_beta[idx])/2))
+            exp_1 = sorted_kappa_1[idx]*(sorted_beta[idx]-sorted_gam[idx])/2
+            exp_2 = sorted_kappa_2[idx]*(sorted_gam[idx]-sorted_del[idx])/2
+            inner_piece_1 = (F / (10**sorted_log10_fb_1[idx])) ** (1/sorted_kappa_1[idx])
+            inner_piece_2 = (F / (10**sorted_log10_fb_2[idx])) ** (1/sorted_kappa_2[idx])
+            hcf = outer_piece*((1+inner_piece_1*((1+inner_piece_2)**(exp_2/exp_1)))**exp_1)
+            rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
+            axis.plot(F, np.log10(rho), color=Color, lw=0.4,
+                        ls='-', zorder=6, alpha=0.03)
+
+    if verbose:
+        print('Plotting Powerlaw RN Params:'
+              'Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
+        print('Red noise parameters: log10_A = '
+              '{0:.2f}, gamma = {1:.2f}'.format(sorted_Amp[0], sorted_gam[0]))
+
+    log10_A = core.get_param_median(amp_par)
+    log10_fb_1 = core.get_param_median(log10_fb_1_par)
+    log10_fb_2 = core.get_param_median(log10_fb_2_par)
+    
+    outer_piece = (10**log10_A) * ((F / fyr) ** ((3-beta)/2))
+    exp_1 = kappa_1*(beta-gamma)/2
+    exp_2 = kappa_2*(gamma-delta)/2
+    inner_piece_1 = (F / (10**log10_fb_1)) ** (1/kappa_1)
+    inner_piece_2 = (F / (10**log10_fb_2)) ** (1/kappa_2)
+    hcf = outer_piece*((1+inner_piece_1*((1+inner_piece_2)**(exp_2/exp_1)))**exp_1)
     rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)

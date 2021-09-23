@@ -1,20 +1,15 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
-from __future__ import division, print_function
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 import os.path
 import copy, string
 import inspect
-# import corner
-# from collections import OrderedDict
-# from enterprise_extensions import model_utils
 
 from . import utils
 from .core import Core, HyperModelCore, TimingCore
-# from . import rednoise as rn
 
 __all__ = ['plot_chains','noise_flower']
 
@@ -77,15 +72,23 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     """
     if pars is not None:
         params = pars
+    elif exclude is not None and pars is not None:
+        raise ValueError('Please remove excluded parameters from `pars`.')
     elif exclude is not None:
-        params = list(core.params)
+        if isinstance(core,list):
+            params = set()
+            for c in core:
+                params.intersection_update(c.params)
+        else:
+            params = core.params
+        params = list(params)
         for p in exclude:
             params.remove(p)
     elif pars is None and exclude is None:
         if isinstance(core,list):
-            params = set()
-            for c in core:
-                params.update(c.params)
+            params = core[0].params
+            for c in core[1:]:
+                params = [p for p in params if p in c.params]
         else:
             params = core.params
 

@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 import glob
 import numpy as np
 import scipy.stats as sps
@@ -15,7 +14,7 @@ except ImportError:
 fyr = 1./31536000.
 
 
-# from Kristina
+# from Kristina Islo
 
 def getMax2d(samples1, samples2, weights=None, smooth=True, bins=[40, 40],
             x_range=None, y_range=None, logx=False, logy=False, logz=False):

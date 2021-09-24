@@ -153,6 +153,14 @@ class Core(object):
                   'noise figures.\n'
                   'Please use core.set_rn_freqs() to set, if needed.')
 
+    def __call__(self, param, to_burn=True):
+        """
+        Returns array of samples for the parameter given.
+
+        `param` can either be a single string or list of strings.
+        """
+        return self.get_param(param, to_burn=True)
+
     def get_param(self, param, to_burn=True):
         """
         Returns array of samples for the parameter given.

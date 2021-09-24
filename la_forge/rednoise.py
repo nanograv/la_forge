@@ -111,7 +111,7 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None,
 
 
 
-def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
+def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,
                            plot_2d_hist=True, verbose=True, Tspan=None,
                            title_suffix='', freq_yr=1, plotpath = None,
                            cmap='gist_rainbow', n_plaw_realizations=0,

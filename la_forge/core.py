@@ -153,7 +153,6 @@ class Core(object):
                   'noise figures.\n'
                   'Please use core.set_rn_freqs() to set, if needed.')
 
-
     def get_param(self, param, to_burn=True):
         """
         Returns array of samples for the parameter given.
@@ -288,6 +287,7 @@ class Core(object):
                 raise FileNotFoundError(err_msg)
 
         self.rn_freqs = F
+
 
     def set_fancy_par_names(self, names_list):
         """Set fancy_par_names."""

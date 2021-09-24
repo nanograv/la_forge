@@ -241,7 +241,7 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None,labels=None,
         plt.semilogy(Nyears,10**simul_mean,c='gray',
                  alpha=0.7,lw=2,label='Simulation Median')
         plt.semilogy(Nyears,10**upper_90_ci,c='gray',ls='--',
-                 alpha=0.7,label='90\% Confidence Interval')
+                 alpha=0.7,label='90% Confidence Interval')
         plt.semilogy(Nyears,10**lower_90_ci,c='gray',ls='--',alpha=0.7)
 
     for ii,array in enumerate(arrays):

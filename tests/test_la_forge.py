@@ -37,7 +37,19 @@ def fs_core():
 def test_core():
     """Tests the loading of a Core into a class. """
     c0=core.Core(label='J1713+0747 Adv Noise Modeling Round 3a',
-                 chaindir=chaindir)
+                 chaindir=chaindir, pt_chains=True, skiprows=10)
 
     assert hasattr(c0,'get_param')
     assert hasattr(c0,'params')
+
+def test_rednoise_plot(plaw_core,fs_core):
+    rednoise.plot_rednoise_spectrum('J1713+0747',
+                                    [plaw_core,fs_core],
+                                    show_figure=False,
+                                    rn_types=['_red_noise','_red_noise'])
+
+def test_diag_plot_hist(plaw_core,fs_core):
+    diagnostics.plot_chains([plaw_core,fs_core])
+
+def test_diag_plot_trace(plaw_core):
+    diagnostics.plot_chains(plaw_core,hist=False,show=False)

@@ -2,6 +2,7 @@ import numpy as np
 import os.path
 import sys, pickle, json
 import glob
+import h5py
 
 from astropy.io import fits
 from astropy.table import Table
@@ -12,10 +13,15 @@ __all__ = ['Core','HyperModelCore','TimingCore','load_Core']
 
 ### Convenience function to load a Core object
 
-def load_Core(filepath):
+def load_pickle_Core(filepath):
     with open(filepath, "rb") as fin:
         core = pickle.load(fin)
         core.filepath = filepath
+    return core
+
+def load_Core(filepath):
+    core = Core(label='empty')
+    core.reload(filepath)
     return core
 
 class Core(object):
@@ -57,7 +63,13 @@ class Core(object):
         self.fancy_par_names = fancy_par_names
 
         if chain is None:
-            if os.path.isfile(chaindir + '/chain.fits'):
+            if chaindir is None:
+                # Use an empty Core to load an HDF5 core.
+                self.chain = np.zeros((2, 2))
+                chaindir = './'
+                self.params = np.zeros(2)
+
+            elif os.path.isfile(chaindir + '/chain.fits'):
                 myfile = fits.open(chaindir + '/chain.fits')
                 table = Table(myfile[1].data)
                 self.params = table.colnames
@@ -92,7 +104,7 @@ class Core(object):
                             ky = chp.split('/')[-1].split('_')[-1].replace('.txt','')
                             self.hot_chains.update({ky:ch})
 
-            jump_paths = glob.glob(chaindir+'*jump*.txt')
+            jump_paths = glob.glob(chaindir+'/*jump*.txt')
             self.jumps={}
             for path in jump_paths:
                 if path.split('/')[-1]=='jumps.txt':
@@ -103,13 +115,13 @@ class Core(object):
                 self.jumps[ky] = np.loadtxt(path, dtype=dtype)
 
             try:
-                prior_path = glob.glob(chaindir+'priors.txt')[0]
+                prior_path = glob.glob(chaindir+'/priors.txt')[0]
                 self.priors = np.loadtxt(prior_path, dtype=str, delimiter='/t')
             except (FileNotFoundError, IndexError):
                 pass
 
             try:
-                cov_path = glob.glob(chaindir+'cov.npy')[0]
+                cov_path = glob.glob(chaindir+'/cov.npy')[0]
                 self.cov = np.load(cov_path)
             except (FileNotFoundError, IndexError):
                 pass
@@ -310,13 +322,66 @@ class Core(object):
         self.fancy_par_names = names_list
 
     def save(self, filepath):
-        self.filepath = filepath
-        with open(filepath, "wb") as fout:
-            pickle.dump(self,fout)
+        """
+        Save Core object as HDF5 (.h5)
+        """
+        # TODO(Aaron): add support for higher temp. chains
+        # TODO(Aaron): add support for hypermodels
+        dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
+        with h5py.File(filepath, 'w') as hf:
+            g1 = hf.create_group('metadata')
+            g2 = hf.create_group('jumps')
+            g3 = hf.create_group('jump_percents')
 
-    def reload(self, filepath):
+            g1.create_dataset('label', data=self.label)
+            g1.create_dataset('chaindir', data=self.chaindir)
+            g1.create_dataset('chainpath', data=self.chainpath)
+            g1.create_dataset('burn', data=self.burn)
+
+            for key in self.jumps:
+                try:
+                    g2.create_dataset(key, data=self.jumps[key])  # each jump array gets its own key
+                except:
+                    for i in range(len(self.jumps[key])):
+                        g3.create_dataset(self.jumps[key][i][0], data=np.float(self.jumps[key][i][1]))
+
+            if self.fancy_par_names is not None:
+                hf.create_dataset('fancy_par_names', data=np.array(self.fancy_par_names, dtype="O"), dtype=dt)
+
+            hf.create_dataset('params', data=np.array(self.params, dtype="O"), dtype=dt)
+            hf.create_dataset('chain', data=self.chain, compression="gzip", compression_opts=9)
+            hf.create_dataset('priors', data=np.array(self.priors, dtype="O"), dtype=dt)
+            hf.create_dataset('cov', data=self.cov, compression="gzip", compression_opts=9)
+            if self.rn_freqs is not None:
+                hf.create_dataset('rn_freqs', data=self.rn_freqs)
+
+    # def save(self, filepath):
+    #     self.filepath = filepath
+    #     with open(filepath, "wb") as fout:
+    #         pickle.dump(self,fout)
+
+    def reload_pickle(self, filepath):
         with open(filepath, "rb") as fin:
             self = pickle.load(fin)
+    
+    def reload(self, filepath):
+        # TODO(Aaron): add support for higher temp. chains
+        # TODO(Aaron): add support for hypermodels
+        print('Loading data from HDF5 file....')
+        with h5py.File(filepath, 'r') as hf:
+            self.chain = np.array(hf['chain'])
+            self.cov = np.array(hf['cov'])
+            self.params = np.array(hf['params']).astype(str)
+            self.burn = float(np.array(hf['metadata']['burn']))
+            self.chaindir = str(np.array(hf['metadata']['chaindir']).astype(str))
+            self.label = str(np.array(hf['metadata']['label']).astype(str))
+            self.jump_percents = {}
+            for key in hf['jump_percents']:
+                self.jump_percents[key] = float(np.array(hf['jump_percents'][key]))
+            self.jumps = {}
+            for key in hf['jumps']:
+                self.jumps[key] = np.array(hf['jumps'][key])
+            self.priors = np.array(hf['priors']).astype(str)
 
     def get_map_dict(self):
         map = [self.get_map_param(p) for p in self.params]

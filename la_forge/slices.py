@@ -101,20 +101,9 @@ class SlicesCore(Core):
             start = ch.shape[0] - min_ch_len
             chain[:,ii] = ch[start:]
 
-        if sys.version_info[0]<3:
-            try:
-                super(SlicesCore, self).__init__(label=label, chain=chain,
-                                                 params=par_names, burn=burn,
-                                                 fancy_par_names=fancy_par_names,
-                                                 verbose=verbose)
-            except TypeError:
-                err_msg = 'Python 2 sometimes errors when reloading in '
-                err_msg += 'Jupyter Notebooks. Try reloading kernel.'
-                raise TypeError(err_msg)
-        else:
-            super().__init__(label=label, chain=chain, params=par_names,
-                             burn=burn, fancy_par_names=fancy_par_names,
-                             verbose=verbose)
+        super().__init__(label=label, chain=chain, params=par_names,
+                         burn=burn, fancy_par_names=fancy_par_names,
+                         verbose=verbose)
 
 
 

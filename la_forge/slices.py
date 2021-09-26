@@ -105,8 +105,6 @@ class SlicesCore(Core):
                          burn=burn, fancy_par_names=fancy_par_names,
                          verbose=verbose)
 
-
-
     def get_ul_slices_err(self,q=95.0):
         self.ul = np.zeros((len(self.params),2))
         for ii, yr in enumerate(self.params):

@@ -33,11 +33,19 @@ def fs_core():
     """
     return core.load_Core(fs_core_path)
 
+@pytest.fixture
+def hmc_core():
+    """HyperModel Chain.
+    J1713+0747 Adv Noise Run, NG12.5 yr dataset
+    """
+    return core.HyperModelCore(label='J1713+0747 Adv Noise Modeling Round 3a',
+                               chaindir=chaindir, pt_chains=True, skiprows=10)
 
-def test_core():
+
+def test_core_from_ptmcmc_chains():
     """Tests the loading of a Core into a class. """
-    c0=core.Core(label='J1713+0747 Adv Noise Modeling Round 3a',
-                 chaindir=chaindir, pt_chains=True, skiprows=10)
+    c0 = core.Core(label='J1713+0747 Adv Noise Modeling Round 3a',
+                     chaindir=chaindir, pt_chains=True, skiprows=10)
 
     assert hasattr(c0,'get_param')
     assert hasattr(c0,'params')
@@ -53,3 +61,6 @@ def test_diag_plot_hist(plaw_core,fs_core):
 
 def test_diag_plot_trace(plaw_core):
     diagnostics.plot_chains(plaw_core,hist=False,show=False)
+
+def test_noise_flower(hmc_core):
+    diagnostics.noise_flower(hmc_core,show=False)

@@ -352,7 +352,7 @@ class HyperModelCore(Core):
     """
     def __init__(self, label, param_dict=None, chaindir=None, burn=None,
                  verbose=True, fancy_par_names=None, chain=None, params=None,
-                 pt_chains=False):
+                 pt_chains=False, skiprows=0):
         """
         Parameters
         ----------
@@ -364,7 +364,7 @@ class HyperModelCore(Core):
         super().__init__(label=label,
                          chaindir=chaindir, burn=burn,
                          verbose=verbose,
-                         fancy_par_names=fancy_par_names,
+                         fancy_par_names=fancy_par_names, skiprows=skiprows,
                          chain=chain, params=params, pt_chains=pt_chains)
 
         if param_dict is None:

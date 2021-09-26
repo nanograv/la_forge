@@ -40,7 +40,7 @@ class SlicesCore(Core):
     """
     def __init__(self, label, slicedirs=None, params=None,
                  verbose=True, par_names=None, fancy_par_names=None,
-                 burn=None, parfile = 'pars.npy'):
+                 burn=None, parfile = 'pars.txt'):
         """
         Parameters
         ----------

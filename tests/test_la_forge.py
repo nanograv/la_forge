@@ -24,14 +24,14 @@ def plaw_core():
     """Premade Free Spectral Core.
     J1713+0747 Free Spectral Noise run, NG12.5 yr dataset.
     """
-    return core.load_Core(plaw_core_path)
+    return core.load_pickle_Core(plaw_core_path)
 
 @pytest.fixture
 def fs_core():
     """Premade Power Law Red Noise Core.
     J1713+0747 Power Law Red Noise run, NG12.5 yr dataset
     """
-    return core.load_Core(fs_core_path)
+    return core.load_pickle_Core(fs_core_path)
 
 @pytest.fixture
 def hmc_core():

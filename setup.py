@@ -15,6 +15,7 @@ requirements = ['numpy>=1.11',
                 'scipy>1.0.0',
                 'matplotlib>=2.0.0',
                 'corner',
+                'h5py>=3.4.0',
                 'astropy>=3.0.0',
                 ]
 

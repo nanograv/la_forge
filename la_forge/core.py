@@ -55,14 +55,21 @@ class Core(object):
 
     """
 
-    def __init__(self, label, chaindir=None, burn=None, verbose=True,
-                 fancy_par_names=None, chain=None, params=None,
+    def __init__(self, label=None, chaindir=None, burn=None, verbose=True,
+                 fancy_par_names=None, chain=None, params=None, hdf5path=None,
                  pt_chains=False, skiprows=0):
         self.label = label
         self.chaindir = chaindir
         self.fancy_par_names = fancy_par_names
+        self.chain = chain
+        self.params = params
 
-        if chain is None:
+        #Aaron: I think this would basically do most of what we needed it to.
+        # This would work for Core, w/ changes 4 HyperModelCore and TimingCore. 
+        # if path is not None:
+        #     self.reload(hdf5path)
+
+        if self.chain is None:
             if chaindir is None:
                 # Use an empty Core to load an HDF5 core.
                 self.chain = np.zeros((2, 2))
@@ -363,7 +370,7 @@ class Core(object):
     def reload_pickle(self, filepath):
         with open(filepath, "rb") as fin:
             self = pickle.load(fin)
-    
+
     def reload(self, filepath):
         # TODO(Aaron): add support for higher temp. chains
         # TODO(Aaron): add support for hypermodels

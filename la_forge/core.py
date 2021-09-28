@@ -78,31 +78,14 @@ class Core(object):
             self.reload(corepath)
 
         if self.chain is None:
-            if chaindir is None:
-                # Use an empty Core to load an HDF5 core.
-                self.chain = np.zeros((2, 2))
-                chaindir = './'
-                self.params = np.zeros(2)
 
-            elif os.path.isfile(chaindir + '/chain.fits'):
+            if os.path.isfile(chaindir + '/chain.fits'):
                 myfile = fits.open(chaindir + '/chain.fits')
                 table = Table(myfile[1].data)
                 self.params = table.colnames
                 self.chain = np.array([table[p] for p in self.params]).T
             else:
-                if os.path.isfile(chaindir + '/pars.txt'):
-                    self.params = list(np.loadtxt(chaindir + '/pars.txt',
-                                                  dtype='S').astype('U'))
-                elif os.path.isfile(chaindir + '/pars.npy'):
-                    self.params = list(np.load(chaindir + '/pars.npy'))
-                elif os.path.isfile(chaindir + '/params.txt'):
-                    self.params = list(np.loadtxt(chaindir + '/params.txt',
-                                                  dtype='S').astype('U'))
-                elif params is not None:
-                    self.params = params
-                else:
-                    raise ValueError('Must set a parameter list if '
-                                     'none provided in directory.')
+                # Load chain
                 if os.path.isfile(chaindir + '/chain_1.txt'):
                     self.chain = np.loadtxt(chaindir + '/chain_1.txt',
                                             skiprows=skiprows)
@@ -118,6 +101,24 @@ class Core(object):
                             ch = np.loadtxt(chp,skiprows=skiprows)
                             ky = chp.split('/')[-1].split('_')[-1].replace('.txt','')
                             self.hot_chains.update({ky:ch})
+                else:
+                    msg = f'No chain file found check chaindir: \n {chaindir}'
+                    raise FileNotFoundError(msg)
+                    
+                # Load parameters
+                if os.path.isfile(chaindir + '/pars.txt'):
+                    self.params = list(np.loadtxt(chaindir + '/pars.txt',
+                                                  dtype='S').astype('U'))
+                elif os.path.isfile(chaindir + '/pars.npy'):
+                    self.params = list(np.load(chaindir + '/pars.npy'))
+                elif os.path.isfile(chaindir + '/params.txt'):
+                    self.params = list(np.loadtxt(chaindir + '/params.txt',
+                                                  dtype='S').astype('U'))
+                elif params is not None:
+                    self.params = params
+                else:
+                    raise ValueError('Must set a parameter list if '
+                                     'none provided in directory.')
 
             jump_paths = glob.glob(chaindir+'/*jump*.txt')
             self.jumps={}
@@ -132,16 +133,14 @@ class Core(object):
             try:
                 prior_path = glob.glob(chaindir+'/priors.txt')[0]
                 self.priors = np.loadtxt(prior_path, dtype=str, delimiter='/t')
-                self.priors = None
             except (FileNotFoundError, IndexError):
-                pass
+                self.priors = None
 
             try:
                 cov_path = glob.glob(chaindir+'/cov.npy')[0]
                 self.cov = np.load(cov_path)
             except (FileNotFoundError, IndexError):
                 self.cov = None
-
 
         elif chain is not None and params is not None:
             self.chain = chain

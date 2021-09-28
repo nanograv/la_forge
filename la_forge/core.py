@@ -104,7 +104,7 @@ class Core(object):
                 else:
                     msg = f'No chain file found check chaindir: \n {chaindir}'
                     raise FileNotFoundError(msg)
-                    
+
                 # Load parameters
                 if os.path.isfile(chaindir + '/pars.txt'):
                     self.params = list(np.loadtxt(chaindir + '/pars.txt',
@@ -215,8 +215,8 @@ class Core(object):
         """
         return np.median(self.get_param(param))
 
-    def get_param_confint(self, param, onesided=False, interval=68):
-        """Returns confidence interval of parameter givenself.
+    def get_param_credint(self, param, onesided=False, interval=68):
+        """Returns credible interval of parameter given.
 
         Parameters
         ----------
@@ -224,7 +224,8 @@ class Core(object):
         param : str
 
         onesided : bool, optional
-            Whether to calculate a one sided or two sided confidence interval.
+            Whether to calculate a one sided or two sided credible interval. The
+            onesided option gives an upper limit.
 
         interval: float, optional
             Width of interval in percent. Default set to 68%.

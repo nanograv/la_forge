@@ -26,8 +26,8 @@ def load_Core(filepath):
 
 class Core(object):
     """
-    An object that stores the parameters and chains from a bayesian analysis
-    currently configured specifically for posteriors produced by
+    An object that stores the parameters and chains from a bayesian analysis.
+    Currently configured specifically for posteriors produced by
     `PTMCMCSampler`.
 
     Parameters
@@ -52,11 +52,21 @@ class Core(object):
     params : list, optional
         List of parameters that corresponds to the parameters in the chain. Is
         loaded automatically if in the chain directory given above.
-
+    corepath : str
+        Path to an already saved core. Assumed to be an `hdf5` file made with
+        `la_forge`.
+    pt_chains : bool
+        Whether to load all higher temperature chains from a parallel tempering
+        (PT) analysis.
+    skiprows : int
+        Number of rows to skip while loading a chain text file. This effectively
+        acts as a burn in, which can not be changed once the file is loaded
+        (unless loade again). Useful when dealing with large chains and loading
+        multiple times.
     """
 
     def __init__(self, label=None, chaindir=None, burn=None, verbose=True,
-                 fancy_par_names=None, chain=None, params=None, hdf5path=None,
+                 fancy_par_names=None, chain=None, params=None, corepath=None,
                  pt_chains=False, skiprows=0):
         self.label = label
         self.chaindir = chaindir
@@ -64,10 +74,8 @@ class Core(object):
         self.chain = chain
         self.params = params
 
-        #Aaron: I think this would basically do most of what we needed it to.
-        # This would work for Core, w/ changes 4 HyperModelCore and TimingCore. 
-        # if path is not None:
-        #     self.reload(hdf5path)
+        if path is not None:
+            self.reload(corepath)
 
         if self.chain is None:
             if chaindir is None:
@@ -124,6 +132,7 @@ class Core(object):
             try:
                 prior_path = glob.glob(chaindir+'/priors.txt')[0]
                 self.priors = np.loadtxt(prior_path, dtype=str, delimiter='/t')
+                self.priors = None
             except (FileNotFoundError, IndexError):
                 pass
 
@@ -131,7 +140,7 @@ class Core(object):
                 cov_path = glob.glob(chaindir+'/cov.npy')[0]
                 self.cov = np.load(cov_path)
             except (FileNotFoundError, IndexError):
-                pass
+                self.cov = None
 
 
         elif chain is not None and params is not None:
@@ -232,7 +241,16 @@ class Core(object):
             return lower, upper
 
     def set_burn(self, burn):
-        """Set number of samples to burn."""
+        """Set number of samples to burn.
+
+        Parameters
+        ----------
+        burn : int, float
+            An integer designating the number of samples to remove from
+            beginning of chain. A float between 0 and 1 can also be used, which
+            will estimate the integer value as a fraction of the full array
+            length.
+        """
         if burn<1 and burn!=0:
             self.burn = int(burn*self.chain.shape[0])
         else:

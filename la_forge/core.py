@@ -74,7 +74,7 @@ class Core(object):
         self.chain = chain
         self.params = params
 
-        if path is not None:
+        if corepath is not None:
             self.reload(corepath)
 
         if self.chain is None:

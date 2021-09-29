@@ -611,8 +611,7 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
                 is_limit = (gbf<1.0 if gbf is not np.nan else False)
                 if is_limit:
                     f2.append(F[n])
-                    x = core.get_param_confint(param_nm, onesided=True,
-                                               interval=95)
+                    x = core.credint(param_nm, onesided=True,interval=95)
                     ul.append(x)
                 else:
                     f1.append(F[n])
@@ -658,7 +657,7 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
 
             if is_limit and plot_ul:
                 f2.append(F[n])
-                x = core.get_param_confint(param_nm, onesided=True, interval=95)
+                x = core.credint(param_nm, onesided=True, interval=95)
                 ul.append(x)
             else:
                 f1.append(F[n])
@@ -666,7 +665,7 @@ def plot_free_spec(core, axis, parname_root, prior_min=None, ci=95,
                 # hist, binedges = np.histogram(core.get_param(param_nm),bins=100)
                 #
                 # median.append(binedges[np.argmax(hist)])
-                x,y = core.get_param_confint(param_nm, onesided=False, interval=ci)
+                x,y = core.credint(param_nm, onesided=False, interval=ci)
                 minval.append(x)
                 maxval.append(y)
 

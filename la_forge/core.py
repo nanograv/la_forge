@@ -215,13 +215,20 @@ class Core(object):
         """
         return np.median(self.get_param(param))
 
+    def median(self,param):
+        """
+        Returns median of parameter provided.
+        Can be given as a string or list of strings.
+        """
+        return self.get_param_median(param)
+
     def get_param_credint(self, param, onesided=False, interval=68):
         """Returns credible interval of parameter given.
 
         Parameters
         ----------
 
-        param : str
+        param : str, list of str
 
         onesided : bool, optional
             Whether to calculate a one sided or two sided credible interval. The
@@ -240,6 +247,23 @@ class Core(object):
                                    q = 100-lower_q)
             return lower, upper
 
+    def credint(self, param, onesided=False, interval=68):
+        """Returns credible interval of parameter given.
+
+        Parameters
+        ----------
+
+        param : str, list of str
+
+        onesided : bool, optional
+            Whether to calculate a one sided or two sided credible interval. The
+            onesided option gives an upper limit.
+
+        interval: float, optional
+            Width of interval in percent. Default set to 68%.
+        """
+        return self.get_param_credint(param, onesided=False, interval=68)
+        
     def set_burn(self, burn):
         """Set number of samples to burn.
 

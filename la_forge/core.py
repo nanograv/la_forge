@@ -262,8 +262,8 @@ class Core(object):
         interval: float, optional
             Width of interval in percent. Default set to 68%.
         """
-        return self.get_param_credint(param, onesided=False, interval=68)
-        
+        return self.get_param_credint(param, onesided=onesided, interval=interval)
+
     def set_burn(self, burn):
         """Set number of samples to burn.
 

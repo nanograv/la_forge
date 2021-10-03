@@ -1,17 +1,19 @@
-import numpy as np
-import os.path
-import sys, pickle, json
 import glob
-import h5py
+import json
+import os.path
+import pickle
 
+import h5py
+import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 
 from . import utils
 
-__all__ = ['Core','HyperModelCore','TimingCore','load_Core']
+__all__ = ['Core', 'HyperModelCore', 'TimingCore', 'load_Core']
 
-### Convenience function to load a Core object
+# Convenience function to load a Core object
+
 
 def load_pickle_Core(filepath):
     with open(filepath, "rb") as fin:
@@ -19,10 +21,12 @@ def load_pickle_Core(filepath):
         core.filepath = filepath
     return core
 
+
 def load_Core(filepath):
     core = Core(label='empty')
     core.reload(filepath)
     return core
+
 
 class Core(object):
     """
@@ -98,9 +102,9 @@ class Core(object):
                         self.chainpaths = sorted(glob.glob(chaindir+'/chain*.txt'))
                         self.hot_chains = {}
                         for chp in self.chainpaths[1:]:
-                            ch = np.loadtxt(chp,skiprows=skiprows)
-                            ky = chp.split('/')[-1].split('_')[-1].replace('.txt','')
-                            self.hot_chains.update({ky:ch})
+                            ch = np.loadtxt(chp, skiprows=skiprows)
+                            ky = chp.split('/')[-1].split('_')[-1].replace('.txt', '')
+                            self.hot_chains.update({ky: ch})
                 else:
                     msg = f'No chain file found check chaindir: \n {chaindir}'
                     raise FileNotFoundError(msg)
@@ -194,15 +198,15 @@ class Core(object):
 
         `param` can either be a single list or list of strings.
         """
-        if isinstance(param,(list,np.ndarray)):
+        if isinstance(param, (list, np.ndarray)):
             idx = [self.params.index(p) for p in param]
         else:
             idx = self.params.index(param)
 
         if to_burn:
-            return self.chain[self.burn:,idx]
+            return self.chain[self.burn:, idx]
         else:
-            return self.chain[:,idx]
+            return self.chain[:, idx]
 
     def get_map_param(self, param):
         """
@@ -215,7 +219,7 @@ class Core(object):
         """
         return np.median(self.get_param(param))
 
-    def median(self,param):
+    def median(self, param):
         """
         Returns median of parameter provided.
         Can be given as a string or list of strings.
@@ -241,10 +245,10 @@ class Core(object):
             return np.percentile(self.get_param(param), q=interval)
         else:
             lower_q = (100-interval)/2
-            lower  = np.percentile(self.get_param(param),
-                                   q = lower_q)
-            upper  = np.percentile(self.get_param(param),
-                                   q = 100-lower_q)
+            lower = np.percentile(self.get_param(param),
+                                  q=lower_q)
+            upper = np.percentile(self.get_param(param),
+                                  q=100-lower_q)
             return lower, upper
 
     def credint(self, param, onesided=False, interval=68):
@@ -357,10 +361,9 @@ class Core(object):
 
         self.rn_freqs = F
 
-
     def set_fancy_par_names(self, names_list):
         """Set fancy_par_names."""
-        if not isinstance(names_list,list):
+        if not isinstance(names_list, list):
             raise ValueError('Names must be in list form.')
         if len(names_list)!= len(self.params):
             err_msg = 'Must supply same number of names as parameters.'
@@ -434,14 +437,14 @@ class Core(object):
 
     def get_map_dict(self):
         map = [self.get_map_param(p) for p in self.params]
-        return dict(zip(self.params,map))
+        return dict(zip(self.params, map))
 
     @property
     def map_idx(self):
         """Maximum a posteri parameter values"""
         if not hasattr(self, '_map_idx'):
             if 'lnpost' in self.params:
-                self._map_idx = np.argmax(self.get_param('lnpost',to_burn=True))
+                self._map_idx = np.argmax(self.get_param('lnpost', to_burn=True))
             else:
                 raise ValueError('No posterior values given.')
 
@@ -451,7 +454,7 @@ class Core(object):
     def map_params(self):
         """Inverse Noise Weighted Transmission Function."""
         if not hasattr(self, '_map_params'):
-            self._map_params = self.chain[self.burn+self.map_idx,:]
+            self._map_params = self.chain[self.burn+self.map_idx, :]
 
         return self._map_params
 
@@ -459,11 +462,13 @@ class Core(object):
 #---------------HyperModel Core--------------#
 #--------------------------------------------#
 
+
 class HyperModelCore(Core):
     """
     A class to make cores for the chains made by the enterprise_extensions
     HyperModel framework.
     """
+
     def __init__(self, label, param_dict=None, chaindir=None, burn=None,
                  verbose=True, fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, skiprows=0):
@@ -483,13 +488,13 @@ class HyperModelCore(Core):
 
         if param_dict is None:
             try:
-                with open(chaindir+'/model_params.json' , 'r') as fin:
+                with open(chaindir+'/model_params.json', 'r') as fin:
                     param_dict = json.load(fin)
 
-                if any([isinstance(ky,str) for ky in param_dict]):
+                if any([isinstance(ky, str) for ky in param_dict]):
                     self.param_dict = {}
                     for ky, val in param_dict.items():
-                        self.param_dict.update({int(ky):val})
+                        self.param_dict.update({int(ky): val})
 
             except:
                 raise ValueError('Must provide parameter dictionary!!')
@@ -499,7 +504,7 @@ class HyperModelCore(Core):
         self.nmodels = len(list(self.param_dict.keys()))
         #HyperModelCore, self
 
-    def model_core(self,nmodel):
+    def model_core(self, nmodel):
         """
         Return a core that only contains the parameters and samples from a
         single HyperModel model.
@@ -518,7 +523,7 @@ class HyperModelCore(Core):
         for par in model_pars:
             par_idx.append(self.params.index(par))
 
-        model_chain = self.chain[np.rint(self.chain[:,N_idx])==N,:][:,par_idx]
+        model_chain = self.chain[np.rint(self.chain[:, N_idx])==N, :][:, par_idx]
 
         if model_chain.size == 0:
             raise ValueError('There are no samples with this model index.')
@@ -533,6 +538,8 @@ class HyperModelCore(Core):
 #--------------------------------------------#
 #---------------Timing Core------------------#
 #--------------------------------------------#
+
+
 class TimingCore(Core):
     """
     A class for cores that use the enterprise_extensions timing framework. The
@@ -540,6 +547,7 @@ class TimingCore(Core):
     in a standard format, rather than using the real parameter ranges. These
     Cores allow for automatic handling of the parameters.
     """
+
     def __init__(self, label, chaindir=None, burn=None, verbose=True,
                  fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, tm_pars_path=None):
@@ -579,7 +587,7 @@ class TimingCore(Core):
             raise ValueError(err_msg)
 
         non_normalize_pars = []
-        for par,(val,err,ptype) in self.tm_pars_orig.items():
+        for par, (val, err, ptype) in self.tm_pars_orig.items():
             if ptype=='physical':
                 non_normalize_pars.append(par)
 
@@ -596,7 +604,7 @@ class TimingCore(Core):
         """
         tm_pars = list(self.tm_pars_orig.keys())
 
-        if isinstance(param,(list,np.ndarray)):
+        if isinstance(param, (list, np.ndarray)):
             if np.any([p in tm_pars for p in param]):
                 param = [self._get_ent_tm_par_name(p)
                          if p in tm_pars else p for p in param]
@@ -619,10 +627,10 @@ class TimingCore(Core):
                 raise ValueError('Original timing parameter dictionary not set.')
 
             if to_burn:
-                chain = self.chain[self.burn:,idx]
+                chain = self.chain[self.burn:, idx]
             else:
-                chain =  self.chain[:,idx]
-            if isinstance(pidxs,(list,np.ndarray)):
+                chain = self.chain[:, idx]
+            if isinstance(pidxs, (list, np.ndarray)):
 
                 for pidx in pidxs:
                     n = idx.index(pidx)
@@ -638,9 +646,9 @@ class TimingCore(Core):
 
         else:
             if to_burn:
-                return self.chain[self.burn:,idx]
+                return self.chain[self.burn:, idx]
             else:
-                return self.chain[:,idx]
+                return self.chain[:, idx]
 
     def mass_function(self, PB, A1):
         """
@@ -659,7 +667,7 @@ class TimingCore(Core):
             Mass function [solar mass]
 
         """
-        T_sun = 4.925490947e-6 # conversion from solar masses to seconds
+        T_sun = 4.925490947e-6  # conversion from solar masses to seconds
         nb = 2 * np.pi / PB / 86400
         return nb**2 * A1**3 / T_sun
 

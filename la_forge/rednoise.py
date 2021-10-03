@@ -113,7 +113,7 @@ def get_Tspan(pulsar, filepath=None, fourier_components=None,
         return 1/np.amin(fourier_components)
 
 
-def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,
+def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # noqa: C901
                            plot_2d_hist=True, verbose=True, Tspan=None,
                            title_suffix='', freq_yr=1, plotpath=None,
                            cmap='gist_rainbow', n_plaw_realizations=0,
@@ -919,8 +919,8 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
         df = np.diff(np.concatenate((np.array([0]), F)))
         for idx in range(n_realizations):
             exp = sorted_kappa[idx] * (sorted_gam[idx] - sorted_del[idx]) / 2
-            hcf = (10**sorted_Amp[idx] * (F / fyr) ** ((3-sorted_gam[idx])/2) *
-                   (1 + (F / 10**sorted_log10_fb[idx]) ** (1/sorted_kappa[idx])) ** exp)
+            hcf = (10**sorted_Amp[idx] * (F / fyr) ** ((3-sorted_gam[idx])/2)
+                   * (1 + (F / 10**sorted_log10_fb[idx]) ** (1/sorted_kappa[idx])) ** exp)
             rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
             axis.plot(F, np.log10(rho), color=Color, lw=0.4,
                       ls='-', zorder=6, alpha=0.03)
@@ -935,7 +935,7 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
     log10_fb = core.get_param_median(log10_fb_par)
 
     exp = kappa * (gamma - delta) / 2
-    hcf = (10**log10_A * (F / fyr) ** ((3-gamma)/2) *
-           (1 + (F / 10**log10_fb) ** (1/kappa)) ** exp)
+    hcf = (10**log10_A * (F / fyr) ** ((3-gamma)/2)
+           * (1 + (F / 10**log10_fb) ** (1/kappa)) ** exp)
     rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)

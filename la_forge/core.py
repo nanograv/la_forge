@@ -414,7 +414,7 @@ class Core(object):
 
     def reload_pickle(self, filepath):
         with open(filepath, "rb") as fin:
-            self = pickle.load(fin)
+            self = pickle.load(fin)  # noqa: F841
 
     def reload(self, filepath):
         # TODO(Aaron): add support for higher temp. chains
@@ -458,9 +458,9 @@ class Core(object):
 
         return self._map_params
 
-#--------------------------------------------#
-#---------------HyperModel Core--------------#
-#--------------------------------------------#
+# --------------------------------------------#
+# ---------------HyperModel Core--------------#
+# --------------------------------------------#
 
 
 class HyperModelCore(Core):
@@ -502,7 +502,6 @@ class HyperModelCore(Core):
             self.param_dict = param_dict
 
         self.nmodels = len(list(self.param_dict.keys()))
-        #HyperModelCore, self
 
     def model_core(self, nmodel):
         """
@@ -535,9 +534,9 @@ class HyperModelCore(Core):
 
         return model_core
 
-#--------------------------------------------#
-#---------------Timing Core------------------#
-#--------------------------------------------#
+# --------------------------------------------#
+# ---------------Timing Core------------------#
+# --------------------------------------------#
 
 
 class TimingCore(Core):

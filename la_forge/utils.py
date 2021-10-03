@@ -76,7 +76,7 @@ def getMax2d(samples1, samples2, weights=None, smooth=True, bins=[40, 40],
     hist2d, xedges, yedges = np.histogram2d(samples1, samples2, weights=weights,
                                             bins=bins,
                                             range=[[xmin, xmax], [ymin, ymax]])
-    extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+    # extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
 
     if logz:
         hist2d = np.where(hist2d >= 0, hist2d, 1)
@@ -237,8 +237,8 @@ def rn_power(amp, gamma=None, freqs=None, T=None, sum_freqs=True):
 
 def powerlaw(freqs, log10_A=-16, gamma=5):
     df = np.diff(np.concatenate((np.array([0]), freqs)))
-    return ((10**log10_A)**2 / 12.0 / np.pi**2 *
-            fyr**(gamma-3) * freqs**(-gamma) * np.repeat(df, 2))
+    return ((10**log10_A)**2 / 12.0 / np.pi**2
+            * fyr**(gamma-3) * freqs**(-gamma) * np.repeat(df, 2))
 
 
 def weighted_quantile(values, quantiles, sample_weight=None,

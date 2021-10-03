@@ -99,8 +99,6 @@ class Signal_Reconstruction():
         self.mlv_idx = np.argmax(chain[:, -4])
         self.mlv_params = self.sample_posterior(self.mlv_idx)
 
-        ret = {}
-
         if p_list=='all':
             p_list = self.p_names
             p_idx = np.arange(len(self.p_names))
@@ -302,7 +300,7 @@ class Signal_Reconstruction():
                     rn_sig = self.pta.get_signal('{0}_red_noise'.format(psrname))
                     sc = self.pta._signalcollections[p_ct]
                     phi_rn = self._shared_basis_get_phi(sc, params, rn_sig)
-                    phiinv_rn = phi_gw.inv()
+                    phiinv_rn = phi_rn.inv()
                     idx = self.gp_idx[psrname]['red_noise']
                     b = self._get_b(d, TNT, phiinv_rn)
                     wave[psrname] += np.dot(T[:, idx], b[idx])
@@ -414,12 +412,12 @@ class Signal_Reconstruction():
             # Sigma += sps.block_diag(conditioner,'csc')
             # Sigma += eps * sps.eye(phiinv.shape[0])
             phi = self.pta.get_phi(params)  # .astype(np.float128)
-            #phisparse = sps.csc_matrix(phi)
+            # phisparse = sps.csc_matrix(phi)
             # conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
             # phisparse += sps.block_diag(conditioner,'csc')
             # phisparse += eps * sps.identity(phisparse.shape[0])
-            #cf = cholesky(phisparse)
-            #phiinv = cf.inv()
+            # cf = cholesky(phisparse)
+            # phiinv = cf.inv()
 
             # u,s,vT = np.linalg.svd(phi)
             # s_inv=np.diagflat(1/s)
@@ -536,7 +534,7 @@ class Signal_Reconstruction():
 
     def _shared_basis_get_phiinv(self, sc, params, primary_signal):
         """Rewrite of get_phiinv where overlapping bases are ignored."""
-        return _shared_basis_get_phi.get_phi(sc, params, primary_signal).inv()
+        return _shared_basis_get_phi.get_phi(sc, params, primary_signal).inv()  # noqa: F821
 
 
 # Copied implementation of KernelMatrix from enterprise

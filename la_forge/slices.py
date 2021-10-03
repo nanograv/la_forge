@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os.path
 import sys
@@ -91,7 +91,7 @@ class SlicesCore(Core):
 
         # Make all chains the same length by truncating to length of shortest.
         chain_lengths = [len(ch) for ch in chain_list]
-        min_ch_idx = np.argmin(chain_lengths)
+        # min_ch_idx = np.argmin(chain_lengths)
         min_ch_len = np.amin(chain_lengths)
 
         chain = np.zeros((min_ch_len, len(chain_lengths)))
@@ -377,11 +377,6 @@ def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
 
     fig.tight_layout(pad=0.4)
     fig.suptitle(suptitle, y=1.05, fontsize=19)
-    font = {'family': 'serif',
-            'color':  'darkred',
-            'weight': 'normal',
-            'size': 16,
-            }
     fig.text(0.5, -0.02, xlabel, ha='center', usetex=False)
     fig.text(-0.02, 0.5, ylabel, va='center', rotation='vertical', usetex=False)
     if save:
@@ -395,7 +390,7 @@ def plot_slice_2d(core, x_pars, y_pars, titles, ncols=3, bins=30, color='k',
 def plot_slice_bf(bayes_fac, Nyears=None, mjd=False, colors=None, labels=None,
                   title='', log=True, Xlim=None, Ylim=None, markers=None,
                   cmap='gist_rainbow', publication_params=False, save=False,
-                  show=True,  arrow_len=60, standalone=True):
+                  show=True, arrow_len=60, standalone=True):
 
     if Nyears is None:
         Nyears = [3.0 + ii*0.5 for ii in range(17)]
@@ -421,7 +416,7 @@ def plot_slice_bf(bayes_fac, Nyears=None, mjd=False, colors=None, labels=None,
                         linestyle='none', marker=markers[ii], color=colors[ii],
                         label=labels[ii])
         if bf_ll.size!=0:
-            ax=plt.errorbar(bf_ll[:, 0], bf_ll[:, 1], yerr=arrow_len,
+            ax=plt.errorbar(bf_ll[:, 0], bf_ll[:, 1], yerr=arrow_len,  # noqa: F841
                             lolims=True, linestyle='none', marker=markers[ii],
                             color=colors[ii], fillstyle='none')
 

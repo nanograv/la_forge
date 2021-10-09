@@ -466,22 +466,23 @@ class Signal_Reconstruction():
         return {par: self.chain[index, ct] for ct, par
                 in enumerate(self.pta.param_names)}
 
-    def sample_posterior(self, samp_idx, array_params=['alphas', 'rho']):
+    def sample_posterior(self, samp_idx, array_params=['alphas', 'rho', 'nE']):
         param_names = self.pta.param_names
         if any([any([array_str in par for par in param_names])
                 for array_str in array_params]):
-
+            # Check for any array params and make samples appropriate shape.
             mask = np.ones(len(param_names), dtype=bool)
 
             array_par_dict = {}
             for array_str in array_params:
+                # Go through each type of possible array sample.
                 mask &= [array_str not in par for par in param_names]
                 if any([array_str+'_0' in par for par in param_names]):
                     array_par_name = [par.replace('_0', '')
                                       for par in param_names
                                       if array_str+'_0'in par][0]
                     array_idxs = np.where([array_str in par
-                                           for par in param_names])
+                                           for par in param_names])[0]
                     par_array = self.chain[samp_idx, array_idxs]
                     array_par_dict.update({array_par_name: par_array})
 

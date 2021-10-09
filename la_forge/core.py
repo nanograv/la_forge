@@ -2,6 +2,7 @@ import glob
 import json
 import os.path
 import pickle
+import logging
 
 import h5py
 import numpy as np
@@ -10,21 +11,17 @@ from astropy.table import Table
 
 from . import utils
 
+logger = logging.getLogger(__name__)
+
 __all__ = ['Core', 'HyperModelCore', 'TimingCore', 'load_Core']
 
 # Convenience function to load a Core object
 
 
-def load_pickle_Core(filepath):
+def load_Core(filepath):
     with open(filepath, "rb") as fin:
         core = pickle.load(fin)
         core.filepath = filepath
-    return core
-
-
-def load_Core(filepath):
-    core = Core(label='empty')
-    core.reload(filepath)
     return core
 
 
@@ -69,7 +66,7 @@ class Core(object):
         multiple times.
     """
 
-    def __init__(self, label=None, chaindir=None, burn=None, verbose=True,
+    def __init__(self, label=None, chaindir=None, burn=0.25, verbose=True,
                  fancy_par_names=None, chain=None, params=None, corepath=None,
                  pt_chains=False, skiprows=0):
         self.label = label
@@ -77,17 +74,18 @@ class Core(object):
         self.fancy_par_names = fancy_par_names
         self.chain = chain
         self.params = params
+        self.corepath = corepath
 
         if corepath is not None:
-            self.reload(corepath)
+            self._load(corepath)
 
         if self.chain is None:
-
             if os.path.isfile(chaindir + '/chain.fits'):
                 myfile = fits.open(chaindir + '/chain.fits')
                 table = Table(myfile[1].data)
                 self.params = table.colnames
                 self.chain = np.array([table[p] for p in self.params]).T
+                self.chainpath = chaindir + '/chain.fits'
             else:
                 # Load chain
                 if os.path.isfile(chaindir + '/chain_1.txt'):
@@ -99,7 +97,7 @@ class Core(object):
                                             skiprows=skiprows)
                     self.chainpath = chaindir + '/chain_1.0.txt'
                     if pt_chains:
-                        self.chainpaths = sorted(glob.glob(chaindir+'/chain*.txt'))
+                        self.chainpaths = sorted(glob.glob(chaindir + '/chain*.txt'))
                         self.hot_chains = {}
                         for chp in self.chainpaths[1:]:
                             ch = np.loadtxt(chp, skiprows=skiprows)
@@ -124,10 +122,10 @@ class Core(object):
                     raise ValueError('Must set a parameter list if '
                                      'none provided in directory.')
 
-            jump_paths = glob.glob(chaindir+'/*jump*.txt')
-            self.jumps={}
+            jump_paths = glob.glob(chaindir + '/*jump*.txt')
+            self.jumps = {}
             for path in jump_paths:
-                if path.split('/')[-1]=='jumps.txt':
+                if path.split('/')[-1] == 'jumps.txt':
                     dtype = str
                 else:
                     dtype = np.float
@@ -135,13 +133,13 @@ class Core(object):
                 self.jumps[ky] = np.loadtxt(path, dtype=dtype)
 
             try:
-                prior_path = glob.glob(chaindir+'/priors.txt')[0]
+                prior_path = glob.glob(chaindir + '/priors.txt')[0]
                 self.priors = np.loadtxt(prior_path, dtype=str, delimiter='/t')
             except (FileNotFoundError, IndexError):
                 self.priors = None
 
             try:
-                cov_path = glob.glob(chaindir+'/cov.npy')[0]
+                cov_path = glob.glob(chaindir + '/cov.npy')[0]
                 self.cov = np.load(cov_path)
             except (FileNotFoundError, IndexError):
                 self.cov = None
@@ -149,29 +147,23 @@ class Core(object):
         elif chain is not None and params is not None:
             self.chain = chain
             self.params = params
+            self.chainpath = None
         elif chain is not None and params is None:
             raise ValueError('Must declare parameters with chain.')
 
         if self.chain.shape[1] > len(self.params):
-            self.params.extend(['lnpost',
-                                'lnlike',
-                                'chain_accept',
-                                'pt_chain_accept'])
-            if verbose:
-                print('Appending PTMCMCSampler sampling parameters to end of'
-                      ' parameter list.\nIf unwanted please provide a parameter'
-                      ' list.')
+            ptmcmc_end = ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']
+            # This is a check for old Cores with only 'lnlike'.
+            if any([p in self.params for p in ptmcmc_end]):
+                for p in ptmcmc_end:
+                    if p in self.params:
+                        self.params.remove(p)
+            self.params.extend(ptmcmc_end)
+            msg = 'Appending [\'lnpost\',\'lnlike\',\'chain_accept\','
+            msg += '\'pt_chain_accept\'] to end of params list.'
+            logger.info(msg)
 
-        if burn is None:
-            self.set_burn(int(0.25*self.chain.shape[0]))
-            if verbose:
-                burn_msg = 'No burn specified. Burn set to 25% of'
-                burn_msg += ' chain length, {0}'.format(self.burn)
-                burn_msg += '\n'+'You may change the burn length'
-                burn_msg += ' with core.set_burn()'
-                print(burn_msg)
-        else:
-            self.set_burn(burn)
+        self.set_burn(burn)
 
         if fancy_par_names is None:
             pass
@@ -244,11 +236,11 @@ class Core(object):
         if onesided:
             return np.percentile(self.get_param(param), q=interval)
         else:
-            lower_q = (100-interval)/2
+            lower_q = (100 - interval) / 2
             lower = np.percentile(self.get_param(param),
                                   q=lower_q)
             upper = np.percentile(self.get_param(param),
-                                  q=100-lower_q)
+                                  q=100 - lower_q)
             return lower, upper
 
     def credint(self, param, onesided=False, interval=68):
@@ -279,8 +271,8 @@ class Core(object):
             will estimate the integer value as a fraction of the full array
             length.
         """
-        if burn<1 and burn!=0:
-            self.burn = int(burn*self.chain.shape[0])
+        if burn < 1 and burn != 0:
+            self.burn = int(burn * self.chain.shape[0])
         else:
             self.burn = int(burn)
 
@@ -335,13 +327,13 @@ class Core(object):
             if log:
                 F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)
             else:
-                F = np.linspace(1/T, nfreqs/T, nfreqs)
+                F = np.linspace(1/T, nfreqs / T, nfreqs)
         elif partimdir is not None:
             T = utils.get_Tspan(psr, partimdir)
             if log:
-                F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)
+                F = np.logspace(np.log10(1 / T), np.log10(nfreqs / T), nfreqs)
             else:
-                F = np.linspace(1/T, nfreqs/T, nfreqs)
+                F = np.linspace(1 / T, nfreqs / T, nfreqs)
         else:
             if os.path.isfile(freq_path):
                 F = np.loadtxt(freq_path)
@@ -365,7 +357,7 @@ class Core(object):
         """Set fancy_par_names."""
         if not isinstance(names_list, list):
             raise ValueError('Names must be in list form.')
-        if len(names_list)!= len(self.params):
+        if len(names_list) != len(self.params):
             err_msg = 'Must supply same number of names as parameters.'
             err_msg += '{0} names supplied '.format(len(names_list))
             err_msg += 'for {0} parameters.'.format(len(self.params))
@@ -381,59 +373,89 @@ class Core(object):
         # TODO(Aaron): add support for hypermodels
         dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
         with h5py.File(filepath, 'w') as hf:
+            hf.create_dataset('params',
+                              data=np.array(self.params, dtype="O"),
+                              dtype=dt)
+            hf.create_dataset('chain',
+                              data=self.chain,
+                              compression="gzip",
+                              compression_opts=9)
             g1 = hf.create_group('metadata')
-            g2 = hf.create_group('jumps')
-            g3 = hf.create_group('jump_percents')
-
             g1.create_dataset('label', data=self.label)
+            g1.create_dataset('burn', data=self.burn)
             g1.create_dataset('chaindir', data=self.chaindir)
             g1.create_dataset('chainpath', data=self.chainpath)
-            g1.create_dataset('burn', data=self.burn)
 
-            for key in self.jumps:
-                try:
-                    g2.create_dataset(key, data=self.jumps[key])  # each jump array gets its own key
-                except:
-                    for i in range(len(self.jumps[key])):
-                        g3.create_dataset(self.jumps[key][i][0], data=np.float(self.jumps[key][i][1]))
+            if hasattr(self, 'jumps'):
+                g2 = hf.create_group('jumps')
+                g3 = hf.create_group('jump_percents')
+                for key in self.jumps:
+                    try:
+                        # each jump array gets its own key
+                        g2.create_dataset(key, data=self.jumps[key])
+                    except:
+                        for i in range(len(self.jumps[key])):
+                            g3.create_dataset(self.jumps[key][i][0],
+                                              data=np.float(self.jumps[key][i][1]))
 
             if self.fancy_par_names is not None:
                 hf.create_dataset('fancy_par_names', data=np.array(self.fancy_par_names, dtype="O"), dtype=dt)
 
-            hf.create_dataset('params', data=np.array(self.params, dtype="O"), dtype=dt)
-            hf.create_dataset('chain', data=self.chain, compression="gzip", compression_opts=9)
-            hf.create_dataset('priors', data=np.array(self.priors, dtype="O"), dtype=dt)
-            hf.create_dataset('cov', data=self.cov, compression="gzip", compression_opts=9)
+            if hasattr(self, 'priors'):
+                hf.create_dataset('priors',
+                                  data=np.array(self.priors, dtype="O"),
+                                  dtype=dt)
+            if hasattr(self, 'cov'):
+                hf.create_dataset('cov',
+                                  data=self.cov,
+                                  compression="gzip",
+                                  compression_opts=9)
             if self.rn_freqs is not None:
                 hf.create_dataset('rn_freqs', data=self.rn_freqs)
 
-    # def save(self, filepath):
-    #     self.filepath = filepath
-    #     with open(filepath, "wb") as fout:
-    #         pickle.dump(self,fout)
+    def _load(self, filepath):
+        if h5py.is_hdf5(filepath):
+            self._load_hdf5(filepath)
+        else:
+            try:
+                self._load_pickle(filepath)
+            except:
+                raise ValueError('Filepath is not a valid hdf5 or pickle file.')
 
-    def reload_pickle(self, filepath):
+    def _load_pickle(self, filepath):
         with open(filepath, "rb") as fin:
-            self = pickle.load(fin)  # noqa: F841
+            pkl = pickle.load(fin)  # noqa: F841
 
-    def reload(self, filepath):
+        for nm, att in pkl.__dict__.items():
+            setattr(self, nm, att)
+
+    def _load_hdf5(self, filepath):
         # TODO(Aaron): add support for higher temp. chains
         # TODO(Aaron): add support for hypermodels
         print('Loading data from HDF5 file....')
         with h5py.File(filepath, 'r') as hf:
             self.chain = np.array(hf['chain'])
-            self.cov = np.array(hf['cov'])
-            self.params = np.array(hf['params']).astype(str)
+            self.params = np.array(hf['params']).astype(str).tolist()
             self.burn = float(np.array(hf['metadata']['burn']))
             self.chaindir = str(np.array(hf['metadata']['chaindir']).astype(str))
+            self.chainpath = str(np.array(hf['metadata']['chainpath']).astype(str))
+            if self.chaindir == 'None':
+                self.chaindir = None
+            if self.chainpath == 'None':
+                self.chainpath = None
             self.label = str(np.array(hf['metadata']['label']).astype(str))
-            self.jump_percents = {}
-            for key in hf['jump_percents']:
-                self.jump_percents[key] = float(np.array(hf['jump_percents'][key]))
-            self.jumps = {}
-            for key in hf['jumps']:
-                self.jumps[key] = np.array(hf['jumps'][key])
-            self.priors = np.array(hf['priors']).astype(str)
+
+            if 'cov' in hf:
+                self.cov = np.array(hf['cov'])
+            if 'jumps' in hf:
+                self.jump_percents = {}
+                for key in hf['jump_percents']:
+                    self.jump_percents[key] = float(np.array(hf['jump_percents'][key]))
+                self.jumps = {}
+                for key in hf['jumps']:
+                    self.jumps[key] = np.array(hf['jumps'][key])
+            if 'priors' in hf:
+                self.priors = np.array(hf['priors']).astype(str)
 
     def get_map_dict(self):
         map = [self.get_map_param(p) for p in self.params]
@@ -454,7 +476,7 @@ class Core(object):
     def map_params(self):
         """Inverse Noise Weighted Transmission Function."""
         if not hasattr(self, '_map_params'):
-            self._map_params = self.chain[self.burn+self.map_idx, :]
+            self._map_params = self.chain[self.burn + self.map_idx, :]
 
         return self._map_params
 
@@ -469,7 +491,7 @@ class HyperModelCore(Core):
     HyperModel framework.
     """
 
-    def __init__(self, label, param_dict=None, chaindir=None, burn=None,
+    def __init__(self, label, param_dict=None, chaindir=None, burn=0.25,
                  verbose=True, fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, skiprows=0):
         """
@@ -488,7 +510,7 @@ class HyperModelCore(Core):
 
         if param_dict is None:
             try:
-                with open(chaindir+'/model_params.json', 'r') as fin:
+                with open(chaindir + '/model_params.json', 'r') as fin:
                     param_dict = json.load(fin)
 
                 if any([isinstance(ky, str) for ky in param_dict]):
@@ -522,12 +544,12 @@ class HyperModelCore(Core):
         for par in model_pars:
             par_idx.append(self.params.index(par))
 
-        model_chain = self.chain[np.rint(self.chain[:, N_idx])==N, :][:, par_idx]
+        model_chain = self.chain[np.rint(self.chain[:, N_idx]) == N, :][:, par_idx]
 
         if model_chain.size == 0:
             raise ValueError('There are no samples with this model index.')
 
-        model_core = Core(label=self.label+'_{0}'.format(N), chain=model_chain,
+        model_core = Core(label=self.label + '_{0}'.format(N), chain=model_chain,
                           params=model_pars, verbose=False)
         if self.rn_freqs is not None:
             model_core.set_rn_freqs(freqs=self.rn_freqs)
@@ -547,7 +569,7 @@ class TimingCore(Core):
     Cores allow for automatic handling of the parameters.
     """
 
-    def __init__(self, label, chaindir=None, burn=None, verbose=True,
+    def __init__(self, label, chaindir=None, burn=0.25, verbose=True,
                  fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, tm_pars_path=None):
         """
@@ -587,7 +609,7 @@ class TimingCore(Core):
 
         non_normalize_pars = []
         for par, (val, err, ptype) in self.tm_pars_orig.items():
-            if ptype=='physical':
+            if ptype == 'physical':
                 non_normalize_pars.append(par)
 
         self._norm_tm_par_idxs = [self.params.index(p) for p in self.params
@@ -635,11 +657,11 @@ class TimingCore(Core):
                     n = idx.index(pidx)
                     par = self.params[pidx]
                     val, err, _ = self.tm_pars_orig[self._get_real_tm_par_name(par)]
-                    chain[n] = chain[n]*err + val
+                    chain[n] = chain[n] * err + val
             else:
                 par = self.params[pidxs]
                 val, err, _ = self.tm_pars_orig[self._get_real_tm_par_name(par)]
-                chain = chain*err + val
+                chain = chain * err + val
 
             return chain
 
@@ -693,9 +715,9 @@ class TimingCore(Core):
 
     def _get_ent_tm_par_name(self, param):
         if 'DMX' in param:
-            return [p for p in self.params if param=='_'.join(p.split('_')[-2:])][0]
+            return [p for p in self.params if param == '_'.join(p.split('_')[-2:])][0]
         else:
-            return [p for p in self.params if param==p.split('_')[-1]][0]
+            return [p for p in self.params if param == p.split('_')[-1]][0]
 
 # #--------------------------------------------#
 # #---------------Dropout Core-----------------#

@@ -193,7 +193,11 @@ class Core(object):
         if isinstance(param, (list, np.ndarray)):
             idx = [self.params.index(p) for p in param]
         else:
-            idx = self.params.index(param)
+            try:
+                idx = self.params.index(param)
+            except ValueError:
+                msg = f'\'{param}\' not in list. Must use on of {self.params}'
+                raise ValueError(msg)
 
         if to_burn:
             return self.chain[self.burn:, idx]

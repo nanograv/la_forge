@@ -75,6 +75,9 @@ class Core(object):
         self.chain = chain
         self.params = params
         self.corepath = corepath
+        self._metadata = []
+        self._arrays = []
+        self._list_of_str = []
 
         if corepath is not None:
             self._load(corepath)
@@ -196,7 +199,7 @@ class Core(object):
             try:
                 idx = self.params.index(param)
             except ValueError:
-                msg = f'\'{param}\' not in list. Must use on of {self.params}'
+                msg = f'\'{param}\' not in list.\nMust use on of:\n{self.params}'
                 raise ValueError(msg)
 
         if to_burn:
@@ -417,6 +420,27 @@ class Core(object):
             if self.rn_freqs is not None:
                 hf.create_dataset('rn_freqs', data=self.rn_freqs)
 
+
+    def _dict2hdf5(self, hdf5, dict, name):
+        """
+        Convenience function to make saving to hdf5 easier.
+
+        Parameters
+        ----------
+        hdf5 : h5py file
+            The hdf5 file to add a group to from the dictionary.
+
+        name : str
+            The name of the new group.
+
+        dict : dict
+            The dictionary to add to the hdf5 group.
+        """
+
+        g = hdf5.create_group(name)
+        for ky, val in dict.values():
+            g.create_dataset(ky, data=val)
+
     def _load(self, filepath):
         if h5py.is_hdf5(filepath):
             self._load_hdf5(filepath)
@@ -460,6 +484,7 @@ class Core(object):
                     self.jumps[key] = np.array(hf['jumps'][key])
             if 'priors' in hf:
                 self.priors = np.array(hf['priors']).astype(str)
+
 
     def get_map_dict(self):
         map = [self.get_map_param(p) for p in self.params]

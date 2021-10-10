@@ -74,7 +74,7 @@ class Core(object):
         self.chain = chain
         self.params = params
         self.corepath = corepath
-        self._metadata = []
+        self._metadata = ['label','burn','chaindir','chainpath']
         self._arrays = []
         self._list_of_str = []
 
@@ -395,11 +395,13 @@ class Core(object):
                               data=self.chain,
                               compression="gzip",
                               compression_opts=9)
-            g1 = hf.create_group('metadata')
-            g1.create_dataset('label', data=self.label)
-            g1.create_dataset('burn', data=self.burn)
-            g1.create_dataset('chaindir', data=self.chaindir)
-            g1.create_dataset('chainpath', data=self.chainpath)
+            metadata = {ky:getattr(self,ky) for ky in self._metadata}
+            self._dict2hdf5(hf, metadata, 'metadata')
+            # g1 = hf.create_group('metadata')
+            # g1.create_dataset('label', data=self.label)
+            # g1.create_dataset('burn', data=self.burn)
+            # g1.create_dataset('chaindir', data=self.chaindir)
+            # g1.create_dataset('chainpath', data=self.chainpath)
 
             if hasattr(self, 'jumps'):
                 self._dict2hdf5(hf, self.jumps, 'jumps')
@@ -492,6 +494,7 @@ class Core(object):
             self.params = np.array(hf['params']).astype(str).tolist()
             # self.burn = int(np.array(hf['metadata']['burn']))
             metadata = self._hdf5_2dict(hf, 'metadata', dtype=str, set_return='return')
+            print(metadata)
             metadata.update({'burn':int(metadata['burn'])})
             self.__dict__.update(metadata)
             # self.chaindir = str(np.array(hf['metadata']['chaindir']).astype(str))

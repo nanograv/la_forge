@@ -66,10 +66,9 @@ class Core(object):
         multiple times.
     """
 
-    def __init__(self, label=None, chaindir=None, burn=0.25, verbose=True,
-                 fancy_par_names=None, chain=None, params=None, corepath=None,
-                 pt_chains=False, skiprows=0):
-        self.label = label
+    def __init__(self, chaindir=None, corepath=None, burn=0.25, label=None,
+                 fancy_par_names=None, chain=None, params=None,
+                 pt_chains=False, skiprows=0, verbose=True,):
         self.chaindir = chaindir
         self.fancy_par_names = fancy_par_names
         self.chain = chain
@@ -129,11 +128,11 @@ class Core(object):
             self.jumps = {}
             for path in jump_paths:
                 if path.split('/')[-1] == 'jumps.txt':
-                    dtype = str
+                    jf = np.loadtxt(path, dtype=str)
+                    self.jump_fractions = dict(zip(jf[:,0],jf[:,1].astype(float)))
                 else:
-                    dtype = np.float
-                ky = path.split('/')[-1].split('.')[0]
-                self.jumps[ky] = np.loadtxt(path, dtype=dtype)
+                    ky = path.split('/')[-1].split('.')[0]
+                    self.jumps[ky] = np.loadtxt(path, dtype=float)
 
             try:
                 prior_path = glob.glob(chaindir + '/priors.txt')[0]
@@ -172,6 +171,15 @@ class Core(object):
             pass
         else:
             self.set_fancy_par_names(fancy_par_names)
+
+        if label is None:
+            # Give the best label possible.
+            if self.chaindir is not None:
+                self.label = self.chaindir
+            elif self.corepath is not None:
+                self.label = self.corepath
+            else:
+                self.label = 'None'
 
         self.rn_freqs = None
         if verbose:
@@ -394,16 +402,11 @@ class Core(object):
             g1.create_dataset('chainpath', data=self.chainpath)
 
             if hasattr(self, 'jumps'):
-                g2 = hf.create_group('jumps')
-                g3 = hf.create_group('jump_percents')
-                for key in self.jumps:
-                    try:
-                        # each jump array gets its own key
-                        g2.create_dataset(key, data=self.jumps[key])
-                    except:
-                        for i in range(len(self.jumps[key])):
-                            g3.create_dataset(self.jumps[key][i][0],
-                                              data=np.float(self.jumps[key][i][1]))
+                self._dict2hdf5(hf, self.jumps, 'jumps')
+                self._dict2hdf5(hf, self.jump_fractions, 'jump_fractions')
+
+            if hasattr(self, 'hot_chains'):
+                self._dict2hdf5(hf, self.hot_chains, 'hot_chains')
 
             if self.fancy_par_names is not None:
                 hf.create_dataset('fancy_par_names', data=np.array(self.fancy_par_names, dtype="O"), dtype=dt)
@@ -421,7 +424,7 @@ class Core(object):
                 hf.create_dataset('rn_freqs', data=self.rn_freqs)
 
 
-    def _dict2hdf5(self, hdf5, dict, name):
+    def _dict2hdf5(self, hdf5, d, name):
         """
         Convenience function to make saving to hdf5 easier.
 
@@ -438,8 +441,31 @@ class Core(object):
         """
 
         g = hdf5.create_group(name)
-        for ky, val in dict.values():
+        for ky, val in d.items():
             g.create_dataset(ky, data=val)
+
+    def _hdf5_2dict(self, hdf5, name, dtype=float, set_return='set'):
+        """
+        Convenience function to pull dicts from hdf5 easily.
+
+        Parameters
+        ----------
+        hdf5 : h5py file
+            The hdf5 file from which to pull the dictionary.
+
+        name : str
+            The name of the new attribute, which will be a dictionary.
+
+        dtype : dtype {float,str}
+        """
+        d = {ky:(np.array(val).astype(dtype)
+             if val.size!=1 else np.array(val).astype(dtype).tolist())
+             for ky,val in hdf5[name].items()}
+        if set_return == 'set':
+            setattr(self,name,d)
+        else:
+            return d
+
 
     def _load(self, filepath):
         if h5py.is_hdf5(filepath):
@@ -464,27 +490,27 @@ class Core(object):
         with h5py.File(filepath, 'r') as hf:
             self.chain = np.array(hf['chain'])
             self.params = np.array(hf['params']).astype(str).tolist()
-            self.burn = float(np.array(hf['metadata']['burn']))
-            self.chaindir = str(np.array(hf['metadata']['chaindir']).astype(str))
-            self.chainpath = str(np.array(hf['metadata']['chainpath']).astype(str))
+            # self.burn = int(np.array(hf['metadata']['burn']))
+            metadata = self._hdf5_2dict(hf, 'metadata', dtype=str, set_return='return')
+            metadata.update({'burn':int(metadata['burn'])})
+            self.__dict__.update(metadata)
+            # self.chaindir = str(np.array(hf['metadata']['chaindir']).astype(str))
+            # self.chainpath = str(np.array(hf['metadata']['chainpath']).astype(str))
             if self.chaindir == 'None':
                 self.chaindir = None
             if self.chainpath == 'None':
                 self.chainpath = None
-            self.label = str(np.array(hf['metadata']['label']).astype(str))
+            # self.label = str(np.array(hf['metadata']['label']).astype(str))
 
             if 'cov' in hf:
                 self.cov = np.array(hf['cov'])
             if 'jumps' in hf:
-                self.jump_percents = {}
-                for key in hf['jump_percents']:
-                    self.jump_percents[key] = float(np.array(hf['jump_percents'][key]))
-                self.jumps = {}
-                for key in hf['jumps']:
-                    self.jumps[key] = np.array(hf['jumps'][key])
+                self._hdf5_2dict(hf,'jumps')
+                self._hdf5_2dict(hf,'jump_fractions')
             if 'priors' in hf:
                 self.priors = np.array(hf['priors']).astype(str)
-
+            if 'hot_chains' in hf:
+                self._hdf5_2dict(hf, 'hot_chains')
 
     def get_map_dict(self):
         map = [self.get_map_param(p) for p in self.params]

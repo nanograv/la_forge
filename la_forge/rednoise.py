@@ -193,7 +193,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
 
     """
     if any([c.rn_freqs is None for c in cores]):
-        msg = 'Red noise frequencies must be set before plotting most red '
+        msg = 'Red noise frequencies must be set before plotting red '
         msg += 'noise figures.\n'
         msg += 'Please use core.set_rn_freqs() to set, if needed.'
         raise ValueError(msg)

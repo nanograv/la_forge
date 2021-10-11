@@ -75,6 +75,7 @@ class Core(object):
         self.params = params
         self.corepath = corepath
         # Set defaults to None for accounting
+        self.rn_freqs = None
         self.priors = None
         self.cov = None
         self.jumps = None
@@ -182,16 +183,16 @@ class Core(object):
         else:
             self.set_fancy_par_names(fancy_par_names)
 
+
         if label is None:
-            # Give the best label possible.
+            # Attempt to give the best label possible.
             if self.chaindir is not None:
                 self.label = self.chaindir
             elif self.corepath is not None:
                 self.label = self.corepath
-            else:
-                self.label = 'None'
+        else:
+            self.label = label
 
-        self.rn_freqs = None
 
     def __call__(self, param, to_burn=True):
         """
@@ -567,7 +568,7 @@ class HyperModelCore(Core):
             Dictionary of parameter lists, corresponding to the parameters in
             each sub-model of the hypermodel.
         """
-        # Call to add `param_dict` to dictionaries for hdf5 to search for. 
+        # Call to add `param_dict` to dictionaries for hdf5 to search for.
         super()._set_hdf5_lists(append=[('param_dict','_savedicts')])
         super().__init__(chaindir=chaindir, burn=burn,
                          corepath=corepath,
@@ -594,8 +595,7 @@ class HyperModelCore(Core):
             self.param_dict = param_dict
 
         self.nmodels = len(list(self.param_dict.keys()))
-        # self._savedicts.append('param_dict')
-        # self._metadata.append('nmodels')
+
 
     def model_core(self, nmodel):
         """

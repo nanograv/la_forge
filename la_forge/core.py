@@ -412,7 +412,7 @@ class Core(object):
 
             for arr in self._savearrays:
                 zipped = ['cov']  # Add more zipped arrays here.
-                if getattr(self,arr) is not None and arr in :
+                if getattr(self,arr) is not None and arr in zipped:
                     hf.create_dataset(arr,
                                       data=getattr(self,arr),
                                       compression="gzip",

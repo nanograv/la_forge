@@ -83,7 +83,7 @@ class Core(object):
         self.hot_chains = None
 
         # For hdf5 saving/loading
-        if  not any([hasattr(self,l) for l in ['_metadata',
+        if not any([hasattr(self, l) for l in ['_metadata',
                                                '_savedicts',
                                                '_savearrays',
                                                '_savelist_of_str']]):
@@ -140,7 +140,7 @@ class Core(object):
             for path in jump_paths:
                 if path.split('/')[-1] == 'jumps.txt':
                     jf = np.loadtxt(path, dtype=str)
-                    self.jump_fractions = dict(zip(jf[:,0],jf[:,1].astype(float)))
+                    self.jump_fractions = dict(zip(jf[:, 0], jf[:, 1].astype(float)))
                 else:
                     ky = path.split('/')[-1].split('.')[0]
                     self.jumps[ky] = np.loadtxt(path, dtype=float)
@@ -190,7 +190,6 @@ class Core(object):
         else:
             self.set_fancy_par_names(fancy_par_names)
 
-
         if label is None:
             # Attempt to give the best label possible.
             if self.chaindir is not None:
@@ -199,7 +198,6 @@ class Core(object):
                 self.label = self.corepath
         else:
             self.label = label
-
 
     def __call__(self, param, to_burn=True):
         """
@@ -408,8 +406,8 @@ class Core(object):
                               data=self.chain,
                               compression="gzip",
                               compression_opts=9)
-            metadata = {ky:getattr(self,ky) for ky in self._metadata
-                        if getattr(self,ky) is not None}
+            metadata = {ky: getattr(self, ky) for ky in self._metadata
+                        if getattr(self, ky) is not None}
             self._dict2hdf5(hf, metadata, 'metadata')
 
             for arr in self._savearrays:

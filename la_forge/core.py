@@ -411,8 +411,8 @@ class Core(object):
             self._dict2hdf5(hf, metadata, 'metadata')
 
             for arr in self._savearrays:
-                if getattr(self,arr) is not None and arr in ['cov']:
-                    # Add more zipped arrays here.
+                zipped = ['cov']  # Add more zipped arrays here.
+                if getattr(self,arr) is not None and arr in :
                     hf.create_dataset(arr,
                                       data=getattr(self,arr),
                                       compression="gzip",

@@ -192,6 +192,11 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
         This is the bbox_to_anchor value for the legend.
 
     """
+    if any([c.rn_freqs is None for c in cores]):
+        msg = 'Red noise frequencies must be set before plotting most red '
+        msg += 'noise figures.\n'
+        msg += 'Please use core.set_rn_freqs() to set, if needed.'
+        raise ValueError(msg)
 
     if plot_2d_hist:
         fig, axes = plt.subplots(1, 2, figsize=(12, 4.2))
@@ -421,10 +426,6 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
             ymin = min(ax1_ylim[:, 0])
             ymax = max(ax1_ylim[:, 1])
             axes[1].set_ylim((ymin, ymax))
-        # if ax1_ylim_tp is not None and ax1_ylim_pl is not None:
-        #     ymin = min(ax1_ylim_pl[0], ax1_ylim_tp[0])
-        #     ymax = max(ax1_ylim_pl[1], ax1_ylim_tp[1])
-        #     axes[1].set_ylim((ymin,ymax))
 
         if legend_loc is None:
             legend_loc='lower center'
@@ -435,9 +436,6 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
     if ncol is None:
         ncol=len(labels)
 
-    # leg=axes[0].legend(lines,labels,loc=legend_loc,fontsize=12,fancybox=True,
-    #                bbox_to_anchor=Bbox_anchor, ncol=len(labels))
-    # legend_loc
     if legend:
         leg = fig.legend(lines, labels, loc=legend_loc, fontsize=12, fancybox=True,
                          ncol=ncol)  # , bbox_to_anchor=Bbox_anchor)

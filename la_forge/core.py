@@ -157,6 +157,13 @@ class Core(object):
             except (FileNotFoundError, IndexError):
                 self.cov = None
 
+            try:
+                rt_path = glob.glob(chaindir + '/runtime_info.txt')[0]
+                with open(rt_path, 'r') as file:
+                    self.runtime_info = file.read()
+            except (FileNotFoundError, IndexError):
+                self.runtime_info = None
+
         elif chain is not None and params is not None:
             self.chain = chain
             self.params = params
@@ -479,7 +486,7 @@ class Core(object):
             List of tuples of attributes to append to saving lists for HDF5
             files. Each member must be (str of attribute, list to append to).
         """
-        self._metadata = ['label','burn','chaindir','chainpath']
+        self._metadata = ['label','burn','chaindir','chainpath','runtime_info']
         self._savedicts = ['jumps','jump_fractions','hot_chains']
         self._savearrays = ['cov','rn_freqs']
         self._savelist_of_str = ['priors','fancy_par_names']

@@ -14,6 +14,7 @@ testdir = os.path.dirname(os.path.abspath(__file__))
 datadir = os.path.join(testdir, 'data')
 
 chaindir = os.path.join(datadir, 'chains', 'adv_noise_J1713+0747', '')
+chaindir2 = os.path.join(datadir, 'chains', 'ng12p5yr_pint_be', '')
 plaw_core_path = os.path.join(datadir, 'cores', 'J1713+0747_plaw_dmx.core')
 fs_core_path = os.path.join(datadir, 'cores', 'J1713+0747_fs_dmx.core')
 
@@ -48,6 +49,13 @@ def hmc_core():
     return core.HyperModelCore(label='J1713+0747 Adv Noise Modeling Round 3a',
                                chaindir=chaindir, pt_chains=True, skiprows=10)
 
+@pytest.fixture
+def pta_core():
+    """Full PTA BayesEphem Chain. NG12.5 yr dataset
+    """
+    return core.Core(label='Full PTA BayesEphem Chain. NG12.5 yr dataset',
+                     chaindir=chaindir2, pt_chains=False, skiprows=10)
+
 
 def test_core_set_rn_freqs(plaw_core, fs_core):
     """Test various funcs in set_rn_freqs method."""
@@ -69,6 +77,16 @@ def test_core_from_ptmcmc_chains():
     assert isinstance(c0.credint(c0.params[0], onesided=True, interval=95), float)
     assert isinstance(c0.credint(c0.params[0]), tuple)
 
+def test_core_loading(pta_core):
+    """Tests the loading of a Core into a class. """
+    pta_core.save(testdir+'test_hdf5.core')
+    c1 = core.Core(corepath=testdir+'test_hdf5.core')  # test loading
+    assert hasattr(c1, 'get_param')
+    assert hasattr(c1, 'params')
+    assert np.array_equal(c1(c1.params[0]), c1.get_param(c1.params[0]))  # Test __call__
+    assert isinstance(c1.get_map_dict(), dict)
+    assert isinstance(c1.credint(c1.params[0], onesided=True, interval=95), float)
+    assert isinstance(c1.credint(c1.params[0]), tuple)
 
 def test_rednoise_plot(plaw_core, fs_core):
     rednoise.plot_rednoise_spectrum('J1713+0747',

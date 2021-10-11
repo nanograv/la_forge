@@ -82,10 +82,11 @@ class Core(object):
         self.hot_chains = None
 
         # For hdf5 saving/loading
-        self._metadata = ['label','burn','chaindir','chainpath']
-        self._savedicts = ['jumps','jump_fractions','hot_chains']
-        self._savearrays = ['cov','rn_freqs']
-        self._savelist_of_str = ['priors','fancy_par_names']
+        if  not any([hasattr(self,l) for l in ['_metadata',
+                                               '_savedicts',
+                                               '_savearrays',
+                                               '_savelist_of_str']]):
+            self._set_hdf5_lists()
 
         if corepath is not None:
             self._load(corepath)
@@ -465,11 +466,25 @@ class Core(object):
         else:
             return d
 
-    def _check_none(self,att):
+    def _set_hdf5_lists(self,append=None):
         """
-        Convenience function to check is a loaded hdf5 item is a
-        string==\'None\', and convert to NoneType.
+        Convenience function to set lists for hdf5 files. Can append new
+        attributes for subclasses of core.Core.
+
+        Parameters
+        ----------
+
+        append, list of tuples
+            List of tuples of attributes to append to saving lists for HDF5
+            files. Each member must be (str of attribute, list to append to).
         """
+        self._metadata = ['label','burn','chaindir','chainpath']
+        self._savedicts = ['jumps','jump_fractions','hot_chains']
+        self._savearrays = ['cov','rn_freqs']
+        self._savelist_of_str = ['priors','fancy_par_names']
+        if append is not None:
+            for app in append:
+                getattr(self,app[1]).append(app[0])
 
     def _load(self, filepath):
         if h5py.is_hdf5(filepath):
@@ -540,7 +555,8 @@ class HyperModelCore(Core):
     HyperModel framework.
     """
 
-    def __init__(self, label, param_dict=None, chaindir=None, burn=0.25,
+    def __init__(self, label=None, param_dict=None, chaindir=None,
+                 burn=0.25, corepath=None,
                  verbose=True, fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, skiprows=0):
         """
@@ -551,11 +567,16 @@ class HyperModelCore(Core):
             Dictionary of parameter lists, corresponding to the parameters in
             each sub-model of the hypermodel.
         """
-        super().__init__(label=label,
-                         chaindir=chaindir, burn=burn,
-                         verbose=verbose,
-                         fancy_par_names=fancy_par_names, skiprows=skiprows,
-                         chain=chain, params=params, pt_chains=pt_chains)
+        # Call to add `param_dict` to dictionaries for hdf5 to search for. 
+        super()._set_hdf5_lists(append=[('param_dict','_savedicts')])
+        super().__init__(chaindir=chaindir, burn=burn,
+                         corepath=corepath,
+                         label=label,
+                         fancy_par_names=fancy_par_names,
+                         skiprows=skiprows,
+                         chain=chain, params=params,
+                         pt_chains=pt_chains,
+                         verbose=verbose,)
 
         if param_dict is None:
             try:

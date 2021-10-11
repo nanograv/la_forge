@@ -573,6 +573,8 @@ class HyperModelCore(Core):
             self.param_dict = param_dict
 
         self.nmodels = len(list(self.param_dict.keys()))
+        # self._savedicts.append('param_dict')
+        # self._metadata.append('nmodels')
 
     def model_core(self, nmodel):
         """

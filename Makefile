@@ -49,7 +49,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
-	rm tests/*.core
+	find . -name 'tests/*.core' -exec rm -f {} +
 
 lint: ## check style with flake8
 	flake8 la_forge tests

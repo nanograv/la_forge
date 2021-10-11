@@ -74,9 +74,18 @@ class Core(object):
         self.chain = chain
         self.params = params
         self.corepath = corepath
+        # Set defaults to None for accounting
+        self.priors = None
+        self.cov = None
+        self.jumps = None
+        self.jump_fractions = None
+        self.hot_chains = None
+
+        # For hdf5 saving/loading
         self._metadata = ['label','burn','chaindir','chainpath']
-        self._arrays = []
-        self._list_of_str = []
+        self._savedicts = ['jumps','jump_fractions','hot_chains']
+        self._savearrays = ['cov','rn_freqs']
+        self._savelist_of_str = ['priors','fancy_par_names']
 
         if corepath is not None:
             self._load(corepath)
@@ -182,10 +191,6 @@ class Core(object):
                 self.label = 'None'
 
         self.rn_freqs = None
-        if verbose:
-            print('Red noise frequencies must be set before plotting most red '
-                  'noise figures.\n'
-                  'Please use core.set_rn_freqs() to set, if needed.')
 
     def __call__(self, param, to_burn=True):
         """
@@ -384,7 +389,6 @@ class Core(object):
         """
         Save Core object as HDF5 (.h5)
         """
-        # TODO(Aaron): add support for higher temp. chains
         # TODO(Aaron): add support for hypermodels
         dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
         with h5py.File(filepath, 'w') as hf:
@@ -395,35 +399,28 @@ class Core(object):
                               data=self.chain,
                               compression="gzip",
                               compression_opts=9)
-            metadata = {ky:getattr(self,ky) for ky in self._metadata}
+            metadata = {ky:getattr(self,ky) for ky in self._metadata
+                        if getattr(self,ky) is not None}
             self._dict2hdf5(hf, metadata, 'metadata')
-            # g1 = hf.create_group('metadata')
-            # g1.create_dataset('label', data=self.label)
-            # g1.create_dataset('burn', data=self.burn)
-            # g1.create_dataset('chaindir', data=self.chaindir)
-            # g1.create_dataset('chainpath', data=self.chainpath)
 
-            if hasattr(self, 'jumps'):
-                self._dict2hdf5(hf, self.jumps, 'jumps')
-                self._dict2hdf5(hf, self.jump_fractions, 'jump_fractions')
+            for arr in self._savearrays:
+                if getattr(self,arr) is not None and arr in ['cov']:
+                    # Add more zipped arrays here.
+                    hf.create_dataset(arr,
+                                      data=getattr(self,arr),
+                                      compression="gzip",
+                                      compression_opts=9)
+                elif getattr(self,arr) is not None:
+                    hf.create_dataset(arr, data=getattr(self,arr))
 
-            if hasattr(self, 'hot_chains'):
-                self._dict2hdf5(hf, self.hot_chains, 'hot_chains')
-
-            if self.fancy_par_names is not None:
-                hf.create_dataset('fancy_par_names', data=np.array(self.fancy_par_names, dtype="O"), dtype=dt)
-
-            if hasattr(self, 'priors'):
-                hf.create_dataset('priors',
-                                  data=np.array(self.priors, dtype="O"),
-                                  dtype=dt)
-            if hasattr(self, 'cov'):
-                hf.create_dataset('cov',
-                                  data=self.cov,
-                                  compression="gzip",
-                                  compression_opts=9)
-            if self.rn_freqs is not None:
-                hf.create_dataset('rn_freqs', data=self.rn_freqs)
+            for lostr in self._savelist_of_str:
+                if getattr(self,arr) is not None:
+                    hf.create_dataset(lostr,
+                                      data=np.array(getattr(self,arr), dtype="O"),
+                                      dtype=dt)
+            for d in self._savedicts:
+                if getattr(self,d) is not None:
+                    self._dict2hdf5(hf, getattr(self,d), d)
 
 
     def _dict2hdf5(self, hdf5, d, name):
@@ -468,6 +465,11 @@ class Core(object):
         else:
             return d
 
+    def _check_none(self,att):
+        """
+        Convenience function to check is a loaded hdf5 item is a
+        string==\'None\', and convert to NoneType.
+        """
 
     def _load(self, filepath):
         if h5py.is_hdf5(filepath):
@@ -486,34 +488,23 @@ class Core(object):
             setattr(self, nm, att)
 
     def _load_hdf5(self, filepath):
-        # TODO(Aaron): add support for higher temp. chains
         # TODO(Aaron): add support for hypermodels
         print('Loading data from HDF5 file....')
         with h5py.File(filepath, 'r') as hf:
             self.chain = np.array(hf['chain'])
             self.params = np.array(hf['params']).astype(str).tolist()
-            # self.burn = int(np.array(hf['metadata']['burn']))
             metadata = self._hdf5_2dict(hf, 'metadata', dtype=str, set_return='return')
-            print(metadata)
-            metadata.update({'burn':int(metadata['burn'])})
             self.__dict__.update(metadata)
-            # self.chaindir = str(np.array(hf['metadata']['chaindir']).astype(str))
-            # self.chainpath = str(np.array(hf['metadata']['chainpath']).astype(str))
-            if self.chaindir == 'None':
-                self.chaindir = None
-            if self.chainpath == 'None':
-                self.chainpath = None
-            # self.label = str(np.array(hf['metadata']['label']).astype(str))
 
-            if 'cov' in hf:
-                self.cov = np.array(hf['cov'])
-            if 'jumps' in hf:
-                self._hdf5_2dict(hf,'jumps')
-                self._hdf5_2dict(hf,'jump_fractions')
-            if 'priors' in hf:
-                self.priors = np.array(hf['priors']).astype(str)
-            if 'hot_chains' in hf:
-                self._hdf5_2dict(hf, 'hot_chains')
+            for arr in self._savearrays:
+                if arr in hf:
+                    setattr(self, arr, np.array(hf[arr]))
+            for lostr in self._savelist_of_str:
+                if lostr in hf:
+                    setattr(self, lostr, np.array(hf[lostr]).astype(str))
+            for d in self._savedicts:
+                if d in hf:
+                    self._hdf5_2dict(hf, d)
 
     def get_map_dict(self):
         map = [self.get_map_param(p) for p in self.params]

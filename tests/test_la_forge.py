@@ -79,8 +79,9 @@ def test_core_from_ptmcmc_chains():
 
 def test_core_loading(pta_core):
     """Tests the loading of a Core into a class. """
-    pta_core.save(testdir+'test_hdf5.core')
-    c1 = core.Core(corepath=testdir+'test_hdf5.core')  # test loading
+    corepath = os.path.join(testdir, 'test_hdf5.core')
+    pta_core.save(corepath)
+    c1 = core.Core(corepath=corepath)  # test loading
     assert hasattr(c1, 'get_param')
     assert hasattr(c1, 'params')
     assert np.array_equal(c1(c1.params[0]), c1.get_param(c1.params[0]))  # Test __call__

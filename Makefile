@@ -53,16 +53,13 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8
 	flake8 la_forge tests
 
-test: ## run tests quickly with the default Python
-	py.test
+COV_COVERAGE_PERCENT ?= 35
+test:  ##lint run tests quickly with the default Python
+	pytest -v --durations=10 --full-trace --cov-report html --cov-report xml \
+		--cov-config .coveragerc --cov-fail-under=$(COV_COVERAGE_PERCENT) \
+		--cov=la_forge tests
 
-test-all: ## run tests on every Python version with tox
-	tox
-
-coverage: ## check code coverage quickly with the default Python
-	coverage run --source la_forge -m pytest
-	coverage report -m
-	coverage html
+coverage: test ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs

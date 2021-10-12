@@ -434,9 +434,9 @@ class Core(object):
                     hf.create_dataset(arr, data=getattr(self,arr))
 
             for lostr in self._savelist_of_str:
-                if getattr(self,arr) is not None:
+                if getattr(self,lostr) is not None:
                     hf.create_dataset(lostr,
-                                      data=np.array(getattr(self,arr), dtype="O"),
+                                      data=np.array(getattr(self,lostr), dtype="O"),
                                       dtype=dt)
             for d in self._savedicts:
                 if getattr(self,d) is not None:

@@ -39,9 +39,9 @@ class SlicesCore(Core):
     ----------
     """
 
-    def __init__(self, label, slicedirs=None, params=None,
-                 verbose=True, par_names=None, fancy_par_names=None,
-                 burn=None, parfile='pars.txt'):
+    def __init__(self, label=None, slicedirs=None, pars2pull=None, params=None,
+                 corepath=None, verbose=True, fancy_par_names=None,
+                 burn=0.25, parfile='pars.txt'):
         """
         Parameters
         ----------
@@ -52,7 +52,7 @@ class SlicesCore(Core):
         slicedirs : list
             Directories where the various chain files can be found.
 
-        params : list, list of lists
+        pars2pull : list, list of lists
             Parameter names to extract from chains. If list of parameter names
             is provided this set of parameters will be extracted from each
             directory. If list of list, main list must be the same length as
@@ -64,47 +64,49 @@ class SlicesCore(Core):
             columns of the chains.
 
         burn : int
-            Burn in length for chains. Will autmatically be set to 1/4 of chain
+            Burn in length for chains. Will automatically be set to 1/4 of chain
             length if none is provided.
         """
+        super()._set_hdf5_lists(append=[('slicedirs','_savelist_of_str'),
+                                        ('pars2pull','_savelist_of_str')])
+        if corepath is not None:
+            super().__init__(corepath=corepath)
 
-        self.slicedirs = slicedirs
-        # Get indices from par file.
-
-        idxs = []
-        if isinstance(params, str):
-            params = [params]
-
-        # chain_params = []
-        if isinstance(params[0], list):
-            for dir, pars in zip(slicedirs, params):
-                file = dir + '/' + parfile
-                idxs.append(get_idx(pars, file))
-                # for p in pars:
-                #     chain_params.append(p)
         else:
-            for dir in slicedirs:
-                file = dir + '/' + parfile
-                idxs.append(get_idx(params, file))
-                # chain_params.append(par)
-        chain_list = store_chains(slicedirs, idxs, verbose=verbose)
+            self.slicedirs = slicedirs
+            self.pars2pull = pars2pull
+            # Get indices from par file.
 
-        # Make all chains the same length by truncating to length of shortest.
-        chain_lengths = [len(ch) for ch in chain_list]
-        # min_ch_idx = np.argmin(chain_lengths)
-        min_ch_len = np.amin(chain_lengths)
+            idxs = []
+            if isinstance(pars2pull, str):
+                pars2pull = [pars2pull]
 
-        chain = np.zeros((min_ch_len, len(chain_lengths)))
+            # chain_params = []
+            if isinstance(pars2pull[0], list):
+                for dir, pars in zip(slicedirs, pars2pull):
+                    file = dir + '/' + parfile
+                    idxs.append(get_idx(pars, file))
+            else:
+                for dir in slicedirs:
+                    file = dir + '/' + parfile
+                    idxs.append(get_idx(pars2pull, file))
 
-        for ii, ch in enumerate(chain_list):
-            # print(type(ch))
-            # print(ch)
-            start = ch.shape[0] - min_ch_len
-            chain[:, ii] = ch[start:]
+            chain_list = store_chains(slicedirs, idxs, verbose=verbose)
 
-        super().__init__(label=label, chain=chain, params=par_names,
-                         burn=burn, fancy_par_names=fancy_par_names,
-                         verbose=verbose)
+            # Make all chains the same length by truncating to length of shortest.
+            chain_lengths = [len(ch) for ch in chain_list]
+            # min_ch_idx = np.argmin(chain_lengths)
+            min_ch_len = np.amin(chain_lengths)
+
+            chain = np.zeros((min_ch_len, len(chain_lengths)))
+
+            for ii, ch in enumerate(chain_list):
+                start = ch.shape[0] - min_ch_len
+                chain[:, ii] = ch[start:]
+            
+            super().__init__(label=label, chain=chain, params=params,
+                             burn=burn, fancy_par_names=fancy_par_names,
+                             verbose=verbose, corepath=None)
 
     def get_ul_slices_err(self, q=95.0):
         self.ul = np.zeros((len(self.params), 2))
@@ -270,21 +272,11 @@ def plot_slice_ul(arrays, mjd=None, to_err=True, colors=None, labels=None,
 
     if not publication_params:
         plt.title(Title, fontsize=17)
-        # if mjd:
-        #     plt.xlabel('MJD', fontsize=16)
-        # else:
-        #     plt.xlabel('Years', fontsize=16)
-
         plt.ylabel(r'$A_{\rm GWB}$', fontsize=16)
         plt.legend(loc='upper right', fontsize=12, framealpha=1.0)
 
     else:
         plt.title(Title)
-        # if mjd:
-        #     plt.xlabel('MJD')
-        # else:
-        #     plt.xlabel('Years')
-
         plt.ylabel(r'$A_{\rm GWB}$')
         plt.legend(loc='upper right', framealpha=1.0)
 

@@ -81,6 +81,7 @@ class Core(object):
         self.jumps = None
         self.jump_fractions = None
         self.hot_chains = None
+        self.runtime_info = None
 
         # For hdf5 saving/loading
         if not any([hasattr(self, l) for l in ['_metadata',
@@ -196,6 +197,8 @@ class Core(object):
                 self.label = self.chaindir
             elif self.corepath is not None:
                 self.label = self.corepath
+            else:
+                self.label = None
         else:
             self.label = label
 
@@ -407,7 +410,6 @@ class Core(object):
         """
         Save Core object as HDF5 (.h5)
         """
-        # TODO(Aaron): add support for hypermodels
         dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
         with h5py.File(filepath, 'w') as hf:
             hf.create_dataset('params',

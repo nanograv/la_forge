@@ -236,7 +236,7 @@ class Core(object):
     def get_param_median(self, param):
         """Returns median of parameter given.
         """
-        return np.median(self.get_param(param))
+        return np.median(self.get_param(param),axis=0)
 
     def median(self, param):
         """
@@ -260,15 +260,26 @@ class Core(object):
         interval: float, optional
             Width of interval in percent. Default set to 68%.
         """
-        if onesided:
-            return np.percentile(self.get_param(param), q=interval)
+        if isinstance(param, (list, np.ndarray)):
+            if onesided:
+                return np.percentile(self.get_param(param), q=interval, axis=0)
+            else:
+                lower_q = (100 - interval) / 2
+                lower = np.percentile(self.get_param(param),
+                                      q=lower_q, axis=0)
+                upper = np.percentile(self.get_param(param),
+                                      q=100 - lower_q, axis=0)
+                return np.array([lower, upper]).T
         else:
-            lower_q = (100 - interval) / 2
-            lower = np.percentile(self.get_param(param),
-                                  q=lower_q)
-            upper = np.percentile(self.get_param(param),
-                                  q=100 - lower_q)
-            return lower, upper
+            if onesided:
+                return np.percentile(self.get_param(param), q=interval)
+            else:
+                lower_q = (100 - interval) / 2
+                lower = np.percentile(self.get_param(param),
+                                      q=lower_q)
+                upper = np.percentile(self.get_param(param),
+                                      q=100 - lower_q)
+                return lower, upper
 
     def credint(self, param, onesided=False, interval=68):
         """Returns credible interval of parameter given.
@@ -533,18 +544,17 @@ class Core(object):
 
     @property
     def map_idx(self):
-        """Maximum a posteri parameter values"""
-        if not hasattr(self, '_map_idx'):
-            if 'lnpost' in self.params:
-                self._map_idx = np.argmax(self.get_param('lnpost', to_burn=True))
-            else:
-                raise ValueError('No posterior values given.')
+        """Maximum a posteri parameter values. From burned chain."""
+        if 'lnpost' in self.params:
+            self._map_idx = np.argmax(self.get_param('lnpost', to_burn=True))
+        else:
+            raise ValueError('No posterior values given.')
 
         return self._map_idx
 
     @property
     def map_params(self):
-        """Inverse Noise Weighted Transmission Function."""
+        """Return all MAP parameters."""
         if not hasattr(self, '_map_params'):
             self._map_params = self.chain[self.burn + self.map_idx, :]
 

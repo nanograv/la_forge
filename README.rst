@@ -27,13 +27,12 @@ Graphic Credit: Stewart Vernon, via Deviant Art
 
 Python package for conveniently plotting results from pulsar timing array bayesian analyses. Many of the functions are best used with enterprise_ outputs.
 
-Not yet available on PyPI, please use
+`La Forge` is available on PyPI:
 
 .. code-block:: python
 
    pip install git+https://github.com/Hazboun6/la_forge@master
 
-to install or run the `setup.py` script once cloned to your pc.
 
 * Free software: MIT license
 * Documentation: https://la-forge.readthedocs.io.
@@ -72,7 +71,13 @@ Example code
 Features
 --------
 
-* TODO
+* Sweep Bayesian analysis MCMC Chains with sampling info.
+* Allow easy retrieval of various parts of chains.
+* Support for saving chains as HDF5 files.
+* Call chains with parameter names.
+* Plot posteriors easily.
+* Reconstruct Gaussian process realizations using posterior chains.
+* Plot red noise power spectral density.
 
 Credits
 -------

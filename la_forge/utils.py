@@ -243,18 +243,33 @@ def powerlaw(freqs, log10_A=-16, gamma=5):
 
 def weighted_quantile(values, quantiles, sample_weight=None,
                       values_sorted=False, old_style=False):
-    """ Very close to numpy.percentile, but supports weights.
+    """
+    Very close to numpy.percentile, but supports weights.
     NOTE: quantiles should be in [0, 1]!
-    [From Max Ghenis via Stack Overflow:
-     https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy]
-    :param values: numpy.array with data
-    :param quantiles: array-like with many quantiles needed
-    :param sample_weight: array-like of the same length as `array`
-    :param values_sorted: bool, if True, then will avoid sorting of
-        initial array
-    :param old_style: if True, will correct output to be consistent
-        with numpy.percentile.
-    :return: numpy.array with computed quantiles.
+    [From Max Ghenis via Stack Overflow: https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy]
+
+    Parameters
+    ----------
+
+    values : numpy.array
+        The data.
+
+    quantiles : array-like
+        Many quantiles needed.
+
+    sample_weight : array-like
+        Samples weights. The same length as `array`.
+
+    values_sorted : bool
+        If True, then will avoid sorting of initial array.
+
+    old_style: bool
+        If True, will correct output to be consistent with numpy.percentile.
+
+    Returns
+    -------
+    computed quantiles : numpy.array
+
     """
     values = np.array(values)
     quantiles = np.array(quantiles)

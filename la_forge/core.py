@@ -69,7 +69,7 @@ class Core(object):
 
     def __init__(self, chaindir=None, corepath=None, burn=0.25, label=None,
                  fancy_par_names=None, chain=None, params=None,
-                 pt_chains=False, skiprows=0, verbose=True,):
+                 pt_chains=False, skiprows=0,):
         self.chaindir = chaindir
         self.fancy_par_names = fancy_par_names
         self.chain = chain
@@ -576,7 +576,7 @@ class HyperModelCore(Core):
 
     def __init__(self, label=None, param_dict=None, chaindir=None,
                  burn=0.25, corepath=None,
-                 verbose=True, fancy_par_names=None, chain=None, params=None,
+                 fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, skiprows=0):
         """
         Parameters
@@ -594,8 +594,7 @@ class HyperModelCore(Core):
                          fancy_par_names=fancy_par_names,
                          skiprows=skiprows,
                          chain=chain, params=params,
-                         pt_chains=pt_chains,
-                         verbose=verbose,)
+                         pt_chains=pt_chains,)
 
         if param_dict is None:
             try:
@@ -640,7 +639,7 @@ class HyperModelCore(Core):
             raise ValueError('There are no samples with this model index.')
 
         model_core = Core(label=self.label + '_{0}'.format(N), chain=model_chain,
-                          params=model_pars, verbose=False)
+                          params=model_pars)
         if self.rn_freqs is not None:
             model_core.set_rn_freqs(freqs=self.rn_freqs)
 
@@ -659,7 +658,7 @@ class TimingCore(Core):
     Cores allow for automatic handling of the parameters.
     """
 
-    def __init__(self, label, chaindir=None, burn=0.25, verbose=True,
+    def __init__(self, label, chaindir=None, burn=0.25,
                  fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, tm_pars_path=None):
         """
@@ -679,7 +678,6 @@ class TimingCore(Core):
         """
         super().__init__(label=label,
                          chaindir=chaindir, burn=burn,
-                         verbose=verbose,
                          fancy_par_names=fancy_par_names,
                          chain=chain, params=params, pt_chains=False)
 
@@ -820,7 +818,7 @@ class TimingCore(Core):
 #     """
 #     def __init__(self, label, dropout_params=None, dp_model_params=None,
 #                  chaindir=None, burn=None,
-#                  verbose=True, fancy_par_names=None, chain=None, params=None):
+#                  fancy_par_names=None, chain=None, params=None):
 #         """
 #         Parameters
 #         ----------
@@ -831,7 +829,6 @@ class TimingCore(Core):
 #         """
 #         super().__init__(label=label,
 #                          chaindir=chaindir, burn=burn,
-#                          verbose=verbose,
 #                          fancy_par_names=fancy_par_names,
 #                          chain=chain, params=params)
 #
@@ -878,7 +875,7 @@ class TimingCore(Core):
 #             raise ValueError('There are no samples with this model index.')
 #
 #         model_core = Core(label=self.label+'_{0}'.format(N), chain=model_chain,
-#                           params=model_pars, verbose=False)
+#                           params=model_pars)
 #         if self.rn_freqs is not None:
 #             model_core.set_rn_freqs(freqs=self.rn_freqs)
 #

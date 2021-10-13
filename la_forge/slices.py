@@ -40,7 +40,7 @@ class SlicesCore(Core):
     """
 
     def __init__(self, label=None, slicedirs=None, pars2pull=None, params=None,
-                 corepath=None, verbose=True, fancy_par_names=None,
+                 corepath=None, fancy_par_names=None, verbose=True,
                  burn=0.25, parfile='pars.txt'):
         """
         Parameters
@@ -106,7 +106,7 @@ class SlicesCore(Core):
 
             super().__init__(label=label, chain=chain, params=params,
                              burn=burn, fancy_par_names=fancy_par_names,
-                             verbose=verbose, corepath=None)
+                             corepath=None)
 
     def get_ul_slices_err(self, q=95.0):
         self.ul = np.zeros((len(self.params), 2))

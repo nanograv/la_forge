@@ -33,13 +33,14 @@ class Core(object):
 
     Parameters
     ----------
-    label : str
-        Name of the core.
+
     chaindir : str
         Directory with chains and file with parameter names. Currently supports
         chains as {'chain_1.txt','chain.fit'} and parameters as
         {'pars.txt','params.txt','pars.npy'} . If chains are stored in a FITS
         file it is assumed that the parameters are listed as the column names.
+    label : str
+        Name of the core.
     burn : int, optional
         Number of samples burned from beginning of chain. Used when calculating
         statistics and plotting histograms.

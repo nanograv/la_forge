@@ -122,7 +122,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
                            labels=None, legend=True, legend_loc=None, leg_alpha=1.0,
                            Bbox_anchor=(0.5, -0.25, 1.0, 0.2),
                            freq_xtra=None, free_spec_min=None, free_spec_ci=95,
-                           free_spec_violin=False, ncol=None,
+                           free_spec_violin=False, free_spec_ul=False, ncol=None,
                            plot_density=None, plot_contours=None,
                            add_2d_scatter=None, bplaw_kwargs={},
                            return_plot=False, excess_noise=False,
@@ -261,7 +261,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
             plot_free_spec(c, axes[0], Tspan=Tspan, parname_root=par_root,
                            prior_min=free_spec_min, Color=Color,
                            ci=free_spec_ci, Fillstyle=Fillstyle,
-                           verbose=verbose, violin=free_spec_violin)
+                           verbose=verbose, violin=free_spec_violin,
+                           plot_ul=free_spec_ul)
 
             lines.append(plt.Line2D([0], [0], color=Color, linestyle='None',
                                     marker='o', fillstyle=Fillstyle))

@@ -16,7 +16,7 @@ __all__ = ['plot_chains', 'noise_flower']
 def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
-                linestyle=None, plot_mlv=False,
+                linestyle=None, plot_map=False,
                 save=False, show=True, linewidth=1,
                 log=False, title_y=1.01, hist_kwargs={},
                 plot_kwargs={}, legend_labels=None, real_tm_pars=True,
@@ -55,7 +55,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
 
     linestyle : str,
 
-    plot_mlv=False,
+    plot_map=False,
 
     save=False,
     show=True,
@@ -95,10 +95,10 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         if linestyle is None:
             linestyle = ['-' for ii in range(len(core))]
 
-        if isinstance(plot_mlv, list):
+        if isinstance(plot_map, list):
             pass
         else:
-            plot_mlv = [plot_mlv for ii in range(len(core))]
+            plot_map = [plot_map for ii in range(len(core))]
     else:
         fancy_par_names=core.fancy_par_names
 
@@ -135,9 +135,9 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                                    linestyle=linestyle[jj],
                                    histtype='step', **hist_kwargs)
 
-                    if plot_mlv[jj]:
+                    if plot_map[jj]:
                         pcol=phist[-1][-1].get_edgecolor()
-                        plt.axvline(c.get_mlv_param(p), linewidth=1,
+                        plt.axvline(c.get_map_param(p), linewidth=1,
                                     color=pcol, linestyle='--')
             else:
                 gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)
@@ -145,7 +145,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                                bins=bins, density=True, log=log,
                                linewidth=linewidth,
                                histtype='step', **hist_kwargs)
-                if plot_mlv:
+                if plot_map:
                     pcol=phist[-1][-1].get_edgecolor()
                     plt.axvline(c.get_map_param(p), linewidth=1,
                                 color=pcol, linestyle='--')

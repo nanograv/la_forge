@@ -8,7 +8,7 @@ import os
 import pytest
 import numpy as np
 
-from la_forge import core, diagnostics, rednoise
+from la_forge import core, diagnostics, rednoise, utils
 
 testdir = os.path.dirname(os.path.abspath(__file__))
 datadir = os.path.join(testdir, 'data')
@@ -90,6 +90,10 @@ def test_core_loading(pta_core):
     assert isinstance(c1.get_map_dict(), dict)
     assert isinstance(c1.credint(c1.params[0], onesided=True, interval=95), float)
     assert isinstance(c1.credint(c1.params[0]), tuple)
+    bf = utils.bayes_fac(c1('J1944+0907_red_noise_log10_A'),
+                         ntol=10, logAmin=-20, logAmax=-11,
+                         nsamples=10, smallest_dA=0.05, largest_dA=0.1)
+    assert isinstance(bf, tuple)
 
 
 def test_percentiles(pta_core):

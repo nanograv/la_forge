@@ -6,14 +6,8 @@ import sys
 
 import numpy as np
 
-from . import utils
 from .core import Core
 
-try:
-    from enterprise_extensions import model_utils
-    ent_ext_present = True
-except ImportError:
-    ent_ext_present = False
 
 __all__ = ['SlicesCore',
            'get_idx',
@@ -115,32 +109,32 @@ class SlicesCore(Core):
                              burn=burn, fancy_par_names=fancy_par_names,
                              corepath=None)
 
-    def get_ul_slices_err(self, q=95.0):
-        self.ul = np.zeros((len(self.params), 2))
-        for ii, yr in enumerate(self.params):
-            try:
-                if ent_ext_present:
-                    self.ul[ii, :] = model_utils.ul(self.chain[self.burn:, ii],
-                                                    q=q)
-                else:
-                    err_msg = 'Must install enterprise_extensions to'
-                    err_msg += ' use this functionality.'
-                    raise ImportError(err_msg)
-            except ZeroDivisionError:
-                self.ul[ii, :] = (np.percentile(self.chain[self.burn:, ii], q=q), np.nan)
-        return self.ul
-
-    def get_bayes_fac(self, ntol=200, logAmin=-18, logAmax=-12,
-                      nsamples=100, smallest_dA=0.01, largest_dA=0.1):
-        self.bf = np.zeros((len(self.params), 2))
-        for ii, yr in enumerate(self.params):
-            self.bf[ii, :] = utils.bayes_fac(self.chain[self.burn:, ii],
-                                             ntol=ntol, nsamples=nsamples,
-                                             logAmin=logAmin,
-                                             logAmax=logAmax,
-                                             smallest_dA=smallest_dA,
-                                             largest_dA=largest_dA)
-        return self.bf
+    # def get_ul_slices_err(self, q=95.0):
+    #     self.ul = np.zeros((len(self.params), 2))
+    #     for ii, yr in enumerate(self.params):
+    #         try:
+    #             if ent_ext_present:
+    #                 self.ul[ii, :] = model_utils.ul(self.chain[self.burn:, ii],
+    #                                                 q=q)
+    #             else:
+    #                 err_msg = 'Must install enterprise_extensions to'
+    #                 err_msg += ' use this functionality.'
+    #                 raise ImportError(err_msg)
+    #         except ZeroDivisionError:
+    #             self.ul[ii, :] = (np.percentile(self.chain[self.burn:, ii], q=q), np.nan)
+    #     return self.ul
+    #
+    # def get_bayes_fac(self, ntol=200, logAmin=-18, logAmax=-12,
+    #                   nsamples=100, smallest_dA=0.01, largest_dA=0.1):
+    #     self.bf = np.zeros((len(self.params), 2))
+    #     for ii, yr in enumerate(self.params):
+    #         self.bf[ii, :] = utils.bayes_fac(self.chain[self.burn:, ii],
+    #                                          ntol=ntol, nsamples=nsamples,
+    #                                          logAmin=logAmin,
+    #                                          logAmax=logAmax,
+    #                                          smallest_dA=smallest_dA,
+    #                                          largest_dA=largest_dA)
+    #     return self.bf
 
 
 def get_idx(par, filename):

@@ -54,7 +54,7 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8
 	flake8 --config .flake8 la_forge tests
 
-COV_COVERAGE_PERCENT ?= 35
+COV_COVERAGE_PERCENT ?= 40
 test:  ##lint run tests quickly with the default Python
 	pytest -v --durations=10 --full-trace --cov-report html --cov-report xml \
 		--cov-config .coveragerc --cov-fail-under=$(COV_COVERAGE_PERCENT) \

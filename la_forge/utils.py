@@ -1,8 +1,10 @@
 import glob
+
 import numpy as np
 import scipy.stats as sps
 from scipy import interpolate as interp
 from scipy.ndimage import filters as filter
+import matplotlib.pyplot as plt
 
 try:
     from enterprise.pulsar import Pulsar
@@ -17,7 +19,7 @@ fyr = 1./31536000.
 # from Kristina Islo
 
 def getMax2d(samples1, samples2, weights=None, smooth=True, bins=[40, 40],
-            x_range=None, y_range=None, logx=False, logy=False, logz=False):
+             x_range=None, y_range=None, logx=False, logy=False, logz=False):
     """ Function to return the maximum likelihood values by interpolating over
     a two dimensional histogram made of two sets of samples.
 
@@ -72,13 +74,13 @@ def getMax2d(samples1, samples2, weights=None, smooth=True, bins=[40, 40],
     if logy:
         bins[1] = np.logspace(np.log10(ymin), np.log10(ymax), bins[1])
 
-    hist2d,xedges,yedges = np.histogram2d(samples1, samples2, weights=weights,
-                                          bins=bins,
-                                          range=[[xmin,xmax],[ymin,ymax]])
-    extent = [xedges[0], xedges[-1], yedges[0], yedges[-1] ]
+    hist2d, xedges, yedges = np.histogram2d(samples1, samples2, weights=weights,
+                                            bins=bins,
+                                            range=[[xmin, xmax], [ymin, ymax]])
+    # extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
 
     if logz:
-        hist2d = np.where(hist2d >= 0,hist2d,1)
+        hist2d = np.where(hist2d >= 0, hist2d, 1)
 
     xedges = np.delete(xedges, -1) + 0.5*(xedges[1] - xedges[0])
     yedges = np.delete(yedges, -1) + 0.5*(yedges[1] - yedges[0])
@@ -106,7 +108,8 @@ def get_params_2d_mlv(core, par1, par2):
     samps1 = core.get_param(par1, to_burn=True)
     samps2 = core.get_param(par2, to_burn=True)
 
-    return getMax2d(samps1,samps2)
+    return getMax2d(samps1, samps2)
+
 
 def get_rn_noise_params_2d_mlv(core, pulsar):
     """Convenience function to find 2d rednoise maximum likelihood values.
@@ -114,7 +117,8 @@ def get_rn_noise_params_2d_mlv(core, pulsar):
     rn_amp = pulsar + '_log10_A'
     rn_si = pulsar + '_gamma'
 
-    return get_params_2d_mlv(core,rn_amp,rn_si)
+    return get_params_2d_mlv(core, rn_amp, rn_si)
+
 
 def get_Tspan(pulsar, datadir):
     """Returns timespan of a pulsars dataset by loading the pulsar as an
@@ -140,30 +144,16 @@ def get_Tspan(pulsar, datadir):
     return T
 
 
-
 def compute_rho(log10_A, gamma, f, T):
     """
     Converts from power to residual RMS.
     """
 
     return np.sqrt((10**log10_A)**2 / (12.0*np.pi**2)
-                    * fyr**(gamma-3) * f**(-gamma) / T)
+                   * fyr**(gamma-3) * f**(-gamma) / T)
 
 
-def convert_pal2_pars(p2_par):
-    p2 = p2_par.split('_')
-    psr = p2[-1]
-    if 'RN-Amplitude' in p2_par:
-        par = 'log10_A'
-        ent_par = '_'.join([psr,par])
-    elif 'RN-spectral-index' in p2_par:
-        par = 'gamma'
-        ent_par = '_'.join([psr,par])
-    elif 'GWB-Amplitude' == p2_par:
-        ent_par = 'log10_A_gw'
-    return ent_par
-
-def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
+def bayes_fac(samples, ntol=200, logAmin=-18, logAmax=-12,
               nsamples=100, smallest_dA=0.01, largest_dA=0.1):
     """
     Computes the Savage Dickey Bayes Factor and uncertainty. Based on code in
@@ -181,10 +171,10 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
     dA = np.linspace(smallest_dA, largest_dA, nsamples)
     bf = []
     bf_err = []
-    mask = [] # selecting bins with more than ntol samples
+    mask = []  # selecting bins with more than ntol samples
     N = len(samples)
 
-    for ii,delta in enumerate(dA):
+    for ii, delta in enumerate(dA):
         n = np.sum(samples <= (logAmin + delta))
         post = n / N / delta
 
@@ -211,7 +201,10 @@ def bayes_fac(samples, ntol = 200, logAmin = -18, logAmax = -12,
         return (np.nanmean(np.array(bf)[mask]),
                 np.nanstd(np.array(bf)[mask]))
 
+
 fyr = 1/(365.25*24*3600)
+
+
 def rn_power(amp, gamma=None, freqs=None, T=None, sum_freqs=True):
     """Calculate the power in a red noise signal assuming the
     P=A^2(f/f_yr)^-gamma form. """
@@ -220,34 +213,50 @@ def rn_power(amp, gamma=None, freqs=None, T=None, sum_freqs=True):
             raise ValueError('Must provide timespan for power calculation.')
         power = (10**amp)**2 * T
     else:
-        power = (10**amp[:,np.newaxis])**2 \
-                * (np.array(freqs)/fyr)**-gamma[:,np.newaxis] \
-                * (1/fyr)**3 /(12*np.pi**2)
+        power = (10**amp[:, np.newaxis])**2 \
+            * (np.array(freqs)/fyr)**-gamma[:, np.newaxis] \
+            * (1/fyr)**3 /(12*np.pi**2)
     if sum_freqs:
         return np.sum(power, axis=1)
     else:
         return power
 
+
 def powerlaw(freqs, log10_A=-16, gamma=5):
     df = np.diff(np.concatenate((np.array([0]), freqs)))
-    return ((10**log10_A)**2 / 12.0 / np.pi**2 *
-            fyr**(gamma-3) * freqs**(-gamma) * np.repeat(df, 2))
+    return ((10**log10_A)**2 / 12.0 / np.pi**2
+            * fyr**(gamma-3) * freqs**(-gamma) * np.repeat(df, 2))
 
 
 def weighted_quantile(values, quantiles, sample_weight=None,
                       values_sorted=False, old_style=False):
-    """ Very close to numpy.percentile, but supports weights.
+    """
+    Very close to numpy.percentile, but supports weights.
     NOTE: quantiles should be in [0, 1]!
-    [From Max Ghenis via Stack Overflow:
-     https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy]
-    :param values: numpy.array with data
-    :param quantiles: array-like with many quantiles needed
-    :param sample_weight: array-like of the same length as `array`
-    :param values_sorted: bool, if True, then will avoid sorting of
-        initial array
-    :param old_style: if True, will correct output to be consistent
-        with numpy.percentile.
-    :return: numpy.array with computed quantiles.
+    [From Max Ghenis via Stack Overflow: https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy]
+
+    Parameters
+    ----------
+
+    values : numpy.array
+        The data.
+
+    quantiles : array-like
+        Many quantiles needed.
+
+    sample_weight : array-like
+        Samples weights. The same length as `array`.
+
+    values_sorted : bool
+        If True, then will avoid sorting of initial array.
+
+    old_style: bool
+        If True, will correct output to be consistent with numpy.percentile.
+
+    Returns
+    -------
+    computed quantiles : numpy.array
+
     """
     values = np.array(values)
     quantiles = np.array(quantiles)
@@ -269,7 +278,8 @@ def weighted_quantile(values, quantiles, sample_weight=None,
         weighted_quantiles /= np.sum(sample_weight)
     return np.interp(quantiles, weighted_quantiles, values)
 
-def quantize_fast(toas, residuals, toaerrs, dt=0.1):# flags=None,
+
+def quantize_fast(toas, residuals, toaerrs, dt=0.1):  # flags=None,
     r"""
     Function to quantize and average TOAs by observation epoch. Used especially
     for NANOGrav multiband data.
@@ -302,14 +312,15 @@ def quantize_fast(toas, residuals, toaerrs, dt=0.1):# flags=None,
             bucket_ind.append([i])
 
     averesids = np.array([np.average(residuals[l],
-                                     weights=np.power(toaerrs[l],-2))
-                          for l in bucket_ind],'d')
+                                     weights=np.power(toaerrs[l], -2))
+                          for l in bucket_ind], 'd')
     residRMS = np.array([np.sqrt(np.mean(np.square(residuals[l])))
-                         for l in bucket_ind],'d')
-    avetoas = np.array([np.mean(toas[l]) for l in bucket_ind],'d')
-    avetoaerrs = np.array([sps.hmean(toaerrs[l]) for l in bucket_ind],'d')
+                         for l in bucket_ind], 'd')
+    avetoas = np.array([np.mean(toas[l]) for l in bucket_ind], 'd')
+    avetoaerrs = np.array([sps.hmean(toaerrs[l]) for l in bucket_ind], 'd')
     output = np.array([avetoas, averesids, avetoaerrs, residRMS]).T
     return output
+
 
 def epoch_ave_resid(psr, correction=None, dt=10):
     """
@@ -336,7 +347,7 @@ def epoch_ave_resid(psr, correction=None, dt=10):
         Dictionary where each entry is an array that asks as a mask for the
         receiver used as a key.
     """
-    ng_frontends=['327', '430', 'Rcvr_800', 'Rcvr1_2', 'L-wide','S-wide']
+    ng_frontends=['327', '430', 'Rcvr_800', 'Rcvr1_2', 'L-wide', 'S-wide']
     fe_masks = {}
     fe_resids = {}
     psr_fe = np.unique(psr.flags['fe'])
@@ -349,6 +360,51 @@ def epoch_ave_resid(psr, correction=None, dt=10):
         if fe in psr_fe:
             fe_masks[fe] = np.array(psr.flags['fe']==fe)
             mk = fe_masks[fe]
-            fe_resids[fe] = quantize_fast(psr.toas[mk],resids[mk],
+            fe_resids[fe] = quantize_fast(psr.toas[mk], resids[mk],
                                           psr.toaerrs[mk], dt=dt)
     return fe_resids, fe_masks
+
+################## Plot Parameters ############################
+
+
+def figsize(scale):
+    fig_width_pt = 513.17  # 469.755    # Get this from LaTeX using \the\textwidth
+    inches_per_pt = 1.0 / 72.27         # Convert pt to inch
+    golden_mean = (np.sqrt(5.0)-1.0)/2.0    # Aesthetic ratio
+    fig_width = fig_width_pt * inches_per_pt * scale  # width in inches
+    fig_height = fig_width*golden_mean             # height in inches
+    fig_size = [fig_width, fig_height]
+    return fig_size
+
+
+def set_publication_params(param_dict=None, scale=0.5):
+    plt.rcParams.update(plt.rcParamsDefault)
+    params = {'backend': 'pdf',
+              'axes.labelsize': 10,
+              'lines.markersize': 4,
+              'font.size': 10,
+              'xtick.major.size': 6,
+              'xtick.minor.size': 3,
+              'ytick.major.size': 6,
+              'ytick.minor.size': 3,
+              'xtick.major.width': 0.5,
+              'ytick.major.width': 0.5,
+              'xtick.minor.width': 0.5,
+              'ytick.minor.width': 0.5,
+              'lines.markeredgewidth': 1,
+              'axes.linewidth': 1.2,
+              'legend.fontsize': 7,
+              'xtick.labelsize': 10,
+              'ytick.labelsize': 10,
+              'savefig.dpi': 200,
+              'path.simplify': True,
+              'font.family': 'serif',
+              # 'font.serif':'Times New Roman',
+              'text.latex.preamble': [r'\usepackage{amsmath}'],
+              'text.usetex': True,
+              'figure.figsize': figsize(scale)}
+
+    if param_dict is not None:
+        params.update(param_dict)
+
+    plt.rcParams.update(params)

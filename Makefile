@@ -49,24 +49,26 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
+	rm -fr tests/*.core
 
 lint: ## check style with flake8
-	flake8 la_forge tests
+	flake8 --config .flake8 la_forge tests
 
-test: ## run tests quickly with the default Python
-	py.test
+COV_COVERAGE_PERCENT ?= 40
+test:  ##lint run tests quickly with the default Python
+	pytest -v --durations=10 --full-trace --cov-report html --cov-report xml \
+		--cov-config .coveragerc --cov-fail-under=$(COV_COVERAGE_PERCENT) \
+		--cov=la_forge tests
 
-test-all: ## run tests on every Python version with tox
-	tox
-
-coverage: ## check code coverage quickly with the default Python
-	coverage run --source la_forge -m pytest
-	coverage report -m
-	coverage html
+coverage: test ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
+jupyter-docs: ## build jupyter notebook docs # --template docs/nb-rst.tpl
+	jupyter nbconvert --to rst docs/_static/notebooks/*.ipynb --output-dir docs/
+	# cp -r docs/_static/notebooks/img docs/
+
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/la_forge.rst
+	# rm -f docs/la_forge.rst
 	rm -f docs/modules.rst
 	sphinx-apidoc -o docs/ la_forge
 	$(MAKE) -C docs clean

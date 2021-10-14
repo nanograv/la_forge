@@ -75,6 +75,7 @@ class Core(object):
         self.chain = chain
         self.params = params
         self.corepath = corepath
+        
         # Set defaults to None for accounting
         self.rn_freqs = None
         self.priors = None
@@ -409,7 +410,7 @@ class Core(object):
 
     def save(self, filepath):
         """
-        Save Core object as HDF5 (.h5)
+        Save Core object as HDF5.
         """
         dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
         with h5py.File(filepath, 'w') as hf:
@@ -522,7 +523,10 @@ class Core(object):
             setattr(self, nm, att)
 
     def _load_hdf5(self, filepath):
-        # TODO(Aaron): add support for hypermodels
+        """
+        Loads various attributes from an hdf5 file. Looks in the lists set by
+        `_set_hdf5_lists`.
+        """
         print('Loading data from HDF5 file....')
         with h5py.File(filepath, 'r') as hf:
             self.chain = np.array(hf['chain'])
@@ -541,6 +545,10 @@ class Core(object):
                     self._hdf5_2dict(hf, d)
 
     def get_map_dict(self):
+        """
+        Return a dictionary of the max a postori values for the parameters in
+        the core. The keys are the appropriate parameter names.
+        """
         map = [self.get_map_param(p) for p in self.params]
         return dict(zip(self.params, map))
 
@@ -556,11 +564,8 @@ class Core(object):
 
     @property
     def map_params(self):
-        """Return all MAP parameters."""
-        if not hasattr(self, '_map_params'):
-            self._map_params = self.chain[self.burn + self.map_idx, :]
-
-        return self._map_params
+        """Return all Maximum a posteri parameters."""
+        return self._map_params = self.chain[self.burn + self.map_idx, :]
 
 # --------------------------------------------#
 # ---------------HyperModel Core--------------#

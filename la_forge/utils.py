@@ -4,6 +4,7 @@ import numpy as np
 import scipy.stats as sps
 from scipy import interpolate as interp
 from scipy.ndimage import filters as filter
+import matplotlib.pyplot as plt
 
 try:
     from enterprise.pulsar import Pulsar

@@ -4,8 +4,6 @@
 import os.path
 import sys
 
-import corner
-import matplotlib.pyplot as plt
 import numpy as np
 
 from . import utils
@@ -52,16 +50,25 @@ class SlicesCore(Core):
         slicedirs : list
             Directories where the various chain files can be found.
 
-        pars2pull : list, list of lists
+        pars2pull : list of str, list of lists of str
             Parameter names to extract from chains. If list of parameter names
             is provided this set of parameters will be extracted from each
             directory. If list of list, main list must be the same length as
             `slicedirs`, but inner lists may be arbitrary length. The parameters
             in each inner list will be extracted.
 
+        params : list of str
+            User defined names of parameters in constructed array.
+
         parfile : str
             Name of parameter list file in the directories that corresponds to
             columns of the chains.
+
+        corepath : str
+            Path to a SlicedCore saved as an hdf5 file.
+
+        fancy_par_names : list of str
+            A set of parameter names for plotting.
 
         burn : int
             Burn in length for chains. Will automatically be set to 1/4 of chain

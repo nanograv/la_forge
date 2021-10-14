@@ -43,7 +43,7 @@ Tutorial #2 Plotting Posteriors
 
 
 .. image:: tutorial2_files/tutorial2_5_0.png
-   :width: 1284px
+   :width: 1084px
    :height: 2918px
 
 
@@ -58,7 +58,7 @@ Tutorial #2 Plotting Posteriors
 
 
 .. image:: tutorial2_files/tutorial2_6_0.png
-   :width: 1285px
+   :width: 1085px
    :height: 882px
 
 
@@ -79,5 +79,7 @@ Tutorial #2 Plotting Posteriors
 
 
 .. image:: tutorial2_files/tutorial2_8_0.png
-   :width: 1288px
+   :width: 1088px
    :height: 614px
+
+

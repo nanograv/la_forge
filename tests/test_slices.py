@@ -5,10 +5,9 @@
 
 import os
 
-import pytest
 import numpy as np
 
-from la_forge import core, diagnostics, rednoise, slices
+from la_forge import slices
 
 testdir = os.path.dirname(os.path.abspath(__file__))
 datadir = os.path.join(testdir, 'data')
@@ -29,3 +28,4 @@ def test_slice_core():
     corepath = os.path.join(testdir, 'test_hdf5_slice.core')
     sl.save(corepath)
     sl2 = slices.SlicesCore(corepath=corepath)
+    assert isinstance(sl2('J1713+0747_red_noise_gamma'),np.ndarray)

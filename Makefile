@@ -52,7 +52,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr tests/*.core
 
 lint: ## check style with flake8
-	flake8 la_forge tests
+	flake8 --config .flake8 la_forge tests
 
 COV_COVERAGE_PERCENT ?= 35
 test:  ##lint run tests quickly with the default Python

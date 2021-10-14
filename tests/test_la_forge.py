@@ -93,11 +93,13 @@ def test_percentiles(pta_core):
     """Tests calculations of median and credible intervals."""
     pars = ['B1855+09_red_noise_gamma', 'B1855+09_red_noise_log10_A']
     md = np.median(pta_core.chain[1000:,[0,1]],axis=0)
-    ci68_upp = np.percentile(pta_core.chain[1000:,[0,1]],axis=0,q=16)
-    ci68_low = np.percentile(pta_core.chain[1000:,[0,1]],axis=0,q=84)
-    ul95 = np.percentile(pta_core.chain[1000:,[0,1]],axis=0,q=95)
+    ci68_upp = np.percentile(pta_core.chain[1000:,[0,1]], axis=0,q=16)
+    ci68_low = np.percentile(pta_core.chain[1000:,[0,1]], axis=0,q=84)
+    ul95 = np.percentile(pta_core.chain[1000:,[0,1]], axis=0,q=95)
     pta_core.set_burn(1000)
-    assert np.array_equal(pta_core.credint(pars),np.array([ci68_upp,ci68_low]).T)
+    assert np.array_equal(pta_core.credint(pars), np.array([ci68_upp,ci68_low]).T)
+    assert np.array_equal(pta_core.median(pars), md)
+    assert np.array_equal(pta_core.credint(pars, onesided=True, interval=95), ul95)
 
 def test_rednoise_plot(plaw_core, fs_core):
     rednoise.plot_rednoise_spectrum('J1713+0747',

@@ -75,7 +75,7 @@ class Core(object):
         self.chain = chain
         self.params = params
         self.corepath = corepath
-        
+
         # Set defaults to None for accounting
         self.rn_freqs = None
         self.priors = None
@@ -556,16 +556,14 @@ class Core(object):
     def map_idx(self):
         """Maximum a posteri parameter values. From burned chain."""
         if 'lnpost' in self.params:
-            self._map_idx = np.argmax(self.get_param('lnpost', to_burn=True))
+            return np.argmax(self.get_param('lnpost', to_burn=True))
         else:
             raise ValueError('No posterior values given.')
-
-        return self._map_idx
 
     @property
     def map_params(self):
         """Return all Maximum a posteri parameters."""
-        return self._map_params = self.chain[self.burn + self.map_idx, :]
+        return self.chain[self.burn + self.map_idx, :]
 
 # --------------------------------------------#
 # ---------------HyperModel Core--------------#

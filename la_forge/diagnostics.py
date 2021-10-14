@@ -25,7 +25,10 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
 
     Parameters
     ----------
-    core : `la_forge.core.Core`
+    core : {`la_forge.core.Core`,
+            `la_forge.core.HyperModelCore`,
+            `la_forge.core.TimingCore`,
+            `la_forge.slices.SlicedCore`}
 
     hist : bool, optional
         Whether to plot histograms. If False then traces of the chains will be

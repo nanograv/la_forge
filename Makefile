@@ -63,12 +63,12 @@ test:  ##lint run tests quickly with the default Python
 coverage: test ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
-jupyter-docs: ## build jupyter notebook docs
-	jupyter nbconvert --template docs/nb-rst.tpl --to rst docs/_static/notebooks/*.ipynb --output-dir docs/
-	cp -r docs/_static/notebooks/img docs/
+jupyter-docs: ## build jupyter notebook docs # --template docs/nb-rst.tpl
+	jupyter nbconvert --to rst docs/_static/notebooks/*.ipynb --output-dir docs/
+	# cp -r docs/_static/notebooks/img docs/
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/la_forge.rst
+	# rm -f docs/la_forge.rst
 	rm -f docs/modules.rst
 	sphinx-apidoc -o docs/ la_forge
 	$(MAKE) -C docs clean

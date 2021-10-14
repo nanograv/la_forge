@@ -20,10 +20,10 @@ __all__ = ['SlicesCore',
            'get_col',
            'store_chains']
 
-secperyr = 365.25*24*3600
-fyr = 1./secperyr
+secperyr = 365.25 * 24 * 3600
+fyr = 1. / secperyr
 
-Nyears = [3.0 + ii*0.5 for ii in range(17)]
+Nyears = [3.0 + ii * 0.5 for ii in range(17)]
 Nyears.append(11.4)
 
 
@@ -74,8 +74,8 @@ class SlicesCore(Core):
             Burn in length for chains. Will automatically be set to 1/4 of chain
             length if none is provided.
         """
-        super()._set_hdf5_lists(append=[('slicedirs','_savelist_of_str'),
-                                        ('pars2pull','_savelist_of_str')])
+        super()._set_hdf5_lists(append=[('slicedirs', '_savelist_of_str'),
+                                        ('pars2pull', '_savelist_of_str')])
         if corepath is not None:
             super().__init__(corepath=corepath)
 
@@ -151,7 +151,7 @@ def get_idx(par, filename):
         try:
             par_list = list(np.loadtxt(filename, dtype='S').astype('U'))
         except:
-            new_name = filename[:-3] +'txt'
+            new_name = filename[:-3] + 'txt'
             par_list = list(np.loadtxt(new_name, dtype='S').astype('U'))
     if isinstance(par, list):
         idx = []
@@ -163,7 +163,7 @@ def get_idx(par, filename):
 
 
 def get_col(col, filename):
-    if col<0:
+    if col < 0:
         col -= 1
     try:
         L = [x.split('\t')[col] for x in open(filename).readlines()]
@@ -173,19 +173,19 @@ def get_col(col, filename):
 
 
 def store_chains(filepaths, idxs, verbose=True):
-    chains= []
+    chains = []
     for idx, path in zip(idxs, filepaths):
-        if os.path.exists(path+'/chain_1.txt'):
-            ch_path = path+'/chain_1.txt'
-        elif os.path.exists(path+'/chain_1.0.txt'):
-            ch_path = path+'/chain_1.0.txt'
+        if os.path.exists(path + '/chain_1.txt'):
+            ch_path = path + '/chain_1.txt'
+        elif os.path.exists(path + '/chain_1.0.txt'):
+            ch_path = path + '/chain_1.0.txt'
         if isinstance(idx, (list, np.ndarray)):
             for id in idx:
                 chains.append(get_col(id, ch_path))
         else:
             chains.append(get_col(idx, ch_path))
         if verbose:
-            if sys.version_info[0]<3:
+            if sys.version_info[0] < 3:
                 print('\r{0} is loaded.'.format(ch_path), end='')
                 sys.stdout.flush()
             else:

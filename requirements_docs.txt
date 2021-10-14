@@ -8,3 +8,5 @@ matplotlib >=3.0
 scipy >= 1.0
 astropy >= 3.0
 healpy >= 1.11
+h5py>=3.4.0
+corner

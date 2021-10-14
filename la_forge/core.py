@@ -240,7 +240,7 @@ class Core(object):
     def get_param_median(self, param):
         """Returns median of parameter given.
         """
-        return np.median(self.get_param(param),axis=0)
+        return np.median(self.get_param(param), axis=0)
 
     def median(self, param):
         """
@@ -367,9 +367,9 @@ class Core(object):
         elif Tspan is not None:
             T = Tspan
             if log:
-                F = np.logspace(np.log10(1/T), np.log10(nfreqs/T), nfreqs)
+                F = np.logspace(np.log10(1 / T), np.log10(nfreqs / T), nfreqs)
             else:
-                F = np.linspace(1/T, nfreqs / T, nfreqs)
+                F = np.linspace(1 / T, nfreqs / T, nfreqs)
         elif partimdir is not None:
             T = utils.get_Tspan(psr, partimdir)
             if log:
@@ -426,23 +426,22 @@ class Core(object):
 
             for arr in self._savearrays:
                 zipped = ['cov']  # Add more zipped arrays here.
-                if getattr(self,arr) is not None and arr in zipped:
+                if getattr(self, arr) is not None and arr in zipped:
                     hf.create_dataset(arr,
-                                      data=getattr(self,arr),
+                                      data=getattr(self, arr),
                                       compression="gzip",
                                       compression_opts=9)
-                elif getattr(self,arr) is not None:
-                    hf.create_dataset(arr, data=getattr(self,arr))
+                elif getattr(self, arr) is not None:
+                    hf.create_dataset(arr, data=getattr(self, arr))
 
             for lostr in self._savelist_of_str:
-                if getattr(self,lostr) is not None:
+                if getattr(self, lostr) is not None:
                     hf.create_dataset(lostr,
-                                      data=np.array(getattr(self,lostr), dtype="O"),
+                                      data=np.array(getattr(self, lostr), dtype="O"),
                                       dtype=dt)
             for d in self._savedicts:
-                if getattr(self,d) is not None:
-                    self._dict2hdf5(hf, getattr(self,d), d)
-
+                if getattr(self, d) is not None:
+                    self._dict2hdf5(hf, getattr(self, d), d)
 
     def _dict2hdf5(self, hdf5, d, name):
         """
@@ -478,15 +477,15 @@ class Core(object):
 
         dtype : dtype {float,str}
         """
-        d = {ky:(np.array(val).astype(dtype)
-             if val.size!=1 else np.array(val).astype(dtype).tolist())
-             for ky,val in hdf5[name].items()}
+        d = {ky: (np.array(val).astype(dtype)
+                  if val.size != 1 else np.array(val).astype(dtype).tolist())
+             for ky, val in hdf5[name].items()}
         if set_return == 'set':
-            setattr(self,name,d)
+            setattr(self, name, d)
         else:
             return d
 
-    def _set_hdf5_lists(self,append=None):
+    def _set_hdf5_lists(self, append=None):
         """
         Convenience function to set lists for hdf5 files. Can append new
         attributes for subclasses of core.Core.
@@ -498,13 +497,13 @@ class Core(object):
             List of tuples of attributes to append to saving lists for HDF5
             files. Each member must be (str of attribute, list to append to).
         """
-        self._metadata = ['label','burn','chaindir','chainpath','runtime_info']
-        self._savedicts = ['jumps','jump_fractions','hot_chains']
-        self._savearrays = ['cov','rn_freqs']
-        self._savelist_of_str = ['priors','fancy_par_names']
+        self._metadata = ['label', 'burn', 'chaindir', 'chainpath', 'runtime_info']
+        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains']
+        self._savearrays = ['cov', 'rn_freqs']
+        self._savelist_of_str = ['priors', 'fancy_par_names']
         if append is not None:
             for app in append:
-                getattr(self,app[1]).append(app[0])
+                getattr(self, app[1]).append(app[0])
 
     def _load(self, filepath):
         if h5py.is_hdf5(filepath):
@@ -587,7 +586,7 @@ class HyperModelCore(Core):
             each sub-model of the hypermodel.
         """
         # Call to add `param_dict` to dictionaries for hdf5 to search for.
-        super()._set_hdf5_lists(append=[('param_dict','_savedicts')])
+        super()._set_hdf5_lists(append=[('param_dict', '_savedicts')])
         super().__init__(chaindir=chaindir, burn=burn,
                          corepath=corepath,
                          label=label,
@@ -612,7 +611,6 @@ class HyperModelCore(Core):
             self.param_dict = param_dict
 
         self.nmodels = len(list(self.param_dict.keys()))
-
 
     def model_core(self, nmodel):
         """

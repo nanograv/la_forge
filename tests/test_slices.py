@@ -19,13 +19,14 @@ fs_core_path = os.path.join(datadir, 'cores', 'J1713+0747_fs_dmx.core')
 
 J1713_tspan = 392135985.7894745  # seconds
 
+
 def test_slice_core():
-    slicedirs = [chaindir,chaindir2]
+    slicedirs = [chaindir, chaindir2]
     pars2pull = [['J1713+0747_red_noise_gamma', 'J1713+0747_red_noise_log10_A'],
-                 ['B1855+09_red_noise_gamma', 'B1855+09_red_noise_log10_A'],]
-    params = [entry for item in pars2pull for entry in item ]
+                 ['B1855+09_red_noise_gamma', 'B1855+09_red_noise_log10_A'], ]
+    params = [entry for item in pars2pull for entry in item]
     sl = slices.SlicesCore(slicedirs=slicedirs, pars2pull=pars2pull, params=params)
     corepath = os.path.join(testdir, 'test_hdf5_slice.core')
     sl.save(corepath)
     sl2 = slices.SlicesCore(corepath=corepath)
-    assert isinstance(sl2('J1713+0747_red_noise_gamma'),np.ndarray)
+    assert isinstance(sl2('J1713+0747_red_noise_gamma'), np.ndarray)

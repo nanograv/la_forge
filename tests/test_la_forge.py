@@ -49,6 +49,7 @@ def hmc_core():
     return core.HyperModelCore(label='J1713+0747 Adv Noise Modeling Round 3a',
                                chaindir=chaindir, pt_chains=True, skiprows=10)
 
+
 @pytest.fixture
 def pta_core():
     """Full PTA BayesEphem Chain. NG12.5 yr dataset
@@ -77,6 +78,7 @@ def test_core_from_ptmcmc_chains():
     assert isinstance(c0.credint(c0.params[0], onesided=True, interval=95), float)
     assert isinstance(c0.credint(c0.params[0]), tuple)
 
+
 def test_core_loading(pta_core):
     """Tests the loading of a Core into a class. """
     corepath = os.path.join(testdir, 'test_hdf5.core')
@@ -89,17 +91,19 @@ def test_core_loading(pta_core):
     assert isinstance(c1.credint(c1.params[0], onesided=True, interval=95), float)
     assert isinstance(c1.credint(c1.params[0]), tuple)
 
+
 def test_percentiles(pta_core):
     """Tests calculations of median and credible intervals."""
     pars = ['B1855+09_red_noise_gamma', 'B1855+09_red_noise_log10_A']
-    md = np.median(pta_core.chain[1000:,[0,1]],axis=0)
-    ci68_upp = np.percentile(pta_core.chain[1000:,[0,1]], axis=0,q=16)
-    ci68_low = np.percentile(pta_core.chain[1000:,[0,1]], axis=0,q=84)
-    ul95 = np.percentile(pta_core.chain[1000:,[0,1]], axis=0,q=95)
+    md = np.median(pta_core.chain[1000:, [0, 1]], axis=0)
+    ci68_upp = np.percentile(pta_core.chain[1000:, [0, 1]], axis=0, q=16)
+    ci68_low = np.percentile(pta_core.chain[1000:, [0, 1]], axis=0, q=84)
+    ul95 = np.percentile(pta_core.chain[1000:, [0, 1]], axis=0, q=95)
     pta_core.set_burn(1000)
-    assert np.array_equal(pta_core.credint(pars), np.array([ci68_upp,ci68_low]).T)
+    assert np.array_equal(pta_core.credint(pars), np.array([ci68_upp, ci68_low]).T)
     assert np.array_equal(pta_core.median(pars), md)
     assert np.array_equal(pta_core.credint(pars, onesided=True, interval=95), ul95)
+
 
 def test_rednoise_plot(plaw_core, fs_core):
     rednoise.plot_rednoise_spectrum('J1713+0747',

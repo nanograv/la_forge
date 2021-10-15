@@ -3,17 +3,16 @@ name: Build
 on:
   push:
    branches:
-   - master
    - main
    - dev
   pull_request:
    branches:
-   - master
    - main
    - dev
   release:
     types:
       - published
+
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
@@ -26,29 +25,25 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies and package
+    - uses: conda-incubator/setup-miniconda@v1
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          miniconda-version: "latest"
+          activate-environment: ent
+          channels: conda-forge
+    - name: Bash
+      shell: bash -l {0}
       run: |
-        python -m pip install --upgrade pip setuptools wheel
-        python -m pip install flake8 pytest black pytest-cov
-        NO_MKL=1 python -m pip install -e .
-    - name: Display Python, pip, setuptools, and all installed versions
-      run: |
-        python -c "import sys; print(f'Python {sys.version}')"
-        python -c "import pip; print(f'pip {pip.__version__}')"
-        python -c "import setuptools; print(f'setuptools {setuptools.__version__}')"
-        python -m pip freeze
+        conda info
+        conda list
+        conda install enterprise-extensions
     #- name: Run lint
     #  run: make lint
     - name: Test with pytest
       run: make test
     - name: Codecov
       uses: codecov/codecov-action@v1
-      #with:
-      #  fail_ci_if_error: true
 
   build:
     needs: [tests]

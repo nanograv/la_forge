@@ -37,7 +37,7 @@ jobs:
       run: |
         conda info
         conda list
-        conda install -c conda-forge enterprise_extensions pytest coverage twine -y
+        conda install -c conda-forge enterprise_extensions pytest pytest-cov coverage twine -y
     #- name: Run lint
     #  run: make lint
     - name: Test with pytest

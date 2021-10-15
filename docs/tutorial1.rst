@@ -42,16 +42,16 @@ Tutorial #1 Basic Core Usage
 
 .. parsed-literal::
 
-    ['B1855+09_red_noise_gamma',
-     'B1855+09_red_noise_log10_A',
-     'B1953+29_red_noise_gamma',
-     'B1953+29_red_noise_log10_A',
-     'J0023+0923_red_noise_gamma',
-     'J0023+0923_red_noise_log10_A',
-     'J0030+0451_red_noise_gamma',
-     'J0030+0451_red_noise_log10_A',
-     'J0340+4130_red_noise_gamma',
-     'J0340+4130_red_noise_log10_A']
+    > ['B1855+09_red_noise_gamma',
+       'B1855+09_red_noise_log10_A',
+       'B1953+29_red_noise_gamma',
+       'B1953+29_red_noise_log10_A',
+       'J0023+0923_red_noise_gamma',
+       'J0023+0923_red_noise_log10_A',
+       'J0030+0451_red_noise_gamma',
+       'J0030+0451_red_noise_log10_A',
+       'J0340+4130_red_noise_gamma',
+       'J0340+4130_red_noise_log10_A']
 
 
 
@@ -239,7 +239,7 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
     plt.figure(figsize=[8,5])
     # L = len(c1.jumps.keys())
     # half = L//2
-    
+
     for ii,ky in enumerate(c0.jumps.keys()):
         if ii>=9:
             ls='--'
@@ -259,12 +259,12 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
             if lab == 'DEJump':
                 deL = c0.jumps[ky].size
                 jL = c0.jumps['covarianceJumpProposalAM_jump'].size
-                
+
                 nums = np.linspace(jL-deL,jL,deL)
                 plt.plot(nums,c0.jumps[ky],label=lab,ls=ls,lw=1.5)
             else:
                 plt.plot(c0.jumps[ky],label=lab,ls=ls,lw=1.5)
-            
+
     plt.grid()
     plt.legend(loc=[0.4,0.12],ncol=2,fontsize=11)
     plt.ylabel('Acceptance Rate',fontsize=14)
@@ -311,22 +311,22 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
     release : 3.10.0-1160.42.2.el7.x86_64
     version : #1 SMP Tue Sep 7 14:49:57 UTC 2021
     machine : x86_64
-    
+
     enterprise_extensions v2.3.3
     enterprise v3.2.1.dev30+gffe69bf,  Python v3.9.7
     ==========================================================================================
-    
-    Signal Name                              Signal Class                   no. Parameters      
+
+    Signal Name                              Signal Class                   no. Parameters
     ==========================================================================================
-    B1855+09_marginalizing_linear_timing_model TimingModel                    0                   
-    
+    B1855+09_marginalizing_linear_timing_model TimingModel                    0
+
     params:
     __________________________________________________________________________________________
-    B1855+09_red_noise                       FourierBasisGP                 2                   
-    
+    B1855+09_red_noise                       FourierBasisGP                 2
+
     params:
-    B1855+09_red_noise_log10_A:Uniform(pmin=-20, pmax=-11)                                    
-    B1855+09_red_noise_gamma:Uniform(pmin=0, pmax=7)                         
+    B1855+09_red_noise_log10_A:Uniform(pmin=-20, pmax=-11)
+    B1855+09_red_noise_gamma:Uniform(pmin=0, pmax=7)
 
 
 .. code:: ipython3
@@ -339,5 +339,3 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
 .. image:: tutorial1_files/tutorial1_30_0.png
    :width: 251px
    :height: 250px
-
-

@@ -221,17 +221,27 @@ class Signal_Reconstruction():
             Type of gaussian process signal to be reconstructed. In addition
             any GP in `psr.fitpars` or `Signal_Reconstruction.gp_types` may be
             called.
+
             ['achrom_rn','red_noise'] : Return the achromatic red noise.
+
             ['DM'] : Return the timing-model parts of dispersion model.
+
             [timing parameters] : Any of the timing parameters from the linear timing model. A list is available as `psr.fitpars`.
+
             ['timing'] : Return the entire timing model.
+
             ['gw'] : Gravitational wave signal. Works with common process in full PTAs.
-            ['none'] : Returns no Gaussian processes. Meant to be used for returning deterministic signal.
+
+            ['none'] : Returns no Gaussian processes. Meant to be used for returning only a deterministic signal.
+
             ['all'] : Returns all Gaussian processes.
+
         det_signal : bool
             Whether to include the deterministic signals in the reconstruction.
+
         mlv : bool
             Whether to use the maximum likelihood value for the reconstruction.
+            
         idx : int, optional
             Index of the chain array to use.
 

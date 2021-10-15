@@ -68,7 +68,7 @@
         "tmparam_list": null,
         "upper_limit": false,
         "white_vary": true,
-        "wideband": false
+        "is_wideband": false
     },
     "1": {
         "chrom_dt": 7,
@@ -139,7 +139,7 @@
         "tmparam_list": null,
         "upper_limit": false,
         "white_vary": true,
-        "wideband": false
+        "is_wideband": false
     },
     "2": {
         "chrom_dt": 7,
@@ -210,7 +210,7 @@
         "tmparam_list": null,
         "upper_limit": false,
         "white_vary": true,
-        "wideband": false
+        "is_wideband": false
     },
     "3": {
         "chrom_dt": 7,
@@ -281,7 +281,7 @@
         "tmparam_list": null,
         "upper_limit": false,
         "white_vary": true,
-        "wideband": false
+        "is_wideband": false
     },
     "4": {
         "chrom_dt": 7,
@@ -352,6 +352,6 @@
         "tmparam_list": null,
         "upper_limit": false,
         "white_vary": true,
-        "wideband": false
+        "is_wideband": false
     }
 }

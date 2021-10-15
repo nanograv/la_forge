@@ -7,10 +7,11 @@ Welcome to La Forge's documentation!
 
    readme
    installation
-   usage
    tutorial1
    tutorial2
    tutorial3
+   hyper_model
+   gp_visualization
    modules
    contributing
    authors

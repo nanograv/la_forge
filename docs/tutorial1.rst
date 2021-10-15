@@ -10,6 +10,9 @@ Tutorial #1 Basic Core Usage
     import numpy as np
     import json
 
+Loading a Chain Directory
+-------------------------
+
 .. code:: ipython3
 
     chaindir = '/Users/hazboun/software_development/la_forge/tests/data/chains/ng12p5yr_pint_be/'
@@ -42,21 +45,23 @@ Tutorial #1 Basic Core Usage
 
 .. parsed-literal::
 
-    > ['B1855+09_red_noise_gamma',
-       'B1855+09_red_noise_log10_A',
-       'B1953+29_red_noise_gamma',
-       'B1953+29_red_noise_log10_A',
-       'J0023+0923_red_noise_gamma',
-       'J0023+0923_red_noise_log10_A',
-       'J0030+0451_red_noise_gamma',
-       'J0030+0451_red_noise_log10_A',
-       'J0340+4130_red_noise_gamma',
-       'J0340+4130_red_noise_log10_A']
+    ['B1855+09_red_noise_gamma',
+     'B1855+09_red_noise_log10_A',
+     'B1953+29_red_noise_gamma',
+     'B1953+29_red_noise_log10_A',
+     'J0023+0923_red_noise_gamma',
+     'J0023+0923_red_noise_log10_A',
+     'J0030+0451_red_noise_gamma',
+     'J0030+0451_red_noise_log10_A',
+     'J0340+4130_red_noise_gamma',
+     'J0340+4130_red_noise_log10_A']
 
 
 
-Retrieve a single parameter’s sample, post burn-in.
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Access Parameters as Keywords
+-----------------------------
+
+Retrieve a single parameter’s samples, post burn-in.
 
 .. code:: ipython3
 
@@ -72,8 +77,23 @@ Retrieve a single parameter’s sample, post burn-in.
 
 
 
+Retrieve a parameter’s samples with no burn-in.
+
+.. code:: ipython3
+
+    c0('gw_log10_A',to_burn=False)
+
+
+
+
+.. parsed-literal::
+
+    array([-14.60087212, -14.60087212, -14.60087212, ..., -14.59112768,
+           -14.59112768, -14.59112768])
+
+
+
 Retrieve multiple parameters’ samples, post burn-in.
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: ipython3
 
@@ -97,8 +117,10 @@ Retrieve multiple parameters’ samples, post burn-in.
 
 
 
+Parameter Statistics
+--------------------
+
 Retrieve multiple parameters’ 68% credible intervals
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: ipython3
 
@@ -117,7 +139,6 @@ Retrieve multiple parameters’ 68% credible intervals
 
 
 Retrieve single parameter’s 95% upper limit
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: ipython3
 
@@ -234,12 +255,16 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
     with open('noise_file.json','w')as fout:
         json.dump(c0.get_map_dict(),fout)
 
+Jump Proposal Acceptance
+------------------------
+
+Plot the jump proposal acceptance for all of the sampled proposals.
+
 .. code:: ipython3
 
     plt.figure(figsize=[8,5])
-    # L = len(c1.jumps.keys())
-    # half = L//2
-
+    
+    
     for ii,ky in enumerate(c0.jumps.keys()):
         if ii>=9:
             ls='--'
@@ -259,12 +284,12 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
             if lab == 'DEJump':
                 deL = c0.jumps[ky].size
                 jL = c0.jumps['covarianceJumpProposalAM_jump'].size
-
+                
                 nums = np.linspace(jL-deL,jL,deL)
                 plt.plot(nums,c0.jumps[ky],label=lab,ls=ls,lw=1.5)
             else:
                 plt.plot(c0.jumps[ky],label=lab,ls=ls,lw=1.5)
-
+            
     plt.grid()
     plt.legend(loc=[0.4,0.12],ncol=2,fontsize=11)
     plt.ylabel('Acceptance Rate',fontsize=14)
@@ -274,10 +299,12 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
 
 
 
-.. image:: tutorial1_files/tutorial1_27_0.png
+.. image:: tutorial1_files/tutorial1_34_0.png
    :width: 501px
    :height: 336px
 
+
+Fractional breakdown of various jump proposals
 
 .. code:: ipython3
 
@@ -299,6 +326,9 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
 
 
 
+Runtime Information
+-------------------
+
 .. code:: ipython3
 
     print(c0.runtime_info[:960])
@@ -311,31 +341,37 @@ Retrieve a *maximum a postori* dictionary and save it as a noise file.
     release : 3.10.0-1160.42.2.el7.x86_64
     version : #1 SMP Tue Sep 7 14:49:57 UTC 2021
     machine : x86_64
-
+    
     enterprise_extensions v2.3.3
     enterprise v3.2.1.dev30+gffe69bf,  Python v3.9.7
     ==========================================================================================
-
-    Signal Name                              Signal Class                   no. Parameters
+    
+    Signal Name                              Signal Class                   no. Parameters      
     ==========================================================================================
-    B1855+09_marginalizing_linear_timing_model TimingModel                    0
-
+    B1855+09_marginalizing_linear_timing_model TimingModel                    0                   
+    
     params:
     __________________________________________________________________________________________
-    B1855+09_red_noise                       FourierBasisGP                 2
-
+    B1855+09_red_noise                       FourierBasisGP                 2                   
+    
     params:
-    B1855+09_red_noise_log10_A:Uniform(pmin=-20, pmax=-11)
-    B1855+09_red_noise_gamma:Uniform(pmin=0, pmax=7)
+    B1855+09_red_noise_log10_A:Uniform(pmin=-20, pmax=-11)                                    
+    B1855+09_red_noise_gamma:Uniform(pmin=0, pmax=7)                         
 
+
+Parameter Covariance Matrix
+---------------------------
 
 .. code:: ipython3
 
     plt.imshow(np.log10(abs(c0.cov)))
+    plt.colorbar()
     plt.show()
 
 
 
-.. image:: tutorial1_files/tutorial1_30_0.png
-   :width: 251px
+.. image:: tutorial1_files/tutorial1_40_0.png
+   :width: 307px
    :height: 250px
+
+

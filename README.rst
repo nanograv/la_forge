@@ -31,7 +31,7 @@ Python package for conveniently plotting results from pulsar timing array bayesi
 
 .. code-block:: python
 
-   pip install git+https://github.com/Hazboun6/la_forge@master
+   pip install la-forge
 
 
 * Free software: MIT license

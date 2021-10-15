@@ -1,11 +1,11 @@
 Welcome to La Forge's documentation!
 ======================================
+.. include:: ../README.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   readme
    installation
    tutorial1
    tutorial2

@@ -26,12 +26,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
     - uses: conda-incubator/setup-miniconda@v1
-        with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          activate-environment: ent
-          channels: conda-forge
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+        miniconda-version: "latest"
+        activate-environment: ent
+        channels: conda-forge
     - name: Bash
       shell: bash -l {0}
       run: |

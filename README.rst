@@ -50,6 +50,7 @@ Features
 * Plot red noise power spectral density.
 * Separate consituent models of a hypermodel analysis.
 
+.. include:: ./AUTHORS.rst
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 

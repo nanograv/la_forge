@@ -659,7 +659,7 @@ class TimingCore(Core):
     Cores allow for automatic handling of the parameters.
     """
 
-    def __init__(self, label, chaindir=None, burn=0.25,
+    def __init__(self, chaindir=None, burn=0.25, label=None,
                  fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, tm_pars_path=None):
         """

@@ -787,12 +787,31 @@ class TimingCore(Core):
         function uses a Newton-Raphson method since the equation is
         transcendental.
         """
-        mp_pars = ['PB', 'A1', 'M2', 'SINI']
+        if all([[bp in p for p in self.params]
+                for bp in ['PB', 'A1', 'M2']]):
+            if any(['COSI' in p for p in self.params]):
+                mp_pars = ['PB', 'A1', 'M2', 'COSI']
+            elif any(['SINI' in p for p in self.params]):
+                mp_pars = ['PB', 'A1', 'M2', 'SINI']
+            else:
+                msg = 'One of binary parameters '
+                msg += '[\'SINI\', \'COSI\'] is missing.'
+                raise ValueError(msg)
+        else:
+            msg = 'One of binary parameters '
+            msg += '[\'PB\', \'A1\', \'M2\'] is missing.'
+            raise ValueError(msg)
+
         x = {}
         for p in mp_pars:
             x[p] = self.get_param(p, tm_convert=True)
 
-        PB, A1, M2, SINI = x['PB'], x['A1'], x['M2'], x['SINI']
+        try:
+            PB, A1, M2, SINI = x['PB'], x['A1'], x['M2'], x['SINI']
+        except KeyError:
+            PB, A1, M2, COSI = x['PB'], x['A1'], x['M2'], x['COSI']
+            SINI = np.sin(np.arccos(COSI))
+
         mf = self.mass_function(PB, A1)
         return np.sqrt((M2 * SINI)**3 / mf) - M2
 

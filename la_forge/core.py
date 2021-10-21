@@ -464,7 +464,7 @@ class Core(object):
         for ky, val in d.items():
             try:
                 g.create_dataset(ky, data=val)
-            except TypeError,AttributeError:
+            except (TypeError,AttributeError) as e:
                 dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
                 g.create_dataset(str(ky),
                                  data=np.array(val, dtype="O"),

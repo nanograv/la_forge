@@ -235,7 +235,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
         if all([pulsar not in par for par in c.params]):
             raise ValueError('Pulsar not in any parameter names.')
         ###Free Spectral Plotting
-        if pulsar + rn_type +  '_log10_rho_0' in c.params:
+        if any(pulsar + rn_type + '_log10_rho_0' in x for x in c.params):
             Color = Colors[color_idx]
 
             if free_spec_ct==1:
@@ -258,11 +258,15 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             color_idx += 1
 
         ### T-Process Plotting
-        elif pulsar + rn_type + '_alphas_0' in c.params:
-            amp_par = pulsar+rn_type+'_log10_A'
-            gam_par = pulsar+rn_type+'_gamma'
+        elif any(pulsar + rn_type + '_alphas_0' in x for x in c.params):
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    amp_par = y
+                if pulsar + rn_type + '_gamma' in y:
+                    gam_par = y
+            par_root = pulsar + rn_type + '_alphas'
+
             Color = Colors[color_idx]
-            par_root = pulsar + rn_type +  '_alphas'
 
             plot_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
                           alpha_parname_root=par_root, Color=Color,
@@ -285,12 +289,18 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             color_idx += 1
 
         ### Adaptive T-Process Plotting
-        elif pulsar + rn_type + '_alphas_adapt_0' in c.params:
-            amp_par = pulsar+rn_type+'_log10_A'
-            gam_par = pulsar+rn_type+'_gamma'
+        elif any(pulsar + rn_type + '_alphas_adapt_0' in x for x in c.params):
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    amp_par = y
+                if pulsar + rn_type + '_gamma' in y:
+                    gam_par = y
+                if pulsar + rn_type + '_alphas_adapt_0' in y:
+                    alpha_par = y
+                if pulsar + rn_type + '_nfreq' in y:
+                    nfreq_par = y
+
             Color = Colors[color_idx]
-            alpha_par = pulsar + rn_type +  '_alphas_adapt_0'
-            nfreq_par = pulsar + rn_type +  '_nfreq'
             plot_adapt_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
                                 alpha_par=alpha_par, nfreq_par=nfreq_par,
                                 n_realizations=100, Color=Color,
@@ -312,21 +322,35 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
             color_idx += 1
 
         ### Broken Power Law Plotting
-        elif pulsar + rn_type + '_log10_fb' in c.params:
-            pass
-            amp_par = pulsar + rn_type + '_log10_A'
-            gam_par = pulsar + rn_type + '_gamma'
-            fb_par = pulsar + rn_type + '_log10_fb'
-            del_par = pulsar + rn_type + '_delta'
-            kappa_par = pulsar + rn_type + '_kappa'
+        elif any(pulsar + rn_type + '_log10_fb' in x for x in c.params):
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    amp_par = y
+                if pulsar + rn_type + '_gamma' in y:
+                    gam_par = y
+                if pulsar + rn_type + '_log10_fb' in y:
+                    fb_par = y
+                if pulsar + rn_type + '_delta' in y:
+                    del_par = y
+                if pulsar + rn_type + '_kappa' in y:
+                    kappa_par = y
 
             Color = Colors[color_idx]
-            if pulsar + rn_type + '_beta' in c.params:
-                fb_par = pulsar + rn_type + '_log10_fb_1'
-                fb_2_par = pulsar + rn_type + '_log10_fb_2'
-                beta_par = pulsar + rn_type + '_beta'
-                kappa_par = pulsar + rn_type + '_kappa_1'
-                kappa_2_par = pulsar + rn_type + '_kappa_2'
+            #if pulsar + rn_type + '_beta' in c.params:
+            if any(pulsar + rn_type + '_beta' in x for x in c.params):
+                for y in c.params:
+                    if pulsar + rn_type + '_log10_fb' in y:
+                        if pulsar + rn_type + '_log10_fb_1' in y:
+                            fb_par = y
+                        elif pulsar + rn_type + '_log10_fb_2' in y:
+                            fb_2_par = y
+                    if pulsar + rn_type + '_beta' in y:
+                        beta_par = y
+                    if pulsar + rn_type + '_kappa' in y:
+                        if pulsar + rn_type + '_kappa_1' in y:
+                            kappa_par = y
+                        elif pulsar + rn_type + '_kappa_2' in y:
+                            kappa_2_par = y
                 
                 plot_extra_broken_powerlaw(core, axis, amp_par, gam_par, del_par, beta_par,
                                            fb_par, log10_fb_2_par,
@@ -360,8 +384,11 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
         ### Powerlaw Plotting
         else:
-            amp_par = pulsar+rn_type+'_log10_A'
-            gam_par = pulsar+rn_type+'_gamma'
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    amp_par = y
+                if pulsar + rn_type + '_gamma' in y:
+                    gam_par = y
             if plaw_ct==1:
                 Linestyle = '-'
             else:
@@ -961,9 +988,9 @@ def plot_extra_broken_powerlaw(core, axis, amp_par, gam_par, del_par, beta_par,
     beta_par : str
         Name of 1st (lowest freq) red noise powerlaw spectral index parameter
         (gamma3).
-    log10_fb_1 : str
+    log10_fb_1_par : str
         Name of 1st red noise powerlaw frequency split parameter (freq_split).
-    log10_fb_2 : str
+    log10_fb_2_par : str
         Name of 2nd red noise powerlaw frequency split parameter (freq_split).
     kappa_1_par : float
         1st Break transition parameter name.

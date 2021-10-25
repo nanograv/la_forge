@@ -1,20 +1,14 @@
 #!/usr/bin/env python
 
-from __future__ import division, print_function
-import matplotlib.pyplot as plt
-import numpy as np
-import os.path
-import corner
+import logging
 from collections import OrderedDict
 
-## import la_forge dependencies
-from . import utils
-from .core import Core
-
-import scipy.sparse as sps
+import numpy as np
 import scipy.linalg as sl
+import scipy.sparse as sps
 import six
-import logging
+
+# import la_forge dependencies
 
 __all__ = ['Signal_Reconstruction']
 
@@ -22,7 +16,7 @@ logging.basicConfig(format='%(levelname)s: %(name)s: %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-##### Either import SKS Sparse Library or use Scipy version defined below.
+# Either import SKS Sparse Library or use Scipy version defined below.
 try:
     from sksparse.cholmod import cholesky
 except ImportError:
@@ -49,10 +43,12 @@ except ImportError:
 ###### Constants #######
 DM_K = float(2.41e-4)
 
+
 class Signal_Reconstruction():
     '''
     Class for building Gaussian process realizations from enterprise models.
     '''
+
     def __init__(self, psrs, pta, chain=None, burn=None,
                  p_list='all', core=None):
         '''
@@ -80,7 +76,7 @@ class Signal_Reconstruction():
             A core which contains the same information as the chain of samples.
 
         '''
-        if not isinstance(psrs,list):
+        if not isinstance(psrs, list):
             psrs = [psrs]
 
         self.psrs = psrs
@@ -103,21 +99,19 @@ class Signal_Reconstruction():
         self.mlv_idx = np.argmax(chain[:, -4])
         self.mlv_params = self.sample_posterior(self.mlv_idx)
 
-        ret = {}
-
         if p_list=='all':
             p_list = self.p_names
             p_idx = np.arange(len(self.p_names))
 
         else:
-            if isinstance(p_list,six.string_types):
+            if isinstance(p_list, six.string_types):
                 p_idx = [self.p_names.index(p_list)]
                 p_list = [p_list]
 
-            elif isinstance(p_list[0],six.string_types):
+            elif isinstance(p_list[0], six.string_types):
                 p_idx = [self.p_names.index(p) for p in p_list]
 
-            elif isinstance(p_list[0],int):
+            elif isinstance(p_list[0], int):
                 p_idx = p_list
                 p_list = self.p_names
 
@@ -148,7 +142,7 @@ class Signal_Reconstruction():
                 all_bases = []
                 basis_signals = [sig for sig in sc._signals
                                  if sig.signal_type
-                                 in ['basis','common basis']]
+                                 in ['basis', 'common basis']]
 
                 phi_sum = np.sum([sig.get_phi(self.mlv_params).shape[0]
                                   for sig in basis_signals])
@@ -160,16 +154,16 @@ class Signal_Reconstruction():
                 self.shared_sigs[pname] = OrderedDict()
 
                 for sig in basis_signals:
-                    if sig.signal_type in ['basis','common basis']:
+                    if sig.signal_type in ['basis', 'common basis']:
                         basis = sig.get_basis(params=self.mlv_params)
                         nb = basis.shape[1]
                         sig._construct_basis()
-                        if isinstance(sig._labels,dict):
+                        if isinstance(sig._labels, dict):
                             try:
                                 freqs = list(sig._labels[''])[::2]
                             except TypeError:
                                 freqs = sig._labels['']
-                        elif isinstance(sig._labels,(np.ndarray, list)):
+                        elif isinstance(sig._labels, (np.ndarray, list)):
                             try:
                                 freqs = list(sig._labels)[::2]
                             except TypeError:
@@ -182,13 +176,14 @@ class Signal_Reconstruction():
                         else:
                             ky = sig.signal_id
 
-                        if ky not in self.gp_types: self.gp_types.append(ky)
+                        if ky not in self.gp_types:
+                            self.gp_types.append(ky)
 
                         self.gp_freqs[pname][ky] = freqs
 
                         if shared_bases:
                             # basis = basis.tolist()
-                            check = [np.array_equal(basis,M) for M in all_bases]
+                            check = [np.array_equal(basis, M) for M in all_bases]
                             if any(check):
                                 b_idx = check.index(True)
                                 # b_idx = all_bases.index(basis)
@@ -217,7 +212,7 @@ class Signal_Reconstruction():
         self.p_list = p_list
         self.p_idx = p_idx
 
-    def reconstruct_signal(self, gp_type ='achrom_rn', det_signal=False,
+    def reconstruct_signal(self, gp_type='achrom_rn', det_signal=False,
                            mlv=False, idx=None, condition=False, eps=1e-16):
         """
         Parameters
@@ -226,15 +221,19 @@ class Signal_Reconstruction():
             Type of gaussian process signal to be reconstructed. In addition
             any GP in `psr.fitpars` or `Signal_Reconstruction.gp_types` may be
             called.
+
             ['achrom_rn','red_noise'] : Return the achromatic red noise.
+
             ['DM'] : Return the timing-model parts of dispersion model.
-            [timing parameters] : Any of the timing parameters from the linear
-                timing model. A list is available as `psr.fitpars`.
+
+            [timing parameters] : Any of the timing parameters from the linear timing model. A list is available as `psr.fitpars`.
+
             ['timing'] : Return the entire timing model.
-            ['gw'] : Gravitational wave signal. Works with common process in
-                full PTAs.
-            ['none'] : Returns no Gaussian processes. Meant to be used for
-                returning deterministic signal.
+
+            ['gw'] : Gravitational wave signal. Works with common process in full PTAs.
+
+            ['none'] : Returns no Gaussian processes. Meant to be used for returning only a deterministic signal.
+
             ['all'] : Returns all Gaussian processes.
 
         det_signal : bool
@@ -242,7 +241,7 @@ class Signal_Reconstruction():
 
         mlv : bool
             Whether to use the maximum likelihood value for the reconstruction.
-
+            
         idx : int, optional
             Index of the chain array to use.
 
@@ -275,8 +274,8 @@ class Signal_Reconstruction():
             b = self._get_b(d, TNT, phiinv)
 
             if gp_type in self.common_gp_idx[psrname].keys():
-                B = self._get_b_common(gp_type, TNrs, TNTs,params,
-                                       condition=condition,eps=eps)
+                B = self._get_b_common(gp_type, TNrs, TNTs, params,
+                                       condition=condition, eps=eps)
 
             # Red noise pieces
             psr = self.psrs[p_ct]
@@ -290,30 +289,30 @@ class Signal_Reconstruction():
                 dmind = np.array([ct for ct, p in enumerate(psr.fitpars)
                                   if 'DM' in p])
                 idx = self.gp_idx[psrname][tm_key][dmind]
-                wave[psrname] += np.dot(T[:,dmind], b[dmind])
+                wave[psrname] += np.dot(T[:, dmind], b[dmind])
 
-            elif gp_type in ['achrom_rn','red_noise']:
+            elif gp_type in ['achrom_rn', 'red_noise']:
                 if 'red_noise' not in self.shared_sigs[psrname]:
                     if 'red_noise' in self.common_gp_idx[psrname].keys():
                         idx = self.gp_idx[psrname]['red_noise']
                         cidx = self.common_gp_idx[psrname]['red_noise']
-                        wave[psrname] += np.dot(T[:,idx], B[cidx])
+                        wave[psrname] += np.dot(T[:, idx], B[cidx])
                     else:
                         idx = self.gp_idx[psrname]['red_noise']
-                        wave[psrname] += np.dot(T[:,idx], b[idx])
+                        wave[psrname] += np.dot(T[:, idx], b[idx])
                 else:
                     rn_sig = self.pta.get_signal('{0}_red_noise'.format(psrname))
                     sc = self.pta._signalcollections[p_ct]
                     phi_rn = self._shared_basis_get_phi(sc, params, rn_sig)
-                    phiinv_rn = phi_gw.inv()
+                    phiinv_rn = phi_rn.inv()
                     idx = self.gp_idx[psrname]['red_noise']
                     b = self._get_b(d, TNT, phiinv_rn)
-                    wave[psrname] += np.dot(T[:,idx], b[idx])
+                    wave[psrname] += np.dot(T[:, idx], b[idx])
             elif gp_type == 'timing':
                 tm_key = [ky for ky in self.gp_idx[psrname].keys()
                           if 'timing' in ky][0]
                 idx = self.gp_idx[psrname][tm_key]
-                wave[psrname] += np.dot(T[:,idx], b[idx])
+                wave[psrname] += np.dot(T[:, idx], b[idx])
             elif gp_type in psr.fitpars:
                 if any([ky for ky in self.gp_idx[psrname].keys()
                         if 'svd' in ky]):
@@ -327,20 +326,20 @@ class Signal_Reconstruction():
                 dmind = np.array([ct for ct, p in enumerate(psr.fitpars)
                                   if gp_type in p])
                 idx = self.gp_idx[psrname][tm_key][dmind]
-                wave[psrname] += np.dot(T[:,idx], b[idx])
+                wave[psrname] += np.dot(T[:, idx], b[idx])
             elif gp_type == 'all':
                 wave[psrname] += np.dot(T, b)
             elif gp_type == 'gw':
                 if 'red_noise_gw' not in self.shared_sigs[psrname]:
-                    #Parse whether it is a common signal.
+                    # Parse whether it is a common signal.
                     if 'red_noise_gw' in self.common_gp_idx[psrname].keys():
                         idx = self.gp_idx[psrname]['red_noise_gw']
                         cidx = self.common_gp_idx[psrname]['red_noise_gw']
-                        wave[psrname] += np.dot(T[:,idx], B[cidx])
-                    else: #If not common use pulsar Phi
+                        wave[psrname] += np.dot(T[:, idx], B[cidx])
+                    else:  # If not common use pulsar Phi
                         idx = self.gp_idx[psrname]['red_noise_gw']
-                        wave[psrname] += np.dot(T[:,idx], b[idx])
-                #Need to make our own phi when shared...
+                        wave[psrname] += np.dot(T[:, idx], b[idx])
+                # Need to make our own phi when shared...
                 else:
                     gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
                     # [sig for sig
@@ -355,16 +354,16 @@ class Signal_Reconstruction():
                     # b = self._get_b(d[idx], TNT[idx,idx], phiinv_gw)
                     # wave[psrname] += np.dot(T[:,idx], b)
                     b = self._get_b(d, TNT, phiinv_gw)
-                    wave[psrname] += np.dot(T[:,idx], b[idx])
+                    wave[psrname] += np.dot(T[:, idx], b[idx])
             elif gp_type in self.gp_types:
                 try:
                     if gp_type in self.common_gp_idx[psrname].keys():
                         idx = self.gp_idx[psrname][gp_type]
                         cidx = self.common_gp_idx[psrname][gp_type]
-                        wave[psrname] += np.dot(T[:,idx], B[cidx])
+                        wave[psrname] += np.dot(T[:, idx], B[cidx])
                     else:
                         idx = self.gp_idx[psrname][gp_type]
-                        wave[psrname] += np.dot(T[:,idx], b[idx])
+                        wave[psrname] += np.dot(T[:, idx], b[idx])
                 except IndexError:
                     raise IndexError('Index is out of range. '
                                      'Maybe the basis for this is shared.')
@@ -379,22 +378,21 @@ class Signal_Reconstruction():
     def _get_matrices(self, params):
         TNrs = self.pta.get_TNr(params)
         TNTs = self.pta.get_TNT(params)
-        phiinvs = self.pta.get_phiinv(params, logdet=False)#,method='partition')
+        phiinvs = self.pta.get_phiinv(params, logdet=False)  # ,method='partition')
         Ts = self.pta.get_basis(params)
 
-        #The following takes care of common, correlated signals.
+        # The following takes care of common, correlated signals.
         if TNTs[0].shape[0]<phiinvs[0].shape[0]:
-            phiinvs = self._div_common_phiinv(TNTs,params)
+            phiinvs = self._div_common_phiinv(TNTs, params)
 
         # Excise pulsars if p_list not 'all'.
         if len(self.p_list)<len(self.p_names):
-            TNrs = self._subset_psrs(TNrs , self.p_idx)
-            TNTs = self._subset_psrs(TNTs , self.p_idx)
-            phiinvs = self._subset_psrs(phiinvs , self.p_idx)
-            Ts = self._subset_psrs(Ts , self.p_idx)
+            TNrs = self._subset_psrs(TNrs, self.p_idx)
+            TNTs = self._subset_psrs(TNTs, self.p_idx)
+            phiinvs = self._subset_psrs(phiinvs, self.p_idx)
+            Ts = self._subset_psrs(Ts, self.p_idx)
 
         return TNrs, TNTs, phiinvs, Ts
-
 
     def _get_b(self, d, TNT, phiinv):
         Sigma = TNT + (np.diag(phiinv) if phiinv.ndim == 1 else phiinv)
@@ -417,13 +415,13 @@ class Signal_Reconstruction():
             # conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
             # Sigma += sps.block_diag(conditioner,'csc')
             # Sigma += eps * sps.eye(phiinv.shape[0])
-            phi = self.pta.get_phi(params)#.astype(np.float128)
-            #phisparse = sps.csc_matrix(phi)
+            phi = self.pta.get_phi(params)  # .astype(np.float128)
+            # phisparse = sps.csc_matrix(phi)
             # conditioner = [eps*np.ones_like(TNT) for TNT in TNTs]
             # phisparse += sps.block_diag(conditioner,'csc')
             # phisparse += eps * sps.identity(phisparse.shape[0])
-            #cf = cholesky(phisparse)
-            #phiinv = cf.inv()
+            # cf = cholesky(phisparse)
+            # phiinv = cf.inv()
 
             # u,s,vT = np.linalg.svd(phi)
             # s_inv=np.diagflat(1/s)
@@ -436,16 +434,16 @@ class Signal_Reconstruction():
         else:
             phiinv = self.pta.get_phiinv(params, logdet=False)
             # phiinv = sps.csc_matrix(self.pta.get_phiinv(params, logdet=False))#,
-                                                        #   method='partition'))
+            #   method='partition'))
 
-        sps_Sigma = sps.block_diag(TNTs,'csc') + sps.csc_matrix(phiinv)
-        Sigma = sl.block_diag(*TNTs) + phiinv #.astype(np.float128)
+        sps_Sigma = sps.block_diag(TNTs, 'csc') + sps.csc_matrix(phiinv)
+        Sigma = sl.block_diag(*TNTs) + phiinv  # .astype(np.float128)
         TNr = np.concatenate(TNrs)
 
         ch = cholesky(sps_Sigma)
         # mn = ch(TNr)
         Li = sps.linalg.inv(ch.L()).todense()
-        mn = np.linalg.solve(Sigma,TNr)
+        mn = np.linalg.solve(Sigma, TNr)
         # r = 1e30
         # regul = np.dot(Sigma.T,Sigma) + r*np.eye(Sigma.shape[0])
         # regul_inv = sl.inv(regul)
@@ -459,37 +457,38 @@ class Signal_Reconstruction():
             idxs = self.common_gp_idx[psrname][gp_type]
             self.gp[idxs] = common_gp
 
-        B = mn + np.dot(Li,self.gp)
+        B = mn + np.dot(Li, self.gp)
 
         try:
             B = np.array(B.tolist()[0])
         except:
             pass
 
-        return  B
+        return B
 
     def sample_params(self, index):
         return {par: self.chain[index, ct] for ct, par
                 in enumerate(self.pta.param_names)}
 
-    def sample_posterior(self, samp_idx, array_params=['alphas','rho']):
+    def sample_posterior(self, samp_idx, array_params=['alphas', 'rho', 'nE']):
         param_names = self.pta.param_names
         if any([any([array_str in par for par in param_names])
                 for array_str in array_params]):
-
-            mask = np.ones(len(param_names),dtype=bool)
+            # Check for any array params and make samples appropriate shape.
+            mask = np.ones(len(param_names), dtype=bool)
 
             array_par_dict = {}
             for array_str in array_params:
+                # Go through each type of possible array sample.
                 mask &= [array_str not in par for par in param_names]
                 if any([array_str+'_0' in par for par in param_names]):
-                    array_par_name = [par.replace('_0','')
+                    array_par_name = [par.replace('_0', '')
                                       for par in param_names
                                       if array_str+'_0'in par][0]
                     array_idxs = np.where([array_str in par
-                                           for par in param_names])
+                                           for par in param_names])[0]
                     par_array = self.chain[samp_idx, array_idxs]
-                    array_par_dict.update({array_par_name:par_array})
+                    array_par_dict.update({array_par_name: par_array})
 
             par_idx = np.where(mask)[0]
             par_sample = {param_names[p_idx]: self.chain[samp_idx, p_idx]
@@ -502,10 +501,10 @@ class Signal_Reconstruction():
             return {par: self.chain[samp_idx, ct]
                     for ct, par in enumerate(self.pta.param_names)}
 
-    def _subset_psrs(self, likelihood_list , p_idx):
+    def _subset_psrs(self, likelihood_list, p_idx):
         return list(np.array(likelihood_list)[p_idx])
 
-    def _div_common_phiinv(self,TNTs,params):
+    def _div_common_phiinv(self, TNTs, params):
         phivecs = [signalcollection.get_phi(params) for
                    signalcollection in self.pta._signalcollections]
         return [None if phivec is None else phivec.inv(logdet=False)
@@ -518,16 +517,16 @@ class Signal_Reconstruction():
         """Rewrite of get_phi where overlapping bases are ignored."""
         phi = KernelMatrix(sc._Fmat.shape[1])
 
-        idx_dict,_ = sc._combine_basis_columns(sc._signals)
+        idx_dict, _ = sc._combine_basis_columns(sc._signals)
         primary_idxs = idx_dict[primary_signal]
         # sig_types = []
 
-        ### Make new list of signals with no overlapping bases
+        # Make new list of signals with no overlapping bases
         new_signals = []
         for sig in idx_dict.keys():
             if sig.signal_id==primary_signal.signal_id:
                 new_signals.append(sig)
-            elif not np.array_equal(primary_idxs,idx_dict[sig]):
+            elif not np.array_equal(primary_idxs, idx_dict[sig]):
                 new_signals.append(sig)
             else:
                 pass
@@ -540,12 +539,12 @@ class Signal_Reconstruction():
 
     def _shared_basis_get_phiinv(self, sc, params, primary_signal):
         """Rewrite of get_phiinv where overlapping bases are ignored."""
-        return _shared_basis_get_phi.get_phi(sc, params, primary_signal).inv()
+        return _shared_basis_get_phi.get_phi(sc, params, primary_signal).inv()  # noqa: F821
 
 
-### Copied implementation of KernelMatrix from enterprise
-### to avoid enterprise dependencies, though one needs enterprise to provide
-### the PTA object anyways...
+# Copied implementation of KernelMatrix from enterprise
+# to avoid enterprise dependencies, though one needs enterprise to provide
+# the PTA object anyways...
 class KernelMatrix(np.ndarray):
     def __new__(cls, init):
         if isinstance(init, int):
@@ -570,7 +569,7 @@ class KernelMatrix(np.ndarray):
         else:
             self._cliques[idxs] = maxidx
             if len(allidx) > 1:
-                self._cliques[np.in1d(self._cliques,allidx)] = maxidx
+                self._cliques[np.in1d(self._cliques, allidx)] = maxidx
 
     def add(self, other, idx):
         if other.ndim == 2 and self.ndim == 1:

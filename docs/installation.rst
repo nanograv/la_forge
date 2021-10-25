@@ -12,7 +12,7 @@ To install La Forge, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install la_forge
+    $ pip install la-forge
 
 This is the preferred method to install La Forge, as it will always install the most recent stable release.
 

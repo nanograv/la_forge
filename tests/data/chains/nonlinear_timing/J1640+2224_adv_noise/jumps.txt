@@ -1,0 +1,8 @@
+covarianceJumpProposalSCAM 0.21
+draw_from_prior  0.1
+draw_from_timing_model_prior 0.069
+covarianceJumpProposalAM  0.1
+DEJump 0.21
+draw_from_timing_model 0.17
+draw_from_red_prior 0.069
+draw_from_dm_gp_prior 0.069

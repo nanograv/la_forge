@@ -15,10 +15,9 @@ requirements = ['numpy>=1.11',
                 'scipy>1.0.0',
                 'matplotlib>=2.0.0',
                 'corner',
+                'h5py>=3.4.0',
                 'astropy>=3.0.0',
                 ]
-
-setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
@@ -44,10 +43,9 @@ setup(
     keywords='la_forge',
     name='la_forge',
     packages=find_packages(include=['la_forge']),
-    setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/Hazboun6/la_forge',
-    version='0.3.0',
+    version='1.0.0',
     zip_safe=False,
 )

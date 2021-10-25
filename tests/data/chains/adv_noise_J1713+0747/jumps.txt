@@ -1,0 +1,8 @@
+draw_from_dm_gp_prior 0.077
+covarianceJumpProposalAM 0.12
+draw_from_prior 0.038
+covarianceJumpProposalSCAM 0.23
+draw_from_red_prior 0.077
+draw_from_nmodel_prior 0.19
+draw_from_dmexpdip_prior 0.077
+draw_from_empirical_distr 0.19

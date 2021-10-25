@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os.path
 import corner
+from collections import defaultdict
 
 from . import utils
 from .core import Core
@@ -259,163 +260,275 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
 
         ### T-Process Plotting
         elif any(pulsar + rn_type + '_alphas_0' in x for x in c.params):
+            par_dict = {}
             for y in c.params:
                 if pulsar + rn_type + '_log10_A' in y:
-                    amp_par = y
+                    par_dict[y.split('_')[-1]] = {}
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    if y.split('_')[-1] in par_dict.keys():
+                        par_dict[y.split('_')[-1]]['amp_par'] = y
+                    else:
+                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                 if pulsar + rn_type + '_gamma' in y:
-                    gam_par = y
+                    if y.split('_')[-1] in par_dict.keys():
+                        par_dict[y.split('_')[-1]]['gam_par'] = y
+                    else:
+                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+
             par_root = pulsar + rn_type + '_alphas'
+            for group in par_dict.keys():
+                Color = Colors[color_idx]
 
-            Color = Colors[color_idx]
+                plot_tprocess(c, axes[0], amp_par=par_dict[group]['amp_par'],
+                              gam_par=par_dict[group]['gam_par'],
+                              alpha_parname_root=par_root, Color=Color,
+                              n_realizations=n_tproc_realizations,
+                              Tspan=Tspan)
 
-            plot_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
-                          alpha_parname_root=par_root, Color=Color,
-                          n_realizations=n_tproc_realizations,
-                          Tspan=Tspan)
+                if plot_2d_hist:
+                    corner.hist2d(c.get_param(par_dict[group]['gam_par'])[c.burn:],
+                                  c.get_param(par_dict[group]['amp_par'])[c.burn:],
+                                  bins=bins, ax=axes[1], plot_datapoints=False,
+                                  plot_density=plot_density[ii],
+                                  plot_contours=plot_contours[ii],
+                                  no_fill_contours=True, color=Color)
+                    ax1_ylim.append(list(axes[1].get_ylim()))
 
-            if plot_2d_hist:
-                corner.hist2d(c.get_param(gam_par)[c.burn:],
-                              c.get_param(amp_par)[c.burn:],
-                              bins=bins, ax=axes[1], plot_datapoints=False,
-                              plot_density=plot_density[ii],
-                              plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color)
-                ax1_ylim.append(list(axes[1].get_ylim()))
-
-            # Track lines and labels for legend
-            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
-            if make_labels is True: labels.append('T-Process')
-            tproc_ct += 1
-            color_idx += 1
+                # Track lines and labels for legend
+                lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
+                if make_labels is True: labels.append('T-Process')
+                tproc_ct += 1
+                color_idx += 1
 
         ### Adaptive T-Process Plotting
         elif any(pulsar + rn_type + '_alphas_adapt_0' in x for x in c.params):
+            par_dict = {}
             for y in c.params:
                 if pulsar + rn_type + '_log10_A' in y:
-                    amp_par = y
+                    par_dict[y.split('_')[-1]] = {}
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    if y.split('_')[-1] in par_dict.keys():
+                        par_dict[y.split('_')[-1]]['amp_par'] = y
+                    else:
+                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                 if pulsar + rn_type + '_gamma' in y:
-                    gam_par = y
+                    if y.split('_')[-1] in par_dict.keys():
+                        par_dict[y.split('_')[-1]]['gam_par'] = y
+                    else:
+                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                 if pulsar + rn_type + '_alphas_adapt_0' in y:
-                    alpha_par = y
+                    if y.split('_')[-1] in par_dict.keys():
+                        par_dict[y.split('_')[-1]]['alpha_par'] = y
+                    else:
+                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                 if pulsar + rn_type + '_nfreq' in y:
-                    nfreq_par = y
+                    if y.split('_')[-1] in par_dict.keys():
+                        par_dict[y.split('_')[-1]]['nfreq_par'] = y
+                    else:
+                        print(f"{y} how we split it is not in {par_dict.keys()}")
 
-            Color = Colors[color_idx]
-            plot_adapt_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
-                                alpha_par=alpha_par, nfreq_par=nfreq_par,
-                                n_realizations=100, Color=Color,
-                                Tspan=Tspan)
+            for group in par_dict.keys():
+                Color = Colors[color_idx]
+                plot_adapt_tprocess(c, axes[0], amp_par=par_dict[group]['amp_par'],
+                                    gam_par=par_dict[group]['gam_par'],
+                                    alpha_par=par_dict[group]['alpha_par'],
+                                    nfreq_par=par_dict[group]['nfreq_par'],
+                                    n_realizations=100, Color=Color,
+                                    Tspan=Tspan)
 
-            if plot_2d_hist:
-                corner.hist2d(c.get_param(gam_par)[c.burn:],
-                              c.get_param(amp_par)[c.burn:],
-                              bins=bins, ax=axes[1], plot_datapoints=False,
-                              plot_density=plot_density[ii],
-                              plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color)
-                ax1_ylim.append(list(axes[1].get_ylim()))
+                if plot_2d_hist:
+                    corner.hist2d(c.get_param(par_dict[group]['gam_par'])[c.burn:],
+                                  c.get_param(par_dict[group]['amp_par'])[c.burn:],
+                                  bins=bins, ax=axes[1], plot_datapoints=False,
+                                  plot_density=plot_density[ii],
+                                  plot_contours=plot_contours[ii],
+                                  no_fill_contours=True, color=Color)
+                    ax1_ylim.append(list(axes[1].get_ylim()))
 
-            # Track lines and labels for legend
-            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
-            if make_labels is True: labels.append('Adaptive T-Process')
-            tproc_adapt_ct += 1
-            color_idx += 1
+                # Track lines and labels for legend
+                lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
+                if make_labels is True: labels.append('Adaptive T-Process')
+                tproc_adapt_ct += 1
+                color_idx += 1
 
         ### Broken Power Law Plotting
         elif any(pulsar + rn_type + '_log10_fb' in x for x in c.params):
-            for y in c.params:
-                if pulsar + rn_type + '_log10_A' in y:
-                    amp_par = y
-                if pulsar + rn_type + '_gamma' in y:
-                    gam_par = y
-                if pulsar + rn_type + '_log10_fb' in y:
-                    fb_par = y
-                if pulsar + rn_type + '_delta' in y:
-                    del_par = y
-                if pulsar + rn_type + '_kappa' in y:
-                    kappa_par = y
-
-            Color = Colors[color_idx]
-            #if pulsar + rn_type + '_beta' in c.params:
             if any(pulsar + rn_type + '_beta' in x for x in c.params):
+                par_dict = {}
                 for y in c.params:
+                    if pulsar + rn_type + '_log10_A' in y:
+                        par_dict[y.split('_')[-1]] = {}
+                for y in c.params:
+                    if pulsar + rn_type + '_log10_A' in y:
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['amp_par'] = y
+                        else:
+                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                    if pulsar + rn_type + '_gamma' in y:
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['gam_par'] = y
+                        else:
+                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                    if pulsar + rn_type + '_delta' in y:
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['del_par'] = y
+                        else:
+                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                     if pulsar + rn_type + '_log10_fb' in y:
-                        if pulsar + rn_type + '_log10_fb_1' in y:
-                            fb_par = y
-                        elif pulsar + rn_type + '_log10_fb_2' in y:
-                            fb_2_par = y
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['fb_par'] = y
+                        elif y.split('_')[-2] in par_dict.keys():
+                            par_dict[y.split('_')[-2]][f"fb_par_{y.split('_')[-1]}"] = y
+                        else:
+                            print(f"{y} how we split it is not in {par_dict.keys()}")
+
                     if pulsar + rn_type + '_beta' in y:
-                        beta_par = y
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['beta_par'] = y
+                        else:
+                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                     if pulsar + rn_type + '_kappa' in y:
-                        if pulsar + rn_type + '_kappa_1' in y:
-                            kappa_par = y
-                        elif pulsar + rn_type + '_kappa_2' in y:
-                            kappa_2_par = y
-                
-                plot_extra_broken_powerlaw(core, axis, amp_par, gam_par, del_par, beta_par,
-                                           fb_par, log10_fb_2_par,
-                                           kappa_par, kappa_2_par,
-                                           verbose=True, Color=Color,
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['kappa_par'] = y
+                        elif y.split('_')[-2] in par_dict.keys():
+                            par_dict[y.split('_')[-2]][f"kappa_par_{y.split('_')[-1]}"] = y
+                        else:
+                            print(f"{y} how we split it is not in {par_dict.keys()}")
+                            
+                for group in par_dict.keys():
+                    Color = Colors[color_idx]
+                    plot_extra_broken_powerlaw(c, axes[0], par_dict[group]['amp_par'],
+                                               par_dict[group]['gam_par'],
+                                               par_dict[group]['del_par'],
+                                               par_dict[group]['beta_par'],
+                                               par_dict[group]['fb_par'],
+                                               [par_dict[group][x] for x,y in par_dict[group].items() if f'fb_{group}_' in y][0],
+                                               par_dict[group]['kappa_par'], 
+                                               [par_dict[group][x] for x,y in par_dict[group].items() if f'kappa_{group}_' in y][0],
+                                               verbose=True, Color=Color,
+                                                Linestyle='-',
+                                                n_realizations=n_bplaw_realizations,
+                                                Tspan=None, to_resid=True, **bplaw_kwargs)
+                    if plot_2d_hist:
+                        corner.hist2d(c.get_param(par_dict[group]['gam_par'])[c.burn:],
+                                      c.get_param(par_dict[group]['amp_par'])[c.burn:],
+                                      bins=bins, ax=axes[1], plot_datapoints=False,
+                                      plot_density=plot_density[ii],
+                                      plot_contours=plot_contours[ii],
+                                      no_fill_contours=True, color=Color)
+                        ax1_ylim.append(list(axes[1].get_ylim()))
+                        
+                    # Track lines and labels for legend
+                    lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
+                    if make_labels is True: labels.append('Broken Power Law')
+                    tproc_adapt_ct += 1
+                    color_idx += 1
+            else:
+                par_dict = {}
+                for y in c.params:
+                    if pulsar + rn_type + '_log10_A' in y:
+                        par_dict[y.split('_')[-1]] = {}
+                for y in c.params:
+                    if pulsar + rn_type + '_log10_A' in y:
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['amp_par'] = y
+                        else:
+                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                    if pulsar + rn_type + '_gamma' in y:
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['gam_par'] = y
+                        else:
+                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                    if pulsar + rn_type + '_delta' in y:
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['del_par'] = y
+                        else:
+                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                    if pulsar + rn_type + '_log10_fb' in y:
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['fb_par'] = y
+                        else:
+                            print(f"{y} how we split it is not in {par_dict.keys()}")
+                    if pulsar + rn_type + '_kappa' in y:
+                        if y.split('_')[-1] in par_dict.keys():
+                            par_dict[y.split('_')[-1]]['kappa_par'] = y
+                        else:
+                            print(f"{y} how we split it is not in {par_dict.keys()}")
+                for group in par_dict.keys():
+                    plot_broken_powerlaw(c, axes[0], par_dict[group]['amp_par'],
+                                         par_dict[group]['gam_par'],
+                                         par_dict[group]['del_par'],
+                                         par_dict[group]['fb_par'],
+                                         par_dict[group]['kappa_par'],
+                                            verbose=True, Color=Color,
                                             Linestyle='-',
                                             n_realizations=n_bplaw_realizations,
                                             Tspan=None, to_resid=True, **bplaw_kwargs)
-            else:
-                plot_broken_powerlaw(c, axes[0], amp_par, gam_par, del_par,
-                                        fb_par, kappa_par,
-                                        verbose=True, Color=Color,
-                                        Linestyle='-',
-                                        n_realizations=n_bplaw_realizations,
-                                        Tspan=None, to_resid=True, **bplaw_kwargs)
+             
+                    if plot_2d_hist:
+                        corner.hist2d(c.get_param(par_dict[group]['gam_par'])[c.burn:],
+                                      c.get_param(par_dict[group]['amp_par'])[c.burn:],
+                                      bins=bins, ax=axes[1], plot_datapoints=False,
+                                      plot_density=plot_density[ii],
+                                      plot_contours=plot_contours[ii],
+                                      no_fill_contours=True, color=Color)
+                        ax1_ylim.append(list(axes[1].get_ylim()))
 
-            if plot_2d_hist:
-                corner.hist2d(c.get_param(gam_par)[c.burn:],
-                              c.get_param(amp_par)[c.burn:],
-                              bins=bins, ax=axes[1], plot_datapoints=False,
-                              plot_density=plot_density[ii],
-                              plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color)
-                ax1_ylim.append(list(axes[1].get_ylim()))
-
-            # Track lines and labels for legend
-            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
-            if make_labels is True: labels.append('Broken Power Law')
-            tproc_adapt_ct += 1
-            color_idx += 1
+                    # Track lines and labels for legend
+                    lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
+                    if make_labels is True: labels.append('Broken Power Law')
+                    tproc_adapt_ct += 1
+                    color_idx += 1
 
         ### Powerlaw Plotting
         else:
+            par_dict = {}
             for y in c.params:
                 if pulsar + rn_type + '_log10_A' in y:
-                    amp_par = y
+                    par_dict[y.split('_')[-1]] = {}
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    if y.split('_')[-1] in par_dict.keys():
+                        par_dict[y.split('_')[-1]]['amp_par'] = y
+                    else:
+                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                 if pulsar + rn_type + '_gamma' in y:
-                    gam_par = y
-            if plaw_ct==1:
-                Linestyle = '-'
-            else:
-                Linestyle = '-'
+                    if y.split('_')[-1] in par_dict.keys():
+                        par_dict[y.split('_')[-1]]['gam_par'] = y
+                    else:
+                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
 
-            Color = Colors[color_idx]
+            for group in par_dict.keys():
+                if plaw_ct==1:
+                    Linestyle = '-'
+                else:
+                    Linestyle = '-'
 
-            plot_powerlaw(c, axes[0], amp_par, gam_par, Color=Color,
-                          Linestyle=Linestyle, Tspan=None, verbose=verbose,
-                          n_realizations=n_plaw_realizations)
+                Color = Colors[color_idx]
 
-            if plot_2d_hist:
-                corner.hist2d(c.get_param(gam_par, to_burn=True),
-                              c.get_param(amp_par, to_burn=True),
-                              bins=bins, ax=axes[1], plot_datapoints=False,
-                              plot_density=plot_density[ii],
-                              plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color,
-                              levels=levels)
-                ax1_ylim.append(list(axes[1].get_ylim()))
+                plot_powerlaw(c, axes[0], par_dict[group]['amp_par'],
+                              par_dict[group]['gam_par'], Color=Color,
+                              Linestyle=Linestyle, Tspan=None, verbose=verbose,
+                              n_realizations=n_plaw_realizations)
 
-            lines.append(plt.Line2D([0], [0],color=Color,linewidth=2,
-                                    linestyle=Linestyle))
-            if make_labels is True: labels.append('Power Law')
+                if plot_2d_hist:
+                    corner.hist2d(c.get_param(par_dict[group]['gam_par'], to_burn=True),
+                                  c.get_param(par_dict[group]['amp_par'], to_burn=True),
+                                  bins=bins, ax=axes[1], plot_datapoints=False,
+                                  plot_density=plot_density[ii],
+                                  plot_contours=plot_contours[ii],
+                                  no_fill_contours=True, color=Color,
+                                  levels=levels)
+                    ax1_ylim.append(list(axes[1].get_ylim()))
 
-            plaw_ct += 1
-            color_idx += 1
+                lines.append(plt.Line2D([0], [0],color=Color,linewidth=2,
+                                        linestyle=Linestyle))
+                if make_labels is True: labels.append('Power Law')
+
+                plaw_ct += 1
+                color_idx += 1
 
     if isinstance(freq_yr, int):
         for ln in [ii+1. for ii in range(freq_yr)]:
@@ -470,7 +583,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=False, rn_types=None,
                         ncol=ncol)#, bbox_to_anchor=Bbox_anchor)
     leg.get_frame().set_alpha(leg_alpha)
     fig.tight_layout()
-    fig.subplots_adjust(bottom=0.22)
+    fig.subplots_adjust(bottom=0.3)
 
     if plotpath is not None:
         plt.savefig(plotpath, additional_artists=[leg], bbox_inches='tight')

@@ -277,21 +277,17 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
             par_dict = {}
             for y in c.params:
                 if pulsar + rn_type + '_log10_A' in y:
-                    par_dict[y.split('_')[-1]] = {}
+                    par_dict[y] = {}
+                    par_dict[y]['amp_par'] = y
             for y in c.params:
-                if pulsar + rn_type + '_log10_A' in y:
-                    if y.split('_')[-1] in par_dict.keys():
-                        par_dict[y.split('_')[-1]]['amp_par'] = y
-                    else:
-                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                 if pulsar + rn_type + '_gamma' in y:
-                    if y.split('_')[-1] in par_dict.keys():
-                        par_dict[y.split('_')[-1]]['gam_par'] = y
+                    if y.split('_')[-1] != 'gamma':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
                     else:
-                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                        par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
 
             par_root = pulsar + rn_type + '_alphas'
-            for group in par_dict.keys():
+            for group in [x for x,y in par_dict.items() if 'gam_par' in y]:
                 Color = Colors[color_idx]
 
                 plot_tprocess(c, axes[0], amp_par=par_dict[group]['amp_par'],
@@ -320,30 +316,26 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
             par_dict = {}
             for y in c.params:
                 if pulsar + rn_type + '_log10_A' in y:
-                    par_dict[y.split('_')[-1]] = {}
+                    par_dict[y] = {}
+                    par_dict[y]['amp_par'] = y
             for y in c.params:
-                if pulsar + rn_type + '_log10_A' in y:
-                    if y.split('_')[-1] in par_dict.keys():
-                        par_dict[y.split('_')[-1]]['amp_par'] = y
-                    else:
-                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                 if pulsar + rn_type + '_gamma' in y:
-                    if y.split('_')[-1] in par_dict.keys():
-                        par_dict[y.split('_')[-1]]['gam_par'] = y
+                    if y.split('_')[-1] != 'gamma':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
                     else:
-                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                        par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
                 if pulsar + rn_type + '_alphas_adapt_0' in y:
-                    if y.split('_')[-1] in par_dict.keys():
-                        par_dict[y.split('_')[-1]]['alpha_par'] = y
+                    if y.split('_')[-1] != '0':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['alpha_par'] = y
                     else:
-                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                        par_dict[pulsar + rn_type + '_log10_A']['alpha_par'] = y
                 if pulsar + rn_type + '_nfreq' in y:
-                    if y.split('_')[-1] in par_dict.keys():
-                        par_dict[y.split('_')[-1]]['nfreq_par'] = y
+                    if y.split('_')[-1] != 'nfreq':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['nfreq_par'] = y
                     else:
-                        print(f"{y} how we split it is not in {par_dict.keys()}")
+                        par_dict[pulsar + rn_type + '_log10_A']['nfreq_par'] = y
 
-            for group in par_dict.keys():
+            for group in [x for x,y in par_dict.items() if 'gam_par' in y]:
                 Color = Colors[color_idx]
                 plot_adapt_tprocess(c, axes[0], amp_par=par_dict[group]['amp_par'],
                                     gam_par=par_dict[group]['gam_par'],
@@ -373,54 +365,81 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
                 par_dict = {}
                 for y in c.params:
                     if pulsar + rn_type + '_log10_A' in y:
-                        par_dict[y.split('_')[-1]] = {}
+                        par_dict[y] = {}
+                        par_dict[y]['amp_par'] = y
                 for y in c.params:
-                    if pulsar + rn_type + '_log10_A' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['amp_par'] = y
-                        else:
-                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                     if pulsar + rn_type + '_gamma' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['gam_par'] = y
+                        if y.split('_')[-1] != 'gamma':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
                         else:
-                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                            par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
                     if pulsar + rn_type + '_delta' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['del_par'] = y
+                        if y.split('_')[-1] != 'delta':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['del_par'] = y
                         else:
-                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
-                    if pulsar + rn_type + '_log10_fb' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['fb_par'] = y
-                        elif y.split('_')[-2] in par_dict.keys():
-                            par_dict[y.split('_')[-2]][f"fb_par_{y.split('_')[-1]}"] = y
-                        else:
-                            print(f"{y} how we split it is not in {par_dict.keys()}")
-
+                            par_dict[pulsar + rn_type + '_log10_A']['del_par'] = y
                     if pulsar + rn_type + '_beta' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['beta_par'] = y
+                        if y.split('_')[-1] != 'beta':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['beta_par'] = y
                         else:
-                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
-                    if pulsar + rn_type + '_kappa' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['kappa_par'] = y
-                        elif y.split('_')[-2] in par_dict.keys():
-                            par_dict[y.split('_')[-2]][f"kappa_par_{y.split('_')[-1]}"] = y
+                            par_dict[pulsar + rn_type + '_log10_A']['beta_par'] = y
+                            
+                    if pulsar + rn_type + '_log10_fb' in y:
+                        if y.split('_')[-1] == 'fb':
+                            #e.g. gw_log10_fb
+                            par_dict[pulsar + rn_type + '_log10_A']['fb_par'] = y
+                        elif y.split('_')[-2] == 'fb':
+                            #e.g. gw_log10_fb_1 or gw_log10_fb_other
+                            if len(y.split('_')[-1]) >= 2.:
+                                #e.g. gw_log10_fb_other
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['fb_par'] = y
+                            else:
+                                #e.g. gw_log10_fb_1
+                                par_dict[pulsar + rn_type + '_log10_A'][f"fb_par_{y.split('_')[-1]}"] = y
+                        elif y.split('_')[-3] == 'fb':
+                            #e.g. gw_log10_fb_1_other or gw_log10_fb_other_1
+                            if len(y.split('_')[-2]) >= 2.:
+                                #e.g. gw_log10_fb_other_1
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-2]][f"fb_par_{y.split('_')[-1]}"] = y
+                            else:
+                                #e.g. gw_log10_fb_1_other
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]][f"fb_par_{y.split('_')[-2]}"] = y
                         else:
                             print(f"{y} how we split it is not in {par_dict.keys()}")
                             
-                for group in par_dict.keys():
+                    if pulsar + rn_type + '_kappa' in y:
+                        if y.split('_')[-1] == 'kappa':
+                            #e.g. gw_kappa
+                            par_dict[pulsar + rn_type + '_log10_A']['kappa_par'] = y
+                        elif y.split('_')[-2] == 'kappa':
+                            #e.g. gw_kappa_1 or gw_kappa_other
+                            if len(y.split('_')[-1]) >= 2.:
+                                #e.g. gw_kappa_other
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['kappa_par'] = y
+                            else:
+                                #e.g. gw_kappa_1
+                                par_dict[pulsar + rn_type + '_log10_A'][f"kappa_par_{y.split('_')[-1]}"] = y
+                        elif y.split('_')[-3] == 'kappa':
+                            #e.g. gw_kappa_1_other or gw_kappa_other_1
+                            if len(y.split('_')[-2]) >= 2.:
+                                #e.g. gw_kappa_other_1
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-2]][f"kappa_par_{y.split('_')[-1]}"] = y
+                            else:
+                                #e.g. gw_kappa_1_other
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]][f"kappa_par_{y.split('_')[-2]}"] = y
+                        else:
+                            print(f"{y} how we split it is not in {par_dict.keys()}")
+                            
+                for group in [x for x,y in par_dict.items() if 'gam_par' in y]:
                     Color = Colors[color_idx]
                     plot_extra_broken_powerlaw(c, axes[0], par_dict[group]['amp_par'],
                                                par_dict[group]['gam_par'],
                                                par_dict[group]['del_par'],
                                                par_dict[group]['beta_par'],
                                                par_dict[group]['fb_par'],
-                                               [par_dict[group][x] for x,y in par_dict[group].items() if f'fb_{group}_' in y][0],
+                                               [par_dict[group][x] for x in par_dict[group].keys() if 'fb_par_' in x][0],
                                                par_dict[group]['kappa_par'], 
-                                               [par_dict[group][x] for x,y in par_dict[group].items() if f'kappa_{group}_' in y][0],
+                                               [par_dict[group][x] for x in par_dict[group].keys() if 'kappa_par_' in x][0],
                                                verbose=True, Color=Color,
                                                 Linestyle='-',
                                                 n_realizations=n_bplaw_realizations,
@@ -436,41 +455,38 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
                         
                     # Track lines and labels for legend
                     lines.append(plt.Line2D([0], [0],color=Color,linewidth=2))
-                    if make_labels is True: labels.append('Broken Power Law')
+                    if make_labels is True: labels.append('Extra Broken Power Law')
                     tproc_adapt_ct += 1
                     color_idx += 1
             else:
                 par_dict = {}
                 for y in c.params:
                     if pulsar + rn_type + '_log10_A' in y:
-                        par_dict[y.split('_')[-1]] = {}
+                        par_dict[y] = {}
+                        par_dict[y]['amp_par'] = y
                 for y in c.params:
-                    if pulsar + rn_type + '_log10_A' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['amp_par'] = y
-                        else:
-                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                     if pulsar + rn_type + '_gamma' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['gam_par'] = y
+                        if y.split('_')[-1] != 'gamma':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
                         else:
-                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                            par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
                     if pulsar + rn_type + '_delta' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['del_par'] = y
+                        if y.split('_')[-1] != 'delta':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['del_par'] = y
                         else:
-                            print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                            par_dict[pulsar + rn_type + '_log10_A']['del_par'] = y
                     if pulsar + rn_type + '_log10_fb' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['fb_par'] = y
+                        if y.split('_')[-1] != 'fb':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['fb_par'] = y
                         else:
-                            print(f"{y} how we split it is not in {par_dict.keys()}")
+                            par_dict[pulsar + rn_type + '_log10_A']['fb_par'] = y
                     if pulsar + rn_type + '_kappa' in y:
-                        if y.split('_')[-1] in par_dict.keys():
-                            par_dict[y.split('_')[-1]]['kappa_par'] = y
+                        if y.split('_')[-1] != 'kappa':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['kappa_par'] = y
                         else:
-                            print(f"{y} how we split it is not in {par_dict.keys()}")
-                for group in par_dict.keys():
+                            par_dict[pulsar + rn_type + '_log10_A']['kappa_par'] = y
+                for group in [x for x,y in par_dict.items() if 'gam_par' in y]:
+                    Color = Colors[color_idx]
                     plot_broken_powerlaw(c, axes[0], par_dict[group]['amp_par'],
                                          par_dict[group]['gam_par'],
                                          par_dict[group]['del_par'],
@@ -501,20 +517,16 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
             par_dict = {}
             for y in c.params:
                 if pulsar + rn_type + '_log10_A' in y:
-                    par_dict[y.split('_')[-1]] = {}
+                    par_dict[y] = {}
+                    par_dict[y]['amp_par'] = y
             for y in c.params:
-                if pulsar + rn_type + '_log10_A' in y:
-                    if y.split('_')[-1] in par_dict.keys():
-                        par_dict[y.split('_')[-1]]['amp_par'] = y
-                    else:
-                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
                 if pulsar + rn_type + '_gamma' in y:
-                    if y.split('_')[-1] in par_dict.keys():
-                        par_dict[y.split('_')[-1]]['gam_par'] = y
+                    if y.split('_')[-1] != 'gamma':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
                     else:
-                        print(f"{y.split('_')[-1]} not in {par_dict.keys()}")
+                        par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
 
-            for group in par_dict.keys():
+            for group in [x for x,y in par_dict.items() if 'gam_par' in y]:
                 if plaw_ct==1:
                     Linestyle = '-'
                 else:
@@ -620,7 +632,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
 ########## Red Noise Plotting Commands #########################
 
 def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
-                  Linestyle='-', n_realizations=0, Tspan=None, to_resid=True):
+                  Linestyle='-', n_realizations=0, Tspan=None, to_resid=True,
+                  gam_idx = None,):
     """
     Plots a power law line from the given parmeters in units of residual
     time.
@@ -654,6 +667,9 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
         Timespan of the data set. Used for converting amplitudes to
         residual time. Calculated from lowest red noise frequency if not
         provided.
+        
+    gam_idx : float, optional
+        index of the red noise powerlaw spectral index parameter (gamma) if it is fixed (e.g. not in the core).
     """
     F, nfreqs = get_rn_freqs(core)
 
@@ -673,14 +689,22 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
         sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
 
         sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
-        sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
+        if not gam_idx:
+            sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
         for idx in range(n_realizations):
-            rho = utils.compute_rho(sorted_Amp[idx],
-                                    sorted_gam[idx], F, T)
+            if gam_idx:
+                rho = utils.compute_rho(sorted_Amp[idx],
+                                        gam_idx, F, T)
+            else:
+                rho = utils.compute_rho(sorted_Amp[idx],
+                                        sorted_gam[idx], F, T)
             axis.plot(F, np.log10(rho), color=Color, lw=0.4,
                       ls='-', zorder=6, alpha=0.03)
-
-    log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
+    if gam_idx:
+        gamma = gam_idx
+        log10_A = core.get_param_median(amp_par)
+    else:
+        log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
 
     if verbose:
         print('Plotting Powerlaw RN Params:'

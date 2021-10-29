@@ -95,6 +95,12 @@ def test_core_loading(pta_core):
                          nsamples=10, smallest_dA=0.05, largest_dA=0.1)
     assert isinstance(bf, tuple)
 
+def test_hypermodel_core_loading(hmc_core):
+    """Tests the loading of a Core into a class. """
+    corepath = os.path.join(testdir, 'test_hdf5_hmc.core')
+    hmc_core.save(corepath)
+    c1 = core.HyperModelCore(corepath=corepath)  # test loading
+    assert isinstance(c1.param_dict,dict)
 
 def test_percentiles(pta_core):
     """Tests calculations of median and credible intervals."""

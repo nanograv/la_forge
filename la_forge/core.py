@@ -462,7 +462,14 @@ class Core(object):
 
         g = hdf5.create_group(name)
         for ky, val in d.items():
-            g.create_dataset(ky, data=val)
+            try:
+                g.create_dataset(ky, data=val)
+            except (TypeError,AttributeError) as e:
+                dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
+                g.create_dataset(str(ky),
+                                 data=np.array(val, dtype="O"),
+                                 dtype=dt)
+
 
     def _hdf5_2dict(self, hdf5, name, dtype=float, set_return='set'):
         """
@@ -542,7 +549,11 @@ class Core(object):
                     setattr(self, lostr, np.array(hf[lostr]).astype(str))
             for d in self._savedicts:
                 if d in hf:
-                    self._hdf5_2dict(hf, d)
+                    if d in ['param_dict']:
+                        dt = str
+                    else:
+                        dt = float
+                    self._hdf5_2dict(hf, d, dtype=dt)
 
     def get_map_dict(self):
         """
@@ -589,6 +600,7 @@ class HyperModelCore(Core):
             each sub-model of the hypermodel.
         """
         # Call to add `param_dict` to dictionaries for hdf5 to search for.
+        self.param_dict = param_dict
         super()._set_hdf5_lists(append=[('param_dict', '_savedicts')])
         super().__init__(chaindir=chaindir, burn=burn,
                          corepath=corepath,
@@ -597,8 +609,7 @@ class HyperModelCore(Core):
                          skiprows=skiprows,
                          chain=chain, params=params,
                          pt_chains=pt_chains,)
-
-        if param_dict is None:
+        if self.param_dict is None and corepath is None:
             try:
                 with open(chaindir + '/model_params.json', 'r') as fin:
                     param_dict = json.load(fin)
@@ -610,8 +621,10 @@ class HyperModelCore(Core):
 
             except:
                 raise ValueError('Must provide parameter dictionary!!')
-        else:
+        elif self.param_dict is not None and corepath is None:
             self.param_dict = param_dict
+        else:
+            pass
 
         self.nmodels = len(list(self.param_dict.keys()))
 
@@ -621,7 +634,11 @@ class HyperModelCore(Core):
         single HyperModel model.
         """
         N = nmodel
-        model_pars = self.param_dict[N]
+        try:
+            model_pars = self.param_dict[N]
+        except KeyError:
+            model_pars = self.param_dict[str(N)]
+
 
         if 'lnlike' in self.params:
             model_pars = list(model_pars)

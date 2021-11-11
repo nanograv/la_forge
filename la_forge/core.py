@@ -210,7 +210,7 @@ class Core(object):
 
         `param` can either be a single string or list of strings.
         """
-        return self.get_param(param, to_burn=True)
+        return self.get_param(param, to_burn=to_burn)
 
     def get_param(self, param, to_burn=True):
         """

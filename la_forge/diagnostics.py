@@ -130,6 +130,11 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
         cell = ii+1
         axis = fig.add_subplot(nrows, ncols, cell)
         if hist:
+            if truths is not None:
+                ans = truths[p]
+                plt.axvline(ans, linewidth=2,
+                            color='k', linestyle='-.')
+
             if isinstance(core, list):
                 for jj, c in enumerate(core):
                     gpar_kwargs= _get_gpar_kwargs(c, real_tm_pars)
@@ -144,10 +149,6 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                         plt.axvline(c.get_map_param(p), linewidth=1,
                                     color=pcol, linestyle='--')
 
-            if truths is not None:
-                ans = truths[p]
-                plt.axvline(ans, linewidth=2,
-                            color='k', linestyle='-.')
             else:
                 gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)
                 phist=plt.hist(core.get_param(p, **gpar_kwargs),

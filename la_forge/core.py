@@ -157,7 +157,7 @@ class Core(object):
             try:
                 cov_path = glob.glob(chaindir + '/cov.npy')[0]
                 self.cov = np.load(cov_path)
-            except (FileNotFoundError, IndexError):
+            except (FileNotFoundError, IndexError, ValueError):
                 self.cov = None
 
             try:

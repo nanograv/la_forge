@@ -142,7 +142,7 @@ class Core(object):
             self.jumps = {}
             for path in jump_paths:
                 if path.split('/')[-1] == 'jumps.txt':
-                    jf = np.loadtxt(path, dtype=str)
+                    jf = np.loadtxt(path, dtype=str, ndmin=2)
                     self.jump_fractions = dict(zip(jf[:, 0], jf[:, 1].astype(float)))
                 else:
                     ky = path.split('/')[-1].split('.')[0]

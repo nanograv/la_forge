@@ -161,7 +161,10 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                                 color=pcol, linestyle='--')
 
                 if truths is not None:
-                    plt.axvline(truths[ii], linewidth=2,
+                    if p not in truths:
+                        print(p + ' was not found in truths dict.')
+                        continue
+                    plt.axvline(truths[p], linewidth=2,
                                 color='k', linestyle='-.')
         else:
             gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)

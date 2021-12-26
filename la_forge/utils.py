@@ -400,7 +400,7 @@ def set_publication_params(param_dict=None, scale=0.5):
               'path.simplify': True,
               'font.family': 'serif',
               # 'font.serif':'Times New Roman',
-              'text.latex.preamble': [r'\usepackage{amsmath}'],
+              #'text.latex.preamble': [r'\usepackage{amsmath}'],
               'text.usetex': True,
               'figure.figsize': figsize(scale)}
 

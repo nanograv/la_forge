@@ -4,12 +4,16 @@
 import copy
 import inspect
 import string
+import os, json
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import scipy.stats as sps
 import numpy as np
 
 from emcee.autocorr import integrated_time
+
+from .slices import SlicesCore
 
 __all__ = ['plot_chains', 'noise_flower']
 
@@ -430,5 +434,68 @@ def plot_grubin(core, M=2, threshold=1.01):
     plt.xlabel('Parameter Index')
     plt.title('Gelman-Rubin Diagnostic')
     plt.show()
+
+
+def pp_plot(chainfolder, param):
+    """
+    chainfolder: String path to folder containing subfolders with 
+                 chains sampled from simulated pulsars. These folders
+                 also need to have the injected values in a file named
+                 `ans.json`.
+    
+    param: string of the parameter of interest
+    """
+    # get subfolders
+    subfolders = [f.path for f in os.scandir(chainfolder) if f.is_dir()]
+    subfolders.sort()
+    # get injected values
+    answer_list = []
+    for folder in subfolders:
+        answer_file = folder + '/ans.json'
+        try:
+            with open(answer_file, 'r') as f:
+                ans = json.load(f)
+        except:
+            print('Folders must contain ans.json with injected values.')
+            return None
+        try:
+            answer_list.append(ans[param])
+        except KeyError:
+            answer_list.append(ans['gw_log10_A'])
+    answer_array = np.array(answer_list)
+    # get pars
+    try:
+        with open(subfolders[0] + '/pars.txt', 'r') as f:
+            pars = f.read().split('\n')[:-1]
+    except:
+        print('Params file not found.')
+        return None
+    slices = SlicesCore(slicedirs=subfolders, pars2pull=[param], params=pars)
+    pvalues = np.zeros(slices.chain.shape[1])
+    if slices.chain.shape[1] != answer_array.shape[0]:
+        print('Number of chains and number of truths are different.')
+        print(slices.chain.shape[1], '!=', answer_array.shape[0])
+        return None
+    for i in range(slices.chain.shape[1]):
+        pvalues[i] = 1 - sps.percentileofscore(slices.chain[:, i], answer_array[i], kind='weak') / 100
+    q = np.linspace(0, 1, num=len(pvalues))
+    cdf = np.zeros_like(q)
+    for i in range(len(q)):
+        cdf[i] = len(np.where(pvalues <= q[i])[0]) / len(pvalues)
+    NUM_REALS = len(cdf)
+    sigma = np.sqrt(q * (1 - q) / NUM_REALS)
+    plt.figure(figsize=(12, 7))
+    plt.plot(q, cdf)
+    plt.plot(q, q)
+    plt.plot(q, q + sigma, color='gray', alpha=0.5)
+    plt.plot(q, q + 2 * sigma, color='gray', alpha=0.5)
+    plt.plot(q, q + 3 * sigma, color='gray', alpha=0.5)
+    plt.plot(q, q - sigma, color='gray', alpha=0.5)
+    plt.plot(q, q - 2 * sigma, color='gray', alpha=0.5)
+    plt.plot(q, q - 3 * sigma, color='gray', alpha=0.5)
+    plt.xlabel('P Value')
+    plt.ylabel('Cumulative Fraction of Realizations')
+    plt.show()
+    return q, cdf, sigma
 
 

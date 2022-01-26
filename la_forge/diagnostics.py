@@ -355,6 +355,7 @@ def plot_neff(core):
             plt.legend()
     else:
         neffs = compute_neff(core)
+        print(neffs)
         x, y = zip(*sorted(neffs.items()))
         plt.scatter(range(len(core.params) - 4), y)
         plt.xlim([0.5, len(core.params) - 4 + .5])
@@ -442,7 +443,7 @@ def pp_plot(chainfolder, param):
                  chains sampled from simulated pulsars. These folders
                  also need to have the injected values in a file named
                  `ans.json`.
-    
+
     param: string of the parameter of interest
     """
     # get subfolders
@@ -467,9 +468,13 @@ def pp_plot(chainfolder, param):
     try:
         with open(subfolders[0] + '/pars.txt', 'r') as f:
             pars = f.read().split('\n')[:-1]
+    except TypeError:
+        with open(subfolders[0] + '/pars.txt', 'r') as f:
+            pars = [f.readlines()[0].split('\n')[0]]
     except:
         print('Params file not found.')
         return None
+    print(pars)
     slices = SlicesCore(slicedirs=subfolders, pars2pull=[param], params=pars)
     pvalues = np.zeros(slices.chain.shape[1])
     if slices.chain.shape[1] != answer_array.shape[0]:

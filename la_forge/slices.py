@@ -144,6 +144,9 @@ def get_idx(par, filename):
     except:
         try:
             par_list = list(np.loadtxt(filename, dtype='S').astype('U'))
+        except TypeError:
+            with open(filename, 'r') as f:
+                par_list = [f.readlines()[0].split('\n')[0]]
         except:
             new_name = filename[:-3] + 'txt'
             par_list = list(np.loadtxt(new_name, dtype='S').astype('U'))

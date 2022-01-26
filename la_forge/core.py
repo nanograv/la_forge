@@ -3,6 +3,7 @@ import json
 import os.path
 import pickle
 import logging
+from typing import Type
 
 import h5py
 import numpy as np
@@ -125,8 +126,12 @@ class Core(object):
 
                 # Load parameters
                 if os.path.isfile(chaindir + '/pars.txt'):
-                    self.params = list(np.loadtxt(chaindir + '/pars.txt',
-                                                  dtype='S').astype('U'))
+                    try:
+                        self.params = list(np.loadtxt(chaindir + '/pars.txt',
+                                                      dtype='S').astype('U'))
+                    except TypeError:
+                        with open(chaindir + '/pars.txt', 'r') as f:
+                            self.params = [f.readlines()[0].split('\n')[0]]
                 elif os.path.isfile(chaindir + '/pars.npy'):
                     self.params = list(np.load(chaindir + '/pars.npy'))
                 elif os.path.isfile(chaindir + '/params.txt'):

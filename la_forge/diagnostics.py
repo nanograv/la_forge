@@ -448,11 +448,17 @@ def pp_plot(chainfolder, param):
     """
     # get subfolders
     subfolders = [f.path for f in os.scandir(chainfolder) if f.is_dir()]
-    subfolders.sort()
+    # values = [int(subfolder.split('_')[-1]) for subfolder in subfolders]
+    subfolders.sort(key=lambda x: int(x.split('_')[-1]))
     # get injected values
     answer_list = []
+    num_list = []
     for folder in subfolders:
+        num = folder.split('_')[-1]
+        num_list.append(num)
         answer_file = folder + '/ans.json'
+        if not os.path.isdir(folder):
+            continue
         try:
             with open(answer_file, 'r') as f:
                 ans = json.load(f)
@@ -464,6 +470,10 @@ def pp_plot(chainfolder, param):
         except KeyError:
             answer_list.append(ans['gw_log10_A'])
     answer_array = np.array(answer_list)
+    num_array = np.array(num_list).astype(int)
+
+    a = np.column_stack([num_array, answer_array])
+    a = a[a[:, 0].argsort()]
     # get pars
     try:
         with open(subfolders[0] + '/pars.txt', 'r') as f:
@@ -481,15 +491,21 @@ def pp_plot(chainfolder, param):
         print('Number of chains and number of truths are different.')
         print(slices.chain.shape[1], '!=', answer_array.shape[0])
         return None
+    burn = int(0.25 * len(slices.chain[:, 0]))
+    print(burn)
     for i in range(slices.chain.shape[1]):
-        pvalues[i] = 1 - sps.percentileofscore(slices.chain[:, i], answer_array[i], kind='weak') / 100
+        tau = int(integrated_time(slices.chain[burn:, i]))
+        # tau = 1
+        pvalues[i] = len(np.where(slices.chain[burn::tau, i] < a[i, 1])[0]) / len(slices.chain[burn::tau, i])
+        # pvalues[i] = sps.percentileofscore(slices.chain[burn::tau, i], a[i, 1], kind='weak') / 100
     q = np.linspace(0, 1, num=len(pvalues))
     cdf = np.zeros_like(q)
     for i in range(len(q)):
-        cdf[i] = len(np.where(pvalues <= q[i])[0]) / len(pvalues)
+        cdf[i] = len(np.where(pvalues < q[i])[0]) / len(pvalues)
     NUM_REALS = len(cdf)
     sigma = np.sqrt(q * (1 - q) / NUM_REALS)
     plt.figure(figsize=(12, 7))
+    plt.title(param)
     plt.plot(q, cdf)
     plt.plot(q, q)
     plt.plot(q, q + sigma, color='gray', alpha=0.5)
@@ -501,6 +517,6 @@ def pp_plot(chainfolder, param):
     plt.xlabel('P Value')
     plt.ylabel('Cumulative Fraction of Realizations')
     plt.show()
-    return q, cdf, sigma
+    return q, pvalues, cdf, sigma
 
 

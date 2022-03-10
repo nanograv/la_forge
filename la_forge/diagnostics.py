@@ -464,7 +464,10 @@ def pp_plot(chainfolder, param):
                 ans = json.load(f)
         except:
             print('Folders must contain ans.json with injected values.')
-            return None
+            print('Folder {} skipped'.format(folder))
+            subfolders.remove(folder)
+            continue
+            # return None
         try:
             answer_list.append(ans[param])
         except KeyError:
@@ -484,7 +487,7 @@ def pp_plot(chainfolder, param):
     except:
         print('Params file not found.')
         return None
-    print(pars)
+    # print(pars)
     slices = SlicesCore(slicedirs=subfolders, pars2pull=[param], params=pars)
     pvalues = np.zeros(slices.chain.shape[1])
     if slices.chain.shape[1] != answer_array.shape[0]:
@@ -492,30 +495,33 @@ def pp_plot(chainfolder, param):
         print(slices.chain.shape[1], '!=', answer_array.shape[0])
         return None
     burn = int(0.25 * len(slices.chain[:, 0]))
-    print(burn)
+    # print(burn)
     for i in range(slices.chain.shape[1]):
-        tau = int(integrated_time(slices.chain[burn:, i]))
-        # tau = 1
+        # tau = int(integrated_time(slices.chain[burn:, i]))  # thin by ACL
+        tau = 1  # no thinning
         pvalues[i] = len(np.where(slices.chain[burn::tau, i] < a[i, 1])[0]) / len(slices.chain[burn::tau, i])
         # pvalues[i] = sps.percentileofscore(slices.chain[burn::tau, i], a[i, 1], kind='weak') / 100
     q = np.linspace(0, 1, num=len(pvalues))
+    p = np.linspace(0, 1, num=1_000)
     cdf = np.zeros_like(q)
     for i in range(len(q)):
         cdf[i] = len(np.where(pvalues < q[i])[0]) / len(pvalues)
     NUM_REALS = len(cdf)
-    sigma = np.sqrt(q * (1 - q) / NUM_REALS)
-    plt.figure(figsize=(12, 7))
+    sigma = np.sqrt(p * (1 - p) / NUM_REALS)
+    plt.figure(figsize=(10, 10))
     plt.title(param)
     plt.plot(q, cdf)
-    plt.plot(q, q)
-    plt.plot(q, q + sigma, color='gray', alpha=0.5)
-    plt.plot(q, q + 2 * sigma, color='gray', alpha=0.5)
-    plt.plot(q, q + 3 * sigma, color='gray', alpha=0.5)
-    plt.plot(q, q - sigma, color='gray', alpha=0.5)
-    plt.plot(q, q - 2 * sigma, color='gray', alpha=0.5)
-    plt.plot(q, q - 3 * sigma, color='gray', alpha=0.5)
+    plt.plot(p, p)
+    plt.plot(p, p + sigma, color='gray', alpha=0.5)
+    plt.plot(p, p + 2 * sigma, color='gray', alpha=0.5)
+    plt.plot(p, p + 3 * sigma, color='gray', alpha=0.5)
+    plt.plot(p, p - sigma, color='gray', alpha=0.5)
+    plt.plot(p, p - 2 * sigma, color='gray', alpha=0.5)
+    plt.plot(p, p - 3 * sigma, color='gray', alpha=0.5)
     plt.xlabel('P Value')
     plt.ylabel('Cumulative Fraction of Realizations')
+    plt.ylim([0, 1])
+    plt.xlim([0, 1])
     plt.show()
     return q, pvalues, cdf, sigma
 

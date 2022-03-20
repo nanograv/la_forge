@@ -437,7 +437,7 @@ def plot_grubin(core, M=2, threshold=1.01):
     plt.show()
 
 
-def pp_plot(chainfolder, param):
+def pp_plot(chainfolder, param, outdir=None):
     """
     chainfolder: String path to folder containing subfolders with 
                  chains sampled from simulated pulsars. These folders
@@ -520,8 +520,10 @@ def pp_plot(chainfolder, param):
     plt.plot(p, p - 3 * sigma, color='gray', alpha=0.5)
     plt.xlabel('P Value')
     plt.ylabel('Cumulative Fraction of Realizations')
-    plt.ylim([0, 1])
-    plt.xlim([0, 1])
+    # plt.ylim([0, 1])
+    # plt.xlim([0, 1])
+    if outdir is not None:
+        plt.savefig(outdir, dpi=100)
     plt.show()
     return q, pvalues, cdf, sigma
 

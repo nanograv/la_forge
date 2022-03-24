@@ -13,6 +13,7 @@ import numpy as np
 
 from emcee.autocorr import integrated_time
 
+from .core import Core
 from .slices import SlicesCore
 
 __all__ = ['plot_chains', 'noise_flower']
@@ -437,70 +438,25 @@ def plot_grubin(core, M=2, threshold=1.01):
     plt.show()
 
 
-def pp_plot(chainfolder, param, outdir=None):
+def pp_plot(corefolder, param, outdir=None):
     """
-    chainfolder: String path to folder containing subfolders with 
-                 chains sampled from simulated pulsars. These folders
-                 also need to have the injected values in a file named
-                 `ans.json`.
-
-    param: string of the parameter of interest
+    corefolders: list : string paths to folders containing subfolders with
+                        cores (saved with injected values)
+    param: string : the parameter of interest
+    outdir: string : path location to save plots
     """
-    # get subfolders
-    subfolders = [f.path for f in os.scandir(chainfolder) if f.is_dir()]
-    # values = [int(subfolder.split('_')[-1]) for subfolder in subfolders]
+    # get subfolders containing cores
+    subfolders = [f.path for f in os.scandir(corefolder) if f.is_dir()]
     subfolders.sort(key=lambda x: int(x.split('_')[-1]))
-    # get injected values
-    answer_list = []
-    num_list = []
-    for folder in subfolders:
-        num = folder.split('_')[-1]
-        num_list.append(num)
-        answer_file = folder + '/ans.json'
-        if not os.path.isdir(folder):
-            continue
-        try:
-            with open(answer_file, 'r') as f:
-                ans = json.load(f)
-        except:
-            print('Folders must contain ans.json with injected values.')
-            print('Folder {} skipped'.format(folder))
-            subfolders.remove(folder)
-            continue
-            # return None
-        try:
-            answer_list.append(ans[param])
-        except KeyError:
-            answer_list.append(ans['gw_log10_A'])
-    answer_array = np.array(answer_list)
-    num_array = np.array(num_list).astype(int)
+    num_cores = len(subfolders)
 
-    a = np.column_stack([num_array, answer_array])
-    a = a[a[:, 0].argsort()]
-    # get pars
-    try:
-        with open(subfolders[0] + '/pars.txt', 'r') as f:
-            pars = f.read().split('\n')[:-1]
-    except TypeError:
-        with open(subfolders[0] + '/pars.txt', 'r') as f:
-            pars = [f.readlines()[0].split('\n')[0]]
-    except:
-        print('Params file not found.')
-        return None
-    # print(pars)
-    slices = SlicesCore(slicedirs=subfolders, pars2pull=[param], params=pars)
-    pvalues = np.zeros(slices.chain.shape[1])
-    if slices.chain.shape[1] != answer_array.shape[0]:
-        print('Number of chains and number of truths are different.')
-        print(slices.chain.shape[1], '!=', answer_array.shape[0])
-        return None
-    burn = int(0.25 * len(slices.chain[:, 0]))
-    # print(burn)
-    for i in range(slices.chain.shape[1]):
-        # tau = int(integrated_time(slices.chain[burn:, i]))  # thin by ACL
+    pvalues = np.zeros(num_cores)
+    for ii, folder in enumerate(subfolders):
+        c1 = Core(corepath=folder + '/core.hdf')
         tau = 1  # no thinning
-        pvalues[i] = len(np.where(slices.chain[burn::tau, i] < a[i, 1])[0]) / len(slices.chain[burn::tau, i])
-        # pvalues[i] = sps.percentileofscore(slices.chain[burn::tau, i], a[i, 1], kind='weak') / 100
+        core_chain = c1.chain[c1.burn::tau, c1.params.index(param)]  # the part we want
+        pvalues[ii] = len(np.where(core_chain < c1.truths[param])[0]) / len(core_chain)
+
     q = np.linspace(0, 1, num=len(pvalues))
     p = np.linspace(0, 1, num=1_000)
     cdf = np.zeros_like(q)
@@ -526,5 +482,3 @@ def pp_plot(chainfolder, param, outdir=None):
         plt.savefig(outdir, dpi=100)
     plt.show()
     return q, pvalues, cdf, sigma
-
-

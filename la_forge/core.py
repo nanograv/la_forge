@@ -66,18 +66,22 @@ class Core(object):
         acts as a burn in, which can not be changed once the file is loaded
         (unless loade again). Useful when dealing with large chains and loading
         multiple times.
+    true_vals : str
+        Path to file containing simulation injections. For use with pp_plots.
     """
 
     def __init__(self, chaindir=None, corepath=None, burn=0.25, label=None,
                  fancy_par_names=None, chain=None, params=None,
-                 pt_chains=False, skiprows=0,):
+                 pt_chains=False, skiprows=0, true_vals=None):
         self.chaindir = chaindir
         self.fancy_par_names = fancy_par_names
         self.chain = chain
         self.params = params
         self.corepath = corepath
+        self.true_vals = true_vals
 
         # Set defaults to None for accounting
+        self.truths = None
         self.rn_freqs = None
         self.priors = None
         self.cov = None
@@ -197,6 +201,10 @@ class Core(object):
             pass
         else:
             self.set_fancy_par_names(fancy_par_names)
+        
+        if true_vals is not None:
+            with open(self.chaindir + '/' + true_vals, 'r') as f:
+                self.truths = json.load(f)
 
         if label is None:
             # Attempt to give the best label possible.
@@ -504,7 +512,7 @@ class Core(object):
             files. Each member must be (str of attribute, list to append to).
         """
         self._metadata = ['label', 'burn', 'chaindir', 'chainpath', 'runtime_info']
-        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains']
+        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains', 'truths']
         self._savearrays = ['cov', 'rn_freqs']
         self._savelist_of_str = ['priors', 'fancy_par_names']
         if append is not None:
@@ -532,7 +540,7 @@ class Core(object):
         Loads various attributes from an hdf5 file. Looks in the lists set by
         `_set_hdf5_lists`.
         """
-        print('Loading data from HDF5 file....')
+        print('Loading data from HDF5 file....', end='\r')
         with h5py.File(filepath, 'r') as hf:
             self.chain = np.array(hf['chain'])
             self.params = np.array(hf['params']).astype(str).tolist()

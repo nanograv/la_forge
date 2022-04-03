@@ -440,6 +440,7 @@ def plot_grubin(core, M=2, threshold=1.01):
 
 def pp_plot(corefolder, param, outdir=None):
     """
+    Plots one parameter `param` on a P-P plot
     corefolders: list : string paths to folders containing subfolders with
                         cores (saved with injected values)
     param: string : the parameter of interest
@@ -482,3 +483,55 @@ def pp_plot(corefolder, param, outdir=None):
         plt.savefig(outdir, dpi=100)
     plt.show()
     return q, pvalues, cdf, sigma
+
+
+def pp_plot_all(corefolder, outdir=None):
+    """
+    Plots all parameters on one P-P plot
+    corefolders: list : string paths to folders containing subfolders with
+                        cores (saved with injected values)
+    outdir: string : path location to save plots
+    """
+    # get subfolders containing cores
+    subfolders = [f.path for f in os.scandir(corefolder) if f.is_dir()]
+    subfolders.sort(key=lambda x: int(x.split('_')[-1]))
+    num_cores = len(subfolders)
+    c1 = Core(corepath=subfolders[0] + '/core.hdf')
+    num_params = len(c1.params) - 4  # remove the last four parameters from PTMCMCSampler
+
+    pvalues = np.zeros((num_params, num_cores))
+    for ii, folder in enumerate(subfolders):
+        c1 = Core(corepath=folder + '/core.hdf')
+        for jj in range(num_params):
+            tau = 1  # no thinning
+            core_chain = c1.chain[c1.burn::tau, c1.params.index(c1.params[jj])]  # the part we want
+            pvalues[jj, ii] = len(np.where(core_chain < c1.truths[c1.params[jj]])[0]) / len(core_chain)
+
+    q = np.linspace(0, 1, num=len(pvalues))
+    p = np.linspace(0, 1, num=1_000)
+    NUM_REALS = num_cores
+    sigma = np.sqrt(p * (1 - p) / NUM_REALS)
+    plt.figure(figsize=(10, 10))
+    plt.plot(p, p)
+    plt.plot(p, p + sigma, color='gray', alpha=0.5)
+    plt.plot(p, p + 2 * sigma, color='gray', alpha=0.5)
+    plt.plot(p, p + 3 * sigma, color='gray', alpha=0.5)
+    plt.plot(p, p - sigma, color='gray', alpha=0.5)
+    plt.plot(p, p - 2 * sigma, color='gray', alpha=0.5)
+    plt.plot(p, p - 3 * sigma, color='gray', alpha=0.5)
+    for jj in range(num_params):
+        cdf = np.zeros_like(q)
+        for ii in range(len(q)):
+            cdf[ii] = len(np.where(pvalues[jj, :] < q[ii])[0]) / len(pvalues[jj, :])
+        plt.plot(q, cdf)
+        
+        # plt.ylim([0, 1])
+        # plt.xlim([0, 1])
+    plt.xlabel('P Value')
+    plt.ylabel('Cumulative Fraction of Realizations')
+    plt.title('All Parameters')
+    if outdir is not None:
+        plt.savefig(outdir, dpi=100)
+    plt.show()
+    return q, pvalues, cdf, sigma
+

@@ -189,5 +189,33 @@ def log10_bf(log_ev1, log_ev2, scale='log10'):
     elif scale == 'log10':
         return log10_bf.n, log10_bf.s
 
+# HyperModel BF calculation with bootstrap:
 
+def odds_ratio_bootstrap(hmcore, num_reals=2000, domains=([-0.5, 0.5], [0.5, 1.5])):
+    """
+    Standard bootstrap with replacement for product space odds ratios
+
+    Inputs:
+        hmcore (HyperModelCore): HyperModelCore object
+        num_reals (int): number of realizations to bootstrap
+        domains (tuple): tuple of model domains on the nmodel param
+                         default: ([-0.5, 0.5], [0.5, 1.5])
+                         modify this to e.g. ([0.5, 1.5], [-0.5, 0.5]) to
+                             compute the BF the other way around
+    Outputs:
+        mean(ors) (float): average of the odds ratios given by bootstrap
+        std(ors) (float): std of the odds ratios given by bootstrap
+    """
+    nmodel = hmcore.get_param('nmodel')
+    rng = np.random.default_rng()
+    bfs = np.zeros((num_reals))
+    tau = int(integrated_time(nmodel))
+    thinned_nmodel = nmodel[::tau]
+    num_samples = int(0.1 * len(thinned_nmodel))
+    new_nmodels = rng.choice(nmodel, (num_reals, num_samples))
+    ors = np.zeros(new_nmodels.shape[0])
+    for ii in range(num_reals):
+        ors[ii] = (len(np.where((new_nmodels[ii, :] > domains[0][0]) & (new_nmodels[ii, :] <= domains[0][1]))[0]) /
+                   len(np.where((new_nmodels[ii, :] > domains[1][0]) & (new_nmodels[ii, :] <= domains[1][1]))[0]))
+    return np.mean(ors), np.std(ors)
 

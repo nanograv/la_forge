@@ -284,7 +284,7 @@ class Core(object):
             else:
                 return self.chain[::thin_by]
 
-    def get_hot_param(self, param, to_burn=True, temp=1.0):
+    def get_hot_param(self, param, thin_by=1, to_burn=True, temp=1.0):
         """
         Returns array of samples for the parameter given.
 
@@ -316,7 +316,6 @@ class Core(object):
                 return self.hot_chains[temp][self.burn::thin_by]
             else:
                 return self.hot_chains[temp][::thin_by]
-
 
     def get_map_param(self, param):
         """

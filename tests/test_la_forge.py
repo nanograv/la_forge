@@ -74,6 +74,7 @@ def test_core_from_ptmcmc_chains():
     assert hasattr(c0, 'get_param')
     assert hasattr(c0, 'params')
     assert np.array_equal(c0(c0.params[0]), c0.get_param(c0.params[0]))  # Test __call__
+    assert np.array_equal(c0(c0.params[2])[::10], c0.get_param(c0.params[2], thin_by=10))
     assert isinstance(c0.get_map_dict(), dict)
     assert isinstance(c0.credint(c0.params[0], onesided=True, interval=95), float)
     assert isinstance(c0.credint(c0.params[0]), tuple)

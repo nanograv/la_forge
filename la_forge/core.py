@@ -264,6 +264,10 @@ class Core(object):
         Returns array of samples for the parameter given.
 
         `param` can either be a single list or list of strings.
+
+        `thin_by` will thin the returned array by that integer value.
+
+        `to_burn` will use the Core.burn value to ignore a portion of the chain.
         """
         if isinstance(param, (list, np.ndarray)):
             idx = [self.params.index(p) for p in param]

@@ -55,6 +55,10 @@ class SlicesCore(Core):
         params : list of str
             User defined names of parameters in constructed array.
 
+        pt_chains : bool
+            Whether to load all higher temperature chains from a parallel tempering
+            (PT) analysis. Assumes 1 entry in `slicedirs`.
+
         parfile : str
             Name of parameter list file in the directories that corresponds to
             columns of the chains.

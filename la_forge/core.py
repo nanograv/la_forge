@@ -259,7 +259,7 @@ class Core(object):
         """
         return self.get_param(param, to_burn=to_burn)
 
-    def get_param(self, param, to_burn=True):
+    def get_param(self, param, thin_by=1, to_burn=True):
         """
         Returns array of samples for the parameter given.
 
@@ -275,14 +275,14 @@ class Core(object):
                 raise ValueError(msg)
         try:
             if to_burn:
-                return self.chain[self.burn:, idx]
+                return self.chain[self.burn::thin_by, idx]
             else:
-                return self.chain[:, idx]
+                return self.chain[::thin_by, idx]
         except:  # when the chain is 1D:
             if to_burn:
-                return self.chain[self.burn:]
+                return self.chain[self.burn::thin_by]
             else:
-                return self.chain
+                return self.chain[::thin_by]
 
     def get_hot_param(self, param, to_burn=True, temp=1.0):
         """
@@ -300,22 +300,22 @@ class Core(object):
                 raise ValueError(msg)
         try:
             if to_burn and temp == 1.0:
-                return self.chain[self.burn:, idx]
+                return self.chain[self.burn::thin_by, idx]
             elif temp == 1.0 and not to_burn:
-                return self.chain[:, idx]
+                return self.chain[::thin_by, idx]
             elif to_burn and temp != 1.0:
-                return self.hot_chains[temp][self.burn:, idx]
+                return self.hot_chains[temp][self.burn::thin_by, idx]
             else:
-                return self.hot_chains[temp][:, idx]
+                return self.hot_chains[temp][::thin_by, idx]
         except:  # when the chain is 1D:
             if to_burn and temp == 1.0:
-                return self.chain[self.burn:]
+                return self.chain[self.burn::thin_by]
             elif temp == 1.0 and not to_burn:
-                return self.chain
+                return self.chain[::thin_by]
             elif to_burn and temp != 1.0:
-                return self.hot_chains[temp][self.burn:]
+                return self.hot_chains[temp][self.burn::thin_by]
             else:
-                return self.hot_chains[temp]
+                return self.hot_chains[temp][::thin_by]
 
 
     def get_map_param(self, param):

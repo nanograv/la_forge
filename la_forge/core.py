@@ -225,7 +225,7 @@ class Core(object):
             pass
         else:
             self.set_fancy_par_names(fancy_par_names)
-        
+
         if true_vals is not None:
             try:
                 if self.corepath is not None:
@@ -259,7 +259,7 @@ class Core(object):
         """
         return self.get_param(param, to_burn=to_burn)
 
-    def get_param(self, param, to_burn=True, temp=1.0):
+    def get_param(self, param, to_burn=True):
         """
         Returns array of samples for the parameter given.
 
@@ -271,7 +271,32 @@ class Core(object):
             try:
                 idx = self.params.index(param)
             except ValueError:
-                msg = f'\'{param}\' not in list.\nMust use on of:\n{self.params}'
+                msg = f'\'{param}\' not in list.\nMust use one of:\n{self.params}'
+                raise ValueError(msg)
+        try:
+            if to_burn:
+                return self.chain[self.burn:, idx]
+            else:
+                return self.chain[:, idx]
+        except:  # when the chain is 1D:
+            if to_burn:
+                return self.chain[self.burn:]
+            else:
+                return self.chain
+
+    def get_hot_param(self, param, to_burn=True, temp=1.0):
+        """
+        Returns array of samples for the parameter given.
+
+        `param` can either be a single list or list of strings.
+        """
+        if isinstance(param, (list, np.ndarray)):
+            idx = [self.params.index(p) for p in param]
+        else:
+            try:
+                idx = self.params.index(param)
+            except ValueError:
+                msg = f'\'{param}\' not in list.\nMust use one of:\n{self.params}'
                 raise ValueError(msg)
         try:
             if to_burn and temp == 1.0:

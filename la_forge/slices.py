@@ -3,6 +3,7 @@
 
 import os.path
 import sys
+import glob
 
 import numpy as np
 
@@ -33,7 +34,7 @@ class SlicesCore(Core):
 
     def __init__(self, label=None, slicedirs=None, pars2pull=None, params=None,
                  corepath=None, fancy_par_names=None, verbose=True,
-                 burn=0.25, parfile='pars.txt'):
+                 burn=0.25, pt_chains=False, parfile='pars.txt'):
         """
         Parameters
         ----------
@@ -53,6 +54,10 @@ class SlicesCore(Core):
 
         params : list of str
             User defined names of parameters in constructed array.
+
+        pt_chains : bool
+            Whether to load all higher temperature chains from a parallel tempering
+            (PT) analysis. Assumes 1 entry in `slicedirs`.
 
         parfile : str
             Name of parameter list file in the directories that corresponds to
@@ -76,11 +81,36 @@ class SlicesCore(Core):
         else:
             self.slicedirs = slicedirs
             self.pars2pull = pars2pull
-            # Get indices from par file.
 
+            # Get indices from par file.
             idxs = []
             if isinstance(pars2pull, str):
                 pars2pull = [pars2pull]
+
+            if pt_chains and isinstance(slicedirs, list) and len(slicedirs)>1:
+                raise NotImplementedError('PT Chain SlicedCore only supported for 1 directory.')
+
+            if pt_chains and (any([isinstance(p2p, list) for p2p in pars2pull])
+                              or len(pars2pull)>1):
+                raise NotImplementedError('PT Chain SlicedCore only supported for 1 parameter.')
+
+            if isinstance(slicedirs, str):
+                slicedirs = [slicedirs]
+
+            if pt_chains:
+                self.chainpaths = sorted(glob.glob(slicedirs[0] + '/chain*.txt'))
+                if params is None:
+                    params = [chp.split('/')[-1].split('_')[-1].replace('.txt', '')
+                              for chp in self.chainpaths]
+
+                slicedirs = [slicedirs[0] for ch in self.chainpaths]
+            else:
+                self.chainpaths = []
+                for chaindir in slicedirs:
+                    if os.path.exists(chaindir + '/chain_1.txt'):
+                        self.chainpaths.append(chaindir + '/chain_1.txt')
+                    elif os.path.exists(chaindir + '/chain_1.0.txt'):
+                        self.chainpaths.append(chaindir + '/chain_1.0.txt')
 
             # chain_params = []
             if isinstance(pars2pull[0], list):
@@ -92,7 +122,7 @@ class SlicesCore(Core):
                     file = dir + '/' + parfile
                     idxs.append(get_idx(pars2pull, file))
 
-            chain_list = store_chains(slicedirs, idxs, verbose=verbose)
+            chain_list = store_chains(self.chainpaths, idxs, verbose=verbose)
 
             # Make all chains the same length by truncating to length of shortest.
             chain_lengths = [len(ch) for ch in chain_list]
@@ -108,33 +138,6 @@ class SlicesCore(Core):
             super().__init__(label=label, chain=chain, params=params,
                              burn=burn, fancy_par_names=fancy_par_names,
                              corepath=None)
-
-    # def get_ul_slices_err(self, q=95.0):
-    #     self.ul = np.zeros((len(self.params), 2))
-    #     for ii, yr in enumerate(self.params):
-    #         try:
-    #             if ent_ext_present:
-    #                 self.ul[ii, :] = model_utils.ul(self.chain[self.burn:, ii],
-    #                                                 q=q)
-    #             else:
-    #                 err_msg = 'Must install enterprise_extensions to'
-    #                 err_msg += ' use this functionality.'
-    #                 raise ImportError(err_msg)
-    #         except ZeroDivisionError:
-    #             self.ul[ii, :] = (np.percentile(self.chain[self.burn:, ii], q=q), np.nan)
-    #     return self.ul
-    #
-    # def get_bayes_fac(self, ntol=200, logAmin=-18, logAmax=-12,
-    #                   nsamples=100, smallest_dA=0.01, largest_dA=0.1):
-    #     self.bf = np.zeros((len(self.params), 2))
-    #     for ii, yr in enumerate(self.params):
-    #         self.bf[ii, :] = utils.bayes_fac(self.chain[self.burn:, ii],
-    #                                          ntol=ntol, nsamples=nsamples,
-    #                                          logAmin=logAmin,
-    #                                          logAmax=logAmax,
-    #                                          smallest_dA=smallest_dA,
-    #                                          largest_dA=largest_dA)
-    #     return self.bf
 
 
 def get_idx(par, filename):
@@ -172,21 +175,17 @@ def get_col(col, filename):
 def store_chains(filepaths, idxs, verbose=True):
     chains = []
     for idx, path in zip(idxs, filepaths):
-        if os.path.exists(path + '/chain_1.txt'):
-            ch_path = path + '/chain_1.txt'
-        elif os.path.exists(path + '/chain_1.0.txt'):
-            ch_path = path + '/chain_1.0.txt'
         if isinstance(idx, (list, np.ndarray)):
             for id in idx:
-                chains.append(get_col(id, ch_path))
+                chains.append(get_col(id, path))
         else:
-            chains.append(get_col(idx, ch_path))
+            chains.append(get_col(idx, path))
         if verbose:
             if sys.version_info[0] < 3:
-                print('\r{0} is loaded.'.format(ch_path), end='')
+                print('\r{0} is loaded.'.format(path), end='')
                 sys.stdout.flush()
             else:
-                print('\r{0} is loaded.'.format(ch_path), end='', flush=True)
+                print('\r{0} is loaded.'.format(path), end='', flush=True)
 
     if verbose:
         print('\n')

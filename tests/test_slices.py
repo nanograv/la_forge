@@ -30,3 +30,18 @@ def test_slice_core():
     sl.save(corepath)
     sl2 = slices.SlicesCore(corepath=corepath)
     assert isinstance(sl2('J1713+0747_red_noise_gamma'), np.ndarray)
+
+
+def test_slice_core_pt():
+    slicedirs = [chaindir]
+    pars2pull = ['J1713+0747_red_noise_log10_A']
+    sl = slices.SlicesCore(slicedirs=slicedirs,
+                           pars2pull=pars2pull,
+                           params=None,
+                           pt_chains=True)
+    corepath = os.path.join(testdir, 'test_hdf5_pt_slice.core')
+    print(sl.params)
+    print(sl('1.0'))
+    sl.save(corepath)
+    sl2 = slices.SlicesCore(corepath=corepath)
+    assert isinstance(sl2('1.0'), np.ndarray)

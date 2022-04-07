@@ -225,7 +225,7 @@ class Core(object):
             pass
         else:
             self.set_fancy_par_names(fancy_par_names)
-        
+
         if true_vals is not None:
             try:
                 if self.corepath is not None:
@@ -259,7 +259,36 @@ class Core(object):
         """
         return self.get_param(param, to_burn=to_burn)
 
-    def get_param(self, param, to_burn=True, temp=1.0):
+    def get_param(self, param, thin_by=1, to_burn=True):
+        """
+        Returns array of samples for the parameter given.
+
+        `param` can either be a single list or list of strings.
+
+        `thin_by` will thin the returned array by that integer value.
+
+        `to_burn` will use the Core.burn value to ignore a portion of the chain.
+        """
+        if isinstance(param, (list, np.ndarray)):
+            idx = [self.params.index(p) for p in param]
+        else:
+            try:
+                idx = self.params.index(param)
+            except ValueError:
+                msg = f'\'{param}\' not in list.\nMust use one of:\n{self.params}'
+                raise ValueError(msg)
+        try:
+            if to_burn:
+                return self.chain[self.burn::thin_by, idx]
+            else:
+                return self.chain[::thin_by, idx]
+        except:  # when the chain is 1D:
+            if to_burn:
+                return self.chain[self.burn::thin_by]
+            else:
+                return self.chain[::thin_by]
+
+    def get_hot_param(self, param, thin_by=1, to_burn=True, temp=1.0):
         """
         Returns array of samples for the parameter given.
 
@@ -271,27 +300,26 @@ class Core(object):
             try:
                 idx = self.params.index(param)
             except ValueError:
-                msg = f'\'{param}\' not in list.\nMust use on of:\n{self.params}'
+                msg = f'\'{param}\' not in list.\nMust use one of:\n{self.params}'
                 raise ValueError(msg)
         try:
             if to_burn and temp == 1.0:
-                return self.chain[self.burn:, idx]
+                return self.chain[self.burn::thin_by, idx]
             elif temp == 1.0 and not to_burn:
-                return self.chain[:, idx]
+                return self.chain[::thin_by, idx]
             elif to_burn and temp != 1.0:
-                return self.hot_chains[temp][self.burn:, idx]
+                return self.hot_chains[temp][self.burn::thin_by, idx]
             else:
-                return self.hot_chains[temp][:, idx]
+                return self.hot_chains[temp][::thin_by, idx]
         except:  # when the chain is 1D:
             if to_burn and temp == 1.0:
-                return self.chain[self.burn:]
+                return self.chain[self.burn::thin_by]
             elif temp == 1.0 and not to_burn:
-                return self.chain
+                return self.chain[::thin_by]
             elif to_burn and temp != 1.0:
-                return self.hot_chains[temp][self.burn:]
+                return self.hot_chains[temp][self.burn::thin_by]
             else:
-                return self.hot_chains[temp]
-
+                return self.hot_chains[temp][::thin_by]
 
     def get_map_param(self, param):
         """

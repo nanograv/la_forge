@@ -179,13 +179,14 @@ def ti_log_evidence(slices_core, verbose=True, bs_iterations=2000,
 
 # HyperModel BF calculation with bootstrap:
 
-def odds_ratio_bootstrap(hmcore, num_reals=2000, domains=([-0.5, 0.5], [0.5, 1.5])):
+def odds_ratio_bootstrap(hmcore, num_reals=2000, num_samples=1000, domains=([-0.5, 0.5], [0.5, 1.5])):
     """
     Standard bootstrap with replacement for product space odds ratios
 
     Inputs:
         hmcore (HyperModelCore): HyperModelCore object
         num_reals (int): number of realizations to bootstrap
+        num_samples (int): number of samples to draw (w/ replacement)
         domains (tuple): tuple of model domains on the nmodel param
                          default: ([-0.5, 0.5], [0.5, 1.5])
                          modify this to e.g. ([0.5, 1.5], [-0.5, 0.5]) to
@@ -194,16 +195,10 @@ def odds_ratio_bootstrap(hmcore, num_reals=2000, domains=([-0.5, 0.5], [0.5, 1.5
         mean(ors) (float): average of the odds ratios given by bootstrap
         std(ors) (float): std of the odds ratios given by bootstrap
     """
-    nmodel = hmcore.get_param('nmodel')
-    rng = np.random.default_rng()
-    bfs = np.zeros((num_reals))
-    tau = int(integrated_time(nmodel))
-    thinned_nmodel = nmodel[::tau]
-    num_samples = int(0.1 * len(thinned_nmodel))
-    new_nmodels = rng.choice(nmodel, (num_reals, num_samples))
-    ors = np.zeros(new_nmodels.shape[0])
+    new_nmodels = bootstrap(hmcore, 'nmodel', num_reals=num_reals, num_samples=num_samples)
+    ors = np.zeros(num_reals)
     for ii in range(num_reals):
-        ors[ii] = (len(np.where((new_nmodels[ii, :] > domains[0][0]) & (new_nmodels[ii, :] <= domains[0][1]))[0]) /
-                   len(np.where((new_nmodels[ii, :] > domains[1][0]) & (new_nmodels[ii, :] <= domains[1][1]))[0]))
+        ors[ii] = (len(np.where((new_nmodels[:, ii] > domains[0][0]) & (new_nmodels[:, ii] <= domains[0][1]))[0]) /
+                   len(np.where((new_nmodels[:, ii] > domains[1][0]) & (new_nmodels[:, ii] <= domains[1][1]))[0]))
     return np.mean(ors), np.std(ors)
 

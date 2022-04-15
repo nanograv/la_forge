@@ -359,7 +359,7 @@ def plot_neff(core):
         print(neffs)
         x, y = zip(*sorted(neffs.items()))
         plt.scatter(range(len(core.params) - 4), y)
-        plt.xlim([0.5, len(core.params) - 4 + .5])
+        plt.xlim([-0.5, len(core.params) - 4 + .5])
     plt.ylabel(r'$N_{eff}$')
     plt.xlabel('Parameter Index')
     plt.title('Effective Samples')
@@ -429,7 +429,7 @@ def plot_grubin(core, M=2, threshold=1.01):
     else:
         Rhat, idx = grubin(core, M=M, threshold=threshold)
         ax.scatter(range(len(Rhat)), Rhat - 1)
-        plt.xlim([0.5, len(core.params) - 4 + .5])
+        plt.xlim([-0.5, len(core.params) - 4 + .5])
     plt.axhline(threshold - 1, lw=2, ls='-.', color='k')
     ax.set_yscale('log')
     plt.ylabel(r'$\widehat{R} - 1$')

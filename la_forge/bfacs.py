@@ -17,11 +17,39 @@ from scipy.interpolate import interp1d
 import numpy as np
 import matplotlib.pyplot as plt
 
+rng = np.random.default_rng()  # instatiate the RNG
+
 __all__ = []
+
+# Generic functions for all BF calculations:
+
+def bootstrap(core, param, num_reals=2000, num_samples=1000):
+    """
+    Bootstrap samples (with replacement) a 1d array of nearly independent samples,
+    giving a representative subsample for each realization. By taking a mean and
+    standard deviation of the resulting subsamples, we can get an uncertainty
+    estimate.
+
+    Note on number of samples: The number of samples is set at 1000,
+    but in general we should plot the histograms and make sure that they
+    look like histograms and not random points.
+
+    Input:
+        core (*Core): Any core object
+        param (str): parameter to bootstrap sample
+        num_reals (int) [2000]: number of realizations
+        num_samples (int) [1000]: number of samples to use
+    Output:
+        
+    """
+    tau = int(integrated_time(core.get_param(param)))
+    array = core.get_param(param, thin_by=tau)
+    new_array = rng.choice(array, (num_samples, num_reals))
+    return new_array
 
 # Thermodynamic integration
 
-def make_betalike(core):
+def make_betalike(slices_core):
     """
     For use with thermodynamic integration (and BayesWave code).
     Save a file that gives temperatures as column headers with their
@@ -31,33 +59,36 @@ def make_betalike(core):
     will save time and memory on your computer.
 
     Input:
-        core (Core): core loaded to include temperature chains
-        outfile (str): filepath to save output
+        slices_core (SlicesCore): SlicesCore with pt_chains=True
     Output:
         temps (list): temperatures used for the corresponding column
         betalike (ndarray): beta * lnlike
     """
     # find shortest chain:
     chain_lengths = []
-    param = 'lnlike'
-    cold_chain = core.get_param(param)
-    chain_lengths.append(len(cold_chain))
-    temps = sorted(list(core.hot_chains.keys()))
+    temps = slices_core.params
     for ii in range(len(temps)):
-        chain_lengths.append(len(core.get_param(param, temp=temps[ii])))
+        chain_lengths.append(len(slices_core.get_param(temps[ii])))
     num_temps = len(chain_lengths)
     min_length = min(chain_lengths)
     betalike = np.zeros((min_length, num_temps))
-    betalike[:, 0] = cold_chain[len(cold_chain) - min_length:]
     for ii in range(len(temps)):
-        hot_chain = core.get_param(param, temp=temps[ii])
-        betalike[:, ii + 1] = hot_chain[len(hot_chain) - min_length:]
-    temps.insert(0, 1.0)
-    
+        hot_chain = slices_core.get_param(temps[ii])
+        betalike[:, ii] = hot_chain[len(hot_chain) - min_length:]
+
     return np.array(temps), betalike
 
-def core_to_txt(core, outfile):
-    temps, betalike = make_betalike(core)
+def core_to_txt(slices_core, outfile):
+    """
+    Output a file to be used with BayesWave thermodynamic integration code
+    (by Neil Cornish and Tyson Littenberg):
+    https://github.com/tlittenberg/thermodynamic_integration
+
+    Input:
+        slices_core (SlicesCore): SlicesCore with pt_chains=True
+        outfile (str): filepath to save output
+    """
+    temps, betalike = make_betalike(slices_core)
     temps_str = []
     for ii in range(len(temps)):
         temps_str.append(str(temps[ii]))
@@ -65,33 +96,6 @@ def core_to_txt(core, outfile):
         f.write(' '.join(temps_str))
         f.write('\n')
         np.savetxt(f, betalike)
-
-def find_means(temps, betalike, remove_hot=False):
-    """
-    Take mean of beta * log likelihood for several temperatures and inverse temperatures.
-
-    Input:
-        txt_loc (string): location where .txt file is stored
-        burn_pct (float) [0.1]: percent of the start of the chain to remove
-        verbose (bool) [True]: get more info
-
-    Return:
-        inv_temp (array): 1 / temperature of the chains
-        mean_like (array): means of the ln(likelihood)
-        stat_unc (float): uncertainty associated with the MCMC chain
-        betalike (array): beta * loglikelihoods
-    """
-
-    # build numpy array
-    inv_temps = 1 / temps[::-1]
-    mean_like = np.average(betalike, axis=0)[::-1]
-    std = np.std(betalike, axis=0)[::-1]
-
-    if remove_hot:
-        inv_temps = inv_temps[1:]
-        mean_like = mean_like[1:]
-
-    return inv_temps, mean_like, std, betalike
 
 def ti_bootstrap(betalike, num_chains, num_reals=2000):
     """
@@ -109,10 +113,10 @@ def ti_bootstrap(betalike, num_chains, num_reals=2000):
         trimmed_like = betalike[::tau, ii]
         num_samples = int(0.1 * len(trimmed_like))
         new_means[:, ii] = np.mean(rng.choice(betalike[:, ii], (num_reals, num_samples)), axis=1)
-    new_means = np.flip(new_means)
+    new_means = np.flip(new_means)  # we inverted inv_temps, so this should be too!
     return new_means
 
-def ti_log_evidence(core, verbose=True, iterations=2000,
+def ti_log_evidence(slices_core, verbose=True, iterations=2000,
                     remove_hot=False, plot=False):
     """
     Compute ln(evidence) of chains of several different temperatures.
@@ -127,10 +131,10 @@ def ti_log_evidence(core, verbose=True, iterations=2000,
         ln_Z (float): natural logarithm of the evidence
         total_unc (float): uncertainty in the natural logarithm of the evidence
     """
-    temps, betalike = make_betalike(core)
-    inv_temps, __, __, like = find_means(temps, betalike, remove_hot=False)
+    temps, betalike = make_betalike(slices_core)
+    inv_temps = 1 / temps[::-1]
     num_chains = len(inv_temps)
-    new_means = ti_bootstrap(like, num_chains=num_chains, num_reals=iterations)
+    new_means = ti_bootstrap(betalike, num_chains=num_chains, num_reals=iterations)
 
     if plot:
         plt.figure(figsize=(12, 5))

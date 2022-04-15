@@ -103,9 +103,7 @@ class SlicesCore(Core):
                     params = [chp.split('/')[-1].split('_')[-1].replace('.txt', '')
                               for chp in self.chainpaths]
                 if 'hot' in params:
-                    params[params.index('hot')] = '1e80'
-                # sort params by temperature
-                params = sorted([float(param) for param in params])
+                    params[params.index('hot')] = '1e+80'
                 slicedirs = [slicedirs[0] for ch in self.chainpaths]
             else:
                 self.chainpaths = []

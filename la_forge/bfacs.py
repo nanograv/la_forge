@@ -14,6 +14,7 @@ except:
     msg += 'Please install emcee to use these functions.'
 
 from scipy.interpolate import interp1d
+from scipy.special import logsumexp
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -21,8 +22,8 @@ rng = np.random.default_rng()  # instatiate the RNG
 
 __all__ = []
 
-# Generic functions for all BF calculations:
 
+# Generic functions for all BF calculations:
 def bootstrap(core, param, num_reals=2000, num_samples=1000):
     """
     Bootstrap samples (with replacement) a 1d array of nearly independent samples,
@@ -47,6 +48,7 @@ def bootstrap(core, param, num_reals=2000, num_samples=1000):
     new_array = rng.choice(array, (num_samples, num_reals))
     return new_array
 
+
 def log10_bf(log_ev1, log_ev2, scale='log10'):
     """
     Compute log10(Bayes factor) comparing (model 2 / model 1)
@@ -70,8 +72,8 @@ def log10_bf(log_ev1, log_ev2, scale='log10'):
     elif scale == 'log10':
         return log10_bf.n, log10_bf.s
 
-# Thermodynamic integration
 
+# Thermodynamic integration
 def make_betalike(slices_core):
     """
     For use with thermodynamic integration (and BayesWave code).
@@ -102,6 +104,7 @@ def make_betalike(slices_core):
 
     return np.array(temps), betalike
 
+
 def core_to_txt(slices_core, outfile):
     """
     Output a file to be used with BayesWave thermodynamic integration code
@@ -120,6 +123,7 @@ def core_to_txt(slices_core, outfile):
         f.write(' '.join(temps_str))
         f.write('\n')
         np.savetxt(f, betalike)
+
 
 def ti_log_evidence(slices_core, verbose=True, bs_iterations=2000,
                     num_samples=1000, plot=False):
@@ -177,8 +181,8 @@ def ti_log_evidence(slices_core, verbose=True, bs_iterations=2000,
         print()
     return ln_Z, total_unc
 
-# HyperModel BF calculation with bootstrap:
 
+# HyperModel BF calculation with bootstrap:
 def odds_ratio_bootstrap(hmcore, num_reals=2000, num_samples=1000, domains=([-0.5, 0.5], [0.5, 1.5])):
     """
     Standard bootstrap with replacement for product space odds ratios
@@ -202,3 +206,48 @@ def odds_ratio_bootstrap(hmcore, num_reals=2000, num_samples=1000, domains=([-0.
                    len(np.where((new_nmodels[:, ii] > domains[1][0]) & (new_nmodels[:, ii] <= domains[1][1]))[0]))
     return np.mean(ors), np.std(ors)
 
+
+def calc_stepping_stone(slices_core, verbose=True, bs_iterations=2000, block_size=1000):
+    """Calculate evidence using stepping stone method
+
+    Inputs:
+        slices_core (la_forge.slices.SliceCore): slice core object that contains chains for parallel tempered runs
+        verbose (bool, optional): whether to print information or not. Defaults to True.
+        bs_iterations (int, optional): number of realizations for bootstrapping. Defaults to 2000.
+        block_size (int, optional): block size for moving block bootstrap method. Defaults to 1000.
+
+    Outputs:
+        evidence: (float) evidence
+        evidence error: (float) error on evidence using moving block bootstarp method
+    """
+    parlist = slices_core.params
+    temps = np.array(sorted([float(param) for param in parlist]))[::-1]
+    inv_temps = 1 / temps
+
+    # no thinning for this, since MBB is designed for correlated chains
+    tau = 1
+    # make a big array...
+    chains = np.array([slices_core.get_param(str(temp), thin_by=tau) for temp in temps]).T
+    steps = chains.shape[0]
+
+    # chains has shape Nsamples x Ntemperatures
+    evidences = np.zeros(bs_iterations)
+
+    # Moving block bootstrap method
+    # Might not be bad to see how error scales with block size
+    for ii in range(bs_iterations):
+        # create round(Nsamples/ll) random start indexes for the blocks
+        # last start index is Nsamples - ll.
+        start_vals = np.random.randint(0, steps - block_size, size=int(steps/block_size) + 1)
+        # Create a list of blocks that run from start index to start index +block_size
+        # then concatenate those together
+        newchain = np.vstack(np.array([chains[sv:sv+block_size, :] for sv in start_vals]))
+        if len(inv_temps) == 1:
+            tmp = np.mean(newchain[:steps, :])
+        else:
+            dbetas = np.diff(inv_temps)
+            tmp = np.sum(logsumexp(newchain[:steps, :-1] * dbetas, axis=0) - np.log(chains.shape[0]))
+        evidences[ii] = tmp
+    if verbose:
+        print("block length = %i, number of blocks = %i, error = %g" % (block_size, int(steps/block_size) + 1, np.std(evidences)))
+    return np.mean(evidences), np.std(evidences)

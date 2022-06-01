@@ -485,7 +485,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
                             par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['kappa_par'] = y
                         else:
                             par_dict[pulsar + rn_type + '_log10_A']['kappa_par'] = y
-                for group in [x for x,y in par_dict.items() if 'gam_par' in y]:
+                for group in [x for x,y in par_dict.items() if 'del_par' in y]:
                     Color = Colors[color_idx]
                     plot_broken_powerlaw(c, axes[0], par_dict[group]['amp_par'],
                                          par_dict[group]['gam_par'],
@@ -691,7 +691,7 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
         sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
         if not gam_idx:
             sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
-        for idx in range(n_realizations):
+        for idx in range(np.min((len(sorted_idx),n_realizations))):
             if gam_idx:
                 rho = utils.compute_rho(sorted_Amp[idx],
                                         gam_idx, F, T)
@@ -1091,7 +1091,7 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
             raise ValueError(err_msg)
 
         df = np.diff(np.concatenate((np.array([0]), F)))
-        for idx in range(n_realizations):
+        for idx in range(np.min((len(sorted_idx),n_realizations))):
             exp = sorted_kappa[idx] * (sorted_gam[idx] - sorted_del[idx]) / 2
             hcf = (10**sorted_Amp[idx] * (F / fyr) ** ((3-sorted_gam[idx])/2)
                    * (1 + (F / 10**sorted_log10_fb[idx]) ** (1/sorted_kappa[idx])) ** exp)
@@ -1144,9 +1144,9 @@ def plot_extra_broken_powerlaw(core, axis, amp_par, gam_par, del_par, beta_par,
         Name of 1st (lowest freq) red noise powerlaw spectral index parameter
         (gamma3).
     log10_fb_1_par : str
-        Name of 1st red noise powerlaw frequency split parameter (freq_split).
+        Name of 1st (lowest freq) red noise powerlaw frequency split parameter (freq_split).
     log10_fb_2_par : str
-        Name of 2nd red noise powerlaw frequency split parameter (freq_split).
+        Name of 2nd (highest freq) red noise powerlaw frequency split parameter (freq_split).
     kappa_1_par : float
         1st Break transition parameter name.
     kappa_2_par : float
@@ -1250,7 +1250,7 @@ def plot_extra_broken_powerlaw(core, axis, amp_par, gam_par, del_par, beta_par,
 
         df = np.diff(np.concatenate((np.array([0]), F)))
         
-        for idx in range(n_realizations):
+        for idx in range(np.min((len(sorted_idx),n_realizations))):
             outer_piece = (10**sorted_Amp[idx]) * ((F / fyr) ** ((3-sorted_beta[idx])/2))
             exp_1 = sorted_kappa_1[idx]*(sorted_beta[idx]-sorted_gam[idx])/2
             exp_2 = sorted_kappa_2[idx]*(sorted_gam[idx]-sorted_del[idx])/2

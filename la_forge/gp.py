@@ -241,7 +241,7 @@ class Signal_Reconstruction():
 
         mlv : bool
             Whether to use the maximum likelihood value for the reconstruction.
-            
+
         idx : int, optional
             Index of the chain array to use.
 
@@ -333,15 +333,15 @@ class Signal_Reconstruction():
                 if 'red_noise_gw' not in self.shared_sigs[psrname]:
                     # Parse whether it is a common signal.
                     if 'red_noise_gw' in self.common_gp_idx[psrname].keys():
-                        idx = self.gp_idx[psrname]['red_noise_gw']
-                        cidx = self.common_gp_idx[psrname]['red_noise_gw']
+                        idx = self.gp_idx[psrname]['gw']
+                        cidx = self.common_gp_idx[psrname]['gw']
                         wave[psrname] += np.dot(T[:, idx], B[cidx])
                     else:  # If not common use pulsar Phi
-                        idx = self.gp_idx[psrname]['red_noise_gw']
+                        idx = self.gp_idx[psrname]['gw']
                         wave[psrname] += np.dot(T[:, idx], b[idx])
                 # Need to make our own phi when shared...
                 else:
-                    gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
+                    gw_sig = self.pta.get_signal('{0}_gw'.format(psrname))
                     # [sig for sig
                     #           in self.pta._signalcollections[p_ct]._signals
                     #           if sig.signal_id=='red_noise_gw'][0]

@@ -141,7 +141,7 @@ class Core(object):
             jump_paths = glob.glob(chaindir + '/*jump*.txt')
             self.jumps = {}
             for path in jump_paths:
-                if path.split('/')[-1] == 'jumps.txt':
+                if 'jumps.txt' in path.split('/')[-1]:
                     jf = np.loadtxt(path, dtype=str)
                     self.jump_fractions = dict(zip(jf[:, 0], jf[:, 1].astype(float)))
                 else:

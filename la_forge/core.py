@@ -678,7 +678,7 @@ class TimingCore(Core):
 
     def __init__(self, chaindir=None, burn=0.25, label=None,
                  fancy_par_names=None, chain=None, params=None,
-                 pt_chains=False, tm_pars_path=None):
+                 pt_chains=False, tm_pars_path=None, timing_package='tempo2'):
         """
         Parameters
         ----------
@@ -692,6 +692,9 @@ class TimingCore(Core):
             where value is the par file
             Default is chaindir+'orig_timing_pars.pkl'. If no file found a
             warning is given that no conversions can be done.
+        timing_package : str, {'tempo2','pint'}
+            timing package used to construct psr/residuals in run, used for
+            conversion between angles and radians.
 
         """
         super().__init__(label=label,
@@ -714,12 +717,21 @@ class TimingCore(Core):
             raise ValueError(err_msg)
 
         non_normalize_pars = []
+        angle_conv_pars = []
         for par, (val, err, ptype) in self.tm_pars_orig.items():
             if ptype == 'physical':
                 non_normalize_pars.append(par)
+            if par.lower() in ['elat','elong'] and timing_package.lower() == 'pint':
+                angle_conv_pars.append(par)
 
         self._norm_tm_par_idxs = [self.params.index(p) for p in self.params
                                   if ('timing' in p and not np.any([nm in p for nm in non_normalize_pars]))]
+        
+        self._angle_conv_par_idxs = []
+        for p in self.params:
+            if ('timing' in p and np.any([nm in p for nm in angle_conv_pars])):
+                if p.split('_')[-1] in angle_conv_pars:
+                    self._angle_conv_par_idxs.append(self.params.index(p))
 
     def get_param(self, param, to_burn=True, tm_convert=True):
         """
@@ -758,16 +770,21 @@ class TimingCore(Core):
             else:
                 chain = self.chain[:, idx]
             if isinstance(pidxs, (list, np.ndarray)):
-
                 for pidx in pidxs:
                     n = idx.index(pidx)
                     par = self.params[pidx]
                     val, err, _ = self.tm_pars_orig[self._get_real_tm_par_name(par)]
-                    chain[n] = chain[n] * err + val
+                    if pidx in self._angle_conv_par_idxs:
+                        chain[n] = np.deg2rad(chain[n] * err + val)
+                    else:
+                        chain[n] = chain[n] * err + val
             else:
                 par = self.params[pidxs]
                 val, err, _ = self.tm_pars_orig[self._get_real_tm_par_name(par)]
-                chain = chain * err + val
+                if pidxs in self._angle_conv_par_idxs:
+                    chain = np.deg2rad(chain * err + val)
+                else:
+                    chain = chain * err + val
 
             return chain
 

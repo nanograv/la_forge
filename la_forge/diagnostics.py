@@ -164,10 +164,17 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                     plt.axvline(truths[0], linewidth=1,
                                 color=pcol, linestyle='-')
         else:
-            gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)
-            plt.plot(core.get_param(p, to_burn=True, **gpar_kwargs),
-                     lw=linewidth, **plot_kwargs)
-
+            if isinstance(core,list):
+                for jj, c in enumerate(core):
+                    gpar_kwargs= _get_gpar_kwargs(c, real_tm_pars)
+                    plt.plot(c.get_param(p, to_burn=True, **gpar_kwargs),
+                             linestyle=linestyle[jj],
+                             lw=linewidth, **plot_kwargs)
+            else:
+                gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)
+                plt.plot(core.get_param(p, to_burn=True, **gpar_kwargs),
+                         lw=linewidth, **plot_kwargs)
+            
         if (titles is None) and (fancy_par_names is None):
             if psr_name is not None:
                 par_name = p.replace(psr_name+'_', '')

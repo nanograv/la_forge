@@ -221,17 +221,27 @@ class Signal_Reconstruction():
             Type of gaussian process signal to be reconstructed. In addition
             any GP in `psr.fitpars` or `Signal_Reconstruction.gp_types` may be
             called.
+
             ['achrom_rn','red_noise'] : Return the achromatic red noise.
+
             ['DM'] : Return the timing-model parts of dispersion model.
+
             [timing parameters] : Any of the timing parameters from the linear timing model. A list is available as `psr.fitpars`.
+
             ['timing'] : Return the entire timing model.
+
             ['gw'] : Gravitational wave signal. Works with common process in full PTAs.
-            ['none'] : Returns no Gaussian processes. Meant to be used for returning deterministic signal.
+
+            ['none'] : Returns no Gaussian processes. Meant to be used for returning only a deterministic signal.
+
             ['all'] : Returns all Gaussian processes.
+
         det_signal : bool
             Whether to include the deterministic signals in the reconstruction.
+
         mlv : bool
             Whether to use the maximum likelihood value for the reconstruction.
+
         idx : int, optional
             Index of the chain array to use.
 
@@ -323,15 +333,15 @@ class Signal_Reconstruction():
                 if 'red_noise_gw' not in self.shared_sigs[psrname]:
                     # Parse whether it is a common signal.
                     if 'red_noise_gw' in self.common_gp_idx[psrname].keys():
-                        idx = self.gp_idx[psrname]['red_noise_gw']
-                        cidx = self.common_gp_idx[psrname]['red_noise_gw']
+                        idx = self.gp_idx[psrname]['gw']
+                        cidx = self.common_gp_idx[psrname]['gw']
                         wave[psrname] += np.dot(T[:, idx], B[cidx])
                     else:  # If not common use pulsar Phi
-                        idx = self.gp_idx[psrname]['red_noise_gw']
+                        idx = self.gp_idx[psrname]['gw']
                         wave[psrname] += np.dot(T[:, idx], b[idx])
                 # Need to make our own phi when shared...
                 else:
-                    gw_sig = self.pta.get_signal('{0}_red_noise_gw'.format(psrname))
+                    gw_sig = self.pta.get_signal('{0}_gw'.format(psrname))
                     # [sig for sig
                     #           in self.pta._signalcollections[p_ct]._signals
                     #           if sig.signal_id=='red_noise_gw'][0]

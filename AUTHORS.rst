@@ -11,4 +11,5 @@ Contributors
 ------------
 
 * Kristina Islo
+* Aaron Johnson
 * Sarah Vigeland

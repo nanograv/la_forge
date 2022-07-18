@@ -31,56 +31,24 @@ Python package for conveniently plotting results from pulsar timing array bayesi
 
 .. code-block:: python
 
-   pip install git+https://github.com/Hazboun6/la_forge@master
+   pip install la-forge
 
 
 * Free software: MIT license
 * Documentation: https://la-forge.readthedocs.io.
 
-Example code
-------------
-
-.. code-block:: python
-
-   from la_forge import rednoise
-   from la_forge.core import Core
-   from la_forge import utils
-
-   normal_ul_dir = '../BF_standard/DE436/'
-   free_spec_ul_dir = '../BF_free_spec/DE436/'
-
-   a = Core('plaw',chaindir=normal_ul_dir)
-   b = Core('free_spec',chaindir=free_spec_ul_dir)
-
-   tspan = 11.4*365.25*24*3600
-
-   a.set_rn_freqs(Tspan=tspan)
-   b.set_rn_freqs(Tspan=tspan)
-
-   compare = [a,b]
-   plot_filename = './noise_model_plots.png'
-   Colors = ['blue','red']
-   Labels = ['PTA PLaw', 'PTA Free Spec']
-
-   rednoise.plot_rednoise_spectrum(pulsar=psr, cores=compare, chaindir=chaindir,
-                                   show_figure=True, rn_type='', verbose=False,
-                                   Tspan=tspan, Colors=Colors, n_plaw_realizations=100,
-                                   labels=Labels, plotpath=plot_filename)
-
 
 Features
 --------
 
-* Sweep Bayesian analysis MCMC Chains with sampling info.
-* Allow easy retrieval of various parts of chains.
-* Support for saving chains as HDF5 files.
+* Sweep up Bayesian analysis MCMC chains along with sampling info.
+* Allow easy retrieval of various samples from chains.
+* Support for saving chains as `HDF5` files.
 * Call chains with parameter names.
 * Plot posteriors easily.
 * Reconstruct Gaussian process realizations using posterior chains.
 * Plot red noise power spectral density.
-
-Credits
--------
+* Separate consituent models of a hypermodel analysis.
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 

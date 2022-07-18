@@ -22,7 +22,7 @@ __all__ = ['plot_chains', 'noise_flower']
 def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
-                linestyle=None, plot_map=False,
+                linestyle=None, plot_map=False, truths=None,
                 save=False, show=True, linewidth=1,
                 log=False, title_y=1.01, hist_kwargs={},
                 plot_kwargs={}, legend_labels=None, real_tm_pars=True,
@@ -171,6 +171,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                         continue
                     plt.axvline(truths[p], linewidth=2,
                                 color='k', linestyle='-.')
+
         else:
             gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)
             plt.plot(core.get_param(p, to_burn=True, **gpar_kwargs),

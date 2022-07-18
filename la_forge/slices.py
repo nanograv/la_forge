@@ -116,11 +116,17 @@ class SlicesCore(Core):
             # chain_params = []
             if isinstance(pars2pull[0], list):
                 for dir, pars in zip(slicedirs, pars2pull):
-                    file = dir + '/' + parfile
+                    if os.path.exists(parfile):
+                        file = parfile
+                    else:
+                        file = dir + '/' + parfile
                     idxs.append(get_idx(pars, file))
             else:
                 for dir in slicedirs:
-                    file = dir + '/' + parfile
+                    if os.path.exists(parfile):
+                        file = parfile
+                    else:
+                        file = dir + '/' + parfile
                     idxs.append(get_idx(pars2pull, file))
 
             chain_list = store_chains(self.chainpaths, idxs, verbose=verbose)

@@ -170,6 +170,7 @@ class Core(object):
             jump_paths = glob.glob(chaindir + '/*jump*.txt')
             self.jumps = {}
             for path in jump_paths:
+
                 if path.split('/')[-1] == 'jumps.txt':
                     jf = np.loadtxt(path, dtype=str, ndmin=2)
                     self.jump_fractions = dict(zip(jf[:, 0], jf[:, 1].astype(float)))
@@ -551,7 +552,14 @@ class Core(object):
 
         g = hdf5.create_group(name)
         for ky, val in d.items():
-            g.create_dataset(ky, data=val)
+            try:
+                g.create_dataset(ky, data=val)
+            except (TypeError,AttributeError) as e:
+                dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
+                g.create_dataset(str(ky),
+                                 data=np.array(val, dtype="O"),
+                                 dtype=dt)
+
 
     def _hdf5_2dict(self, hdf5, name, dtype=float, set_return='set'):
         """
@@ -631,7 +639,11 @@ class Core(object):
                     setattr(self, lostr, np.array(hf[lostr]).astype(str))
             for d in self._savedicts:
                 if d in hf:
-                    self._hdf5_2dict(hf, d)
+                    if d in ['param_dict']:
+                        dt = str
+                    else:
+                        dt = float
+                    self._hdf5_2dict(hf, d, dtype=dt)
 
     def get_map_dict(self):
         """
@@ -678,6 +690,7 @@ class HyperModelCore(Core):
             each sub-model of the hypermodel.
         """
         # Call to add `param_dict` to dictionaries for hdf5 to search for.
+        self.param_dict = param_dict
         super()._set_hdf5_lists(append=[('param_dict', '_savedicts')])
         super().__init__(chaindir=chaindir, burn=burn,
                          corepath=corepath,
@@ -686,8 +699,7 @@ class HyperModelCore(Core):
                          skiprows=skiprows,
                          chain=chain, params=params,
                          pt_chains=pt_chains,)
-
-        if param_dict is None:
+        if self.param_dict is None and corepath is None:
             try:
                 with open(chaindir + '/model_params.json', 'r') as fin:
                     param_dict = json.load(fin)
@@ -699,8 +711,10 @@ class HyperModelCore(Core):
 
             except:
                 raise ValueError('Must provide parameter dictionary!!')
-        else:
+        elif self.param_dict is not None and corepath is None:
             self.param_dict = param_dict
+        else:
+            pass
 
         self.nmodels = len(list(self.param_dict.keys()))
 
@@ -710,7 +724,11 @@ class HyperModelCore(Core):
         single HyperModel model.
         """
         N = nmodel
-        model_pars = self.param_dict[N]
+        try:
+            model_pars = self.param_dict[N]
+        except KeyError:
+            model_pars = self.param_dict[str(N)]
+
 
         if 'lnlike' in self.params:
             model_pars = list(model_pars)
@@ -748,7 +766,7 @@ class TimingCore(Core):
     Cores allow for automatic handling of the parameters.
     """
 
-    def __init__(self, label, chaindir=None, burn=0.25,
+    def __init__(self, chaindir=None, burn=0.25, label=None,
                  fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, tm_pars_path=None):
         """
@@ -876,12 +894,31 @@ class TimingCore(Core):
         function uses a Newton-Raphson method since the equation is
         transcendental.
         """
-        mp_pars = ['PB', 'A1', 'M2', 'SINI']
+        if all([[bp in p for p in self.params]
+                for bp in ['PB', 'A1', 'M2']]):
+            if any(['COSI' in p for p in self.params]):
+                mp_pars = ['PB', 'A1', 'M2', 'COSI']
+            elif any(['SINI' in p for p in self.params]):
+                mp_pars = ['PB', 'A1', 'M2', 'SINI']
+            else:
+                msg = 'One of binary parameters '
+                msg += '[\'SINI\', \'COSI\'] is missing.'
+                raise ValueError(msg)
+        else:
+            msg = 'One of binary parameters '
+            msg += '[\'PB\', \'A1\', \'M2\'] is missing.'
+            raise ValueError(msg)
+
         x = {}
         for p in mp_pars:
             x[p] = self.get_param(p, tm_convert=True)
 
-        PB, A1, M2, SINI = x['PB'], x['A1'], x['M2'], x['SINI']
+        try:
+            PB, A1, M2, SINI = x['PB'], x['A1'], x['M2'], x['SINI']
+        except KeyError:
+            PB, A1, M2, COSI = x['PB'], x['A1'], x['M2'], x['COSI']
+            SINI = np.sin(np.arccos(COSI))
+
         mf = self.mass_function(PB, A1)
         return np.sqrt((M2 * SINI)**3 / mf) - M2
 

@@ -26,7 +26,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 save=False, show=True, linewidth=1,
                 log=False, title_y=1.01, hist_kwargs={},
                 plot_kwargs={}, legend_labels=None, real_tm_pars=True,
-                legend_loc=None, truths=None, **kwargs):
+                legend_loc=None, **kwargs):
     """Function to plot histograms or traces of chains from cores.
 
     Parameters

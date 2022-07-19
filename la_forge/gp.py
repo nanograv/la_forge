@@ -131,6 +131,7 @@ class Signal_Reconstruction():
                                'not match name from provided list.')
 
             phi_dim = sc.get_phi(params=self.mlv_params).shape[0]
+            print('phi_dim',phi_dim)
             if pname not in p_list:
                 pass
             else:
@@ -146,6 +147,7 @@ class Signal_Reconstruction():
 
                 phi_sum = np.sum([sig.get_phi(self.mlv_params).shape[0]
                                   for sig in basis_signals])
+                print('phi_sum',phi_sum)
                 if phi_dim == phi_sum:
                     shared_bases=False
                 else:
@@ -183,8 +185,22 @@ class Signal_Reconstruction():
 
                         if shared_bases:
                             # basis = basis.tolist()
-                            check = [np.array_equal(basis, M) for M in all_bases]
+                            bL = basis.shape[1]
+                            # print('bL',bL)
+                            # check = [np.array_equal(basis, M) for M in all_bases]
+                            check = []
+                            for M in all_bases:
+                                ML = M.shape[1]
+                                if bL == ML:
+                                    check.append(np.array_equal(basis, M))
+                                elif bL < ML:
+                                    check.append(np.array_equal(basis, M[:,:bL]))
+                                elif bL > ML:
+                                    check.append(np.array_equal(basis[:,ML], M))
+
+                            # print(check)
                             if any(check):
+                                # print('any',all_bases)
                                 b_idx = check.index(True)
                                 # b_idx = all_bases.index(basis)
                                 b_key = list(self.gp_idx[pname].keys())[b_idx]
@@ -195,6 +211,7 @@ class Signal_Reconstruction():
                                     self.common_gp_idx[pname][ky] = np.arange(Ntot+ntot, nb+Ntot+ntot)
 
                             else:
+                                # print('else',all_bases)
                                 self.gp_idx[pname][ky] = np.arange(ntot, nb+ntot)
                                 if sig.signal_type == 'common basis':
                                     self.common_gp_idx[pname][ky] = np.arange(Ntot+ntot, nb+Ntot+ntot)

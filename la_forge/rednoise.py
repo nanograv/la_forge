@@ -163,6 +163,9 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
     freq_yr : int , optional
         Number of 1/year harmonics to include in plot.
 
+    Tspan : float, optional
+        Timespan to be used when converting to residual amplitude from power.
+
     plotpath : str, optional
         Path and file name to which plot will be saved.
 
@@ -372,7 +375,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
             Color = Colors[color_idx]
 
             plot_powerlaw(c, axes[0], amp_par, gam_par, Color=Color,
-                          Linestyle=Linestyle, Tspan=None, verbose=verbose,
+                          Linestyle=Linestyle, Tspan=Tspan, verbose=verbose,
                           n_realizations=n_plaw_realizations)
 
             if plot_2d_hist:

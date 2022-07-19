@@ -3,7 +3,7 @@
 
 __author__ = """Jeffrey Shafiq Hazbboun"""
 __email__ = 'jeffrey.hazboun@gmail.com'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 #
 # from .rednoise import plot_rednoise_spectrum
 # from . import utils

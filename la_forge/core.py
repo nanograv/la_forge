@@ -553,7 +553,7 @@ class Core(object):
         g = hdf5.create_group(name)
         for ky, val in d.items():
             try:
-                g.create_dataset(ky, data=val)
+                g.create_dataset(str(ky), data=val)
             except (TypeError,AttributeError) as e:
                 dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
                 g.create_dataset(str(ky),

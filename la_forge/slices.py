@@ -160,7 +160,7 @@ def get_idx(par, filename):
         except:
             new_name = filename[:-3] + 'txt'
             par_list = list(np.loadtxt(new_name, dtype='S').astype('U'))
-    for item in ['lnprob', 'lnlike']:
+    for item in ['lnprob', 'lnlike', 'accept', 'pt_swap']:
         par_list.append(item)
     if isinstance(par, list):
         idx = []

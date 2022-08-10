@@ -14,6 +14,7 @@ except:
     msg += 'Please install emcee to use these functions.'
 
 from scipy.interpolate import interp1d
+from scipy.integrate import simpson
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -22,6 +23,7 @@ rng = np.random.default_rng()  # instatiate the RNG
 __all__ = []
 
 # Generic functions for all BF calculations:
+
 
 def bootstrap(core, param, num_reals=2000, num_samples=1000):
     """
@@ -47,6 +49,7 @@ def bootstrap(core, param, num_reals=2000, num_samples=1000):
     new_array = rng.choice(array, (num_samples, num_reals))
     return new_array
 
+
 def log10_bf(log_ev1, log_ev2, scale='log10'):
     """
     Compute log10(Bayes factor) comparing (model 2 / model 1)
@@ -70,8 +73,8 @@ def log10_bf(log_ev1, log_ev2, scale='log10'):
     elif scale == 'log10':
         return log10_bf.n, log10_bf.s
 
-# Thermodynamic integration
 
+# Thermodynamic integration functions:
 def make_betalike(slices_core):
     """
     For use with thermodynamic integration (and BayesWave code).
@@ -102,6 +105,7 @@ def make_betalike(slices_core):
 
     return np.array(temps), betalike
 
+
 def core_to_txt(slices_core, outfile):
     """
     Output a file to be used with BayesWave thermodynamic integration code
@@ -120,6 +124,7 @@ def core_to_txt(slices_core, outfile):
         f.write(' '.join(temps_str))
         f.write('\n')
         np.savetxt(f, betalike)
+
 
 def ti_log_evidence(slices_core, verbose=True, bs_iterations=2000,
                     num_samples=1000, plot=False):
@@ -145,12 +150,17 @@ def ti_log_evidence(slices_core, verbose=True, bs_iterations=2000,
     for ii in range(num_chains):
         bs = bootstrap(slices_core, str(temps[ii]), num_reals=bs_iterations, num_samples=num_samples)
         new_means[:, ii] = np.mean(bs, axis=0)
-    new_means = np.flip(new_means) # we flipped inv_temps, so this should be too!
+    new_means = np.flip(new_means)  # we flipped inv_temps, so this should be too!
+    # the following line doesn't guarantee monotonicity, but will help get closer to it...
+    new_means = np.sort(new_means, axis=1)  # sort because the function should realy be monotonic
 
     if plot:
         plt.figure(figsize=(12, 5))
         for ii in range(bs_iterations):
-            plt.semilogx(inv_temps, new_means[ii, :])
+            plt.semilogx(inv_temps, new_means[ii, :], color='blue', alpha=0.01)
+        plt.semilogx(inv_temps, np.mean(new_means, axis=0), color='red', alpha=1)
+        for ii in range(len(inv_temps)):
+            plt.axvline(inv_temps[ii], color='k', linestyle='--')
         plt.xlim([1e-10, 1])
         plt.xlabel('Temperature')
         plt.ylabel('Mean(beta * lnlikelihood)')
@@ -164,7 +174,7 @@ def ti_log_evidence(slices_core, verbose=True, bs_iterations=2000,
     for ii in range(bs_iterations):
         y = new_means[ii, :]
         y_spl = interp1d(x, y)
-        ln_Z = np.trapz(y_spl(x_new), 10**(x_new))
+        ln_Z = simpson(y_spl(x_new), 10**(x_new))
         ln_Z_arr[ii] = ln_Z
     ln_Z = np.mean(ln_Z_arr)
     total_unc = np.std(ln_Z_arr)
@@ -175,10 +185,13 @@ def ti_log_evidence(slices_core, verbose=True, bs_iterations=2000,
         print('ln(evidence) =', ln_Z)
         print('error in ln_Z =', total_unc)
         print()
-    return ln_Z, total_unc
+    if plot:
+        return ln_Z, total_unc, inv_temps, np.mean(new_means, axis=0)
+    else:
+        return ln_Z, total_unc
+
 
 # HyperModel BF calculation with bootstrap:
-
 def odds_ratio_bootstrap(hmcore, num_reals=2000, num_samples=1000, domains=([-0.5, 0.5], [0.5, 1.5])):
     """
     Standard bootstrap with replacement for product space odds ratios

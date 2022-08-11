@@ -72,6 +72,9 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     close=True
 
     """
+
+    close = kwargs.get("close", True)
+
     if pars is not None:
         params = pars
     elif exclude is not None and pars is not None:
@@ -219,10 +222,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     if show:
         plt.show()
 
-    if 'close' in kwargs.keys():
-        if kwargs['close']:
-            plt.close()
-    else:
+    if close:
         plt.close()
 
 

@@ -47,7 +47,7 @@ setup(
     packages=find_packages(include=['la_forge']),
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/Hazboun6/la_forge',
+    url='https://github.com/nanograv/la_forge',
     version='1.0.2',
     zip_safe=False,
 )

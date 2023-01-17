@@ -3,7 +3,6 @@ import json
 import os.path
 import pickle
 import logging
-from typing import Type
 
 import h5py
 import numpy as np
@@ -554,7 +553,7 @@ class Core(object):
         for ky, val in d.items():
             try:
                 g.create_dataset(str(ky), data=val)
-            except (TypeError,AttributeError) as e:
+            except (TypeError, AttributeError):
                 dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
                 g.create_dataset(str(ky),
                                  data=np.array(val, dtype="O"),

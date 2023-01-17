@@ -214,4 +214,3 @@ def odds_ratio_bootstrap(hmcore, num_reals=2000, num_samples=1000, domains=([-0.
         ors[ii] = (len(np.where((new_nmodels[:, ii] > domains[0][0]) & (new_nmodels[:, ii] <= domains[0][1]))[0]) /
                    len(np.where((new_nmodels[:, ii] > domains[1][0]) & (new_nmodels[:, ii] <= domains[1][1]))[0]))
     return np.mean(ors), np.std(ors)
-

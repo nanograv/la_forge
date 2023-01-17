@@ -421,7 +421,7 @@ def grubin(core, M=2, threshold=1.01):
     # do some clever broadcasting:
     sm_sq = 1 / (N - 1) * np.sum((data - theta_bar_dotm[:, None, :])**2, axis=1)
     W = 1 / M * np.sum(sm_sq, axis=0)  # within chains
-    
+
     var_post = (N - 1) / N * W + 1 / N * B
     Rhat = np.sqrt(var_post / W)
 
@@ -538,7 +538,7 @@ def pp_plot_all(corefolder, outdir=None):
         for ii in range(len(q)):
             cdf[ii] = len(np.where(pvalues[jj, :] < q[ii])[0]) / len(pvalues[jj, :])
         plt.plot(q, cdf, color='blue', alpha=0.3)
-        
+
     plt.ylim([0, 1])
     plt.xlim([0, 1])
     plt.xlabel('P Value')

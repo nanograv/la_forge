@@ -4,17 +4,16 @@
 import copy
 import inspect
 import string
-import os, json
+import os
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-import scipy.stats as sps
 import numpy as np
 
 from emcee.autocorr import integrated_time
 
 from .core import Core
-from .slices import SlicesCore
+from .utils import get_param_groups
 
 __all__ = ['plot_chains', 'noise_flower']
 
@@ -176,7 +175,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                     plt.axvline(truths[p], linewidth=2,
                                 color='k', linestyle='-.')
         else:
-            if isinstance(core,list):
+            if isinstance(core, list):
                 for jj, c in enumerate(core):
                     gpar_kwargs= _get_gpar_kwargs(c, real_tm_pars)
                     plt.plot(c.get_param(p, to_burn=True, **gpar_kwargs),
@@ -186,7 +185,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                 gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)
                 plt.plot(core.get_param(p, to_burn=True, **gpar_kwargs),
                          lw=linewidth, **plot_kwargs)
-            
+
         if (titles is None) and (fancy_par_names is None):
             if psr_name is not None:
                 par_name = p.replace(psr_name+'_', '')
@@ -341,113 +340,113 @@ def _get_gpar_kwargs(core, real_tm_pars):
     return gpar_kwargs
 
 
-    def compute_neff(core):
-        """
-        Compute number of effective samples: num_samples / autocorrelation length.
-        """
-        neffs = {}
-        for p in core.params:
-            if p in ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']:
-                continue
-            chain = core(p)
-            neffs[p] = len(chain) / integrated_time(chain, quiet=True)[0]
-        return neffs
+def compute_neff(core):
+    """
+    Compute number of effective samples: num_samples / autocorrelation length.
+    """
+    neffs = {}
+    for p in core.params:
+        if p in ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']:
+            continue
+        chain = core(p)
+        neffs[p] = len(chain) / integrated_time(chain, quiet=True)[0]
+    return neffs
 
 
-    def plot_neff(core):
-        """
-        Plot the effective number of samples computed with compute_neff.
-        """
-        plt.figure(figsize=(12, 5))
-        if isinstance(core, list):
-            for c in core:
-                neffs = compute_neff(c)
-                x, y = zip(*sorted(neffs.items()))
-                plt.scatter(range(len(c.params) - 4), y, label=c.label)
-                plt.xlim([0.5, len(c.params) - 4 + .5])
-                plt.legend()
-        else:
-            neffs = compute_neff(core)
-            print(neffs)
+def plot_neff(core):
+    """
+    Plot the effective number of samples computed with compute_neff.
+    """
+    plt.figure(figsize=(12, 5))
+    if isinstance(core, list):
+        for c in core:
+            neffs = compute_neff(c)
             x, y = zip(*sorted(neffs.items()))
-            plt.scatter(range(len(core.params) - 4), y)
-            plt.xlim([0.5, len(core.params) - 4 + .5])
-        plt.ylabel(r'$N_{eff}$')
-        plt.xlabel('Parameter Index')
-        plt.title('Effective Samples')
-        plt.show()
+            plt.scatter(range(len(c.params) - 4), y, label=c.label)
+            plt.xlim([0.5, len(c.params) - 4 + .5])
+            plt.legend()
+    else:
+        neffs = compute_neff(core)
+        print(neffs)
+        x, y = zip(*sorted(neffs.items()))
+        plt.scatter(range(len(core.params) - 4), y)
+        plt.xlim([0.5, len(core.params) - 4 + .5])
+    plt.ylabel(r'$N_{eff}$')
+    plt.xlabel('Parameter Index')
+    plt.title('Effective Samples')
+    plt.show()
 
 
-    def grubin(core, M=2, threshold=1.01):
-        """
-        Gelman-Rubin split R hat statistic to verify convergence.
-        See section 3.1 of https://arxiv.org/pdf/1903.08008.pdf.
-        Values > 1.1 => recommend continuing sampling due to poor convergence.
-        More recently, values > 1.01 => recommend continued sampling due to poor convergence.
-        Input:
-            core (Core): consists of entire chain file
-            pars (list): list of parameters for each column
-            M (integer): number of times to split the chain
-            threshold (float): Rhat value to tell when chains are good
-        Output:
-            Rhat (ndarray): array of values for each index
-            idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
-        """
-        if isinstance(core, list) and len(core) == 2:  # allow comparison of two chains
-            data = np.concatenate([core[0].chain, core[1].chain])
-        else:
-            data = core.chain
-        burn = 0
-        try:
-            data_split = np.split(data[burn:,:-2], M)  # cut off last two columns
-        except:
-            # this section is to make everything divide evenly into M arrays
-            P = int(np.floor((len(data[:, 0]) - burn) / M))  # nearest integer to division
-            X = len(data[:, 0]) - burn - M * P  # number of additional burn in points
-            burn += X  # burn in to the nearest divisor
-            burn = int(burn)
+def grubin(core, M=2, threshold=1.01):
+    """
+    Gelman-Rubin split R hat statistic to verify convergence.
+    See section 3.1 of https://arxiv.org/pdf/1903.08008.pdf.
+    Values > 1.1 => recommend continuing sampling due to poor convergence.
+    More recently, values > 1.01 => recommend continued sampling due to poor convergence.
+    Input:
+        core (Core): consists of entire chain file
+        pars (list): list of parameters for each column
+        M (integer): number of times to split the chain
+        threshold (float): Rhat value to tell when chains are good
+    Output:
+        Rhat (ndarray): array of values for each index
+        idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
+    """
+    if isinstance(core, list) and len(core) == 2:  # allow comparison of two chains
+        data = np.concatenate([core[0].chain, core[1].chain])
+    else:
+        data = core.chain
+    burn = 0
+    try:
+        data_split = np.split(data[burn:, :-2], M)  # cut off last two columns
+    except:
+        # this section is to make everything divide evenly into M arrays
+        P = int(np.floor((len(data[:, 0]) - burn) / M))  # nearest integer to division
+        X = len(data[:, 0]) - burn - M * P  # number of additional burn in points
+        burn += X  # burn in to the nearest divisor
+        burn = int(burn)
 
-            data_split = np.split(data[burn:,:-2], M)  # cut off last two columns
+        data_split = np.split(data[burn:, :-2], M)  # cut off last two columns
 
-        N = len(data[burn:, 0])
-        data = np.array(data_split)
+    N = len(data[burn:, 0])
+    data = np.array(data_split)
 
-        # print(data_split.shape)
+    # print(data_split.shape)
 
-        theta_bar_dotm = np.mean(data, axis=1)  # mean of each subchain
-        theta_bar_dotdot = np.mean(theta_bar_dotm, axis=0)  # mean of between chains
-        B = N / (M - 1) * np.sum((theta_bar_dotm - theta_bar_dotdot)**2, axis=0)  # between chains
+    theta_bar_dotm = np.mean(data, axis=1)  # mean of each subchain
+    theta_bar_dotdot = np.mean(theta_bar_dotm, axis=0)  # mean of between chains
+    B = N / (M - 1) * np.sum((theta_bar_dotm - theta_bar_dotdot)**2, axis=0)  # between chains
 
-        # do some clever broadcasting:
-        sm_sq = 1 / (N - 1) * np.sum((data - theta_bar_dotm[:, None, :])**2, axis=1)
-        W = 1 / M * np.sum(sm_sq, axis=0)  # within chains
+    # do some clever broadcasting:
+    sm_sq = 1 / (N - 1) * np.sum((data - theta_bar_dotm[:, None, :])**2, axis=1)
+    W = 1 / M * np.sum(sm_sq, axis=0)  # within chains
 
-        var_post = (N - 1) / N * W + 1 / N * B
-        Rhat = np.sqrt(var_post / W)
+    var_post = (N - 1) / N * W + 1 / N * B
+    Rhat = np.sqrt(var_post / W)
 
-        idx = np.where(Rhat > threshold)[0]  # where Rhat > threshold
-        return Rhat, idx
+    idx = np.where(Rhat > threshold)[0]  # where Rhat > threshold
+    return Rhat, idx
 
 
-    def plot_grubin(core, M=2, threshold=1.01):
-        fig, ax = plt.subplots(figsize = (12, 5))
+def plot_grubin(core, M=2, threshold=1.01):
+    fig, ax = plt.subplots(figsize=(12, 5))
 
-        if isinstance(core, list):
-            for c in core:
-                Rhat, idx = grubin(c, M=M, threshold=threshold)
-                ax.scatter(range(len(Rhat)), Rhat - 1, label=c.label)
-                plt.xlim([0.5, len(c.params) - 4 + .5])
-                plt.legend(loc='lower left')
-        else:
-            Rhat, idx = grubin(core, M=M, threshold=threshold)
-            ax.scatter(range(len(Rhat)), Rhat - 1)
-            plt.xlim([0.5, len(core.params) - 4 + .5])
-        plt.axhline(threshold - 1, lw=2, ls='-.', color='k')
-        ax.set_yscale('log')
-        plt.ylabel(r'$\widehat{R} - 1$')
-        plt.xlabel('Parameter Index')
-        plt.title('Gelman-Rubin Diagnostic')
-        plt.show()
+    if isinstance(core, list):
+        for c in core:
+            Rhat, idx = grubin(c, M=M, threshold=threshold)
+            ax.scatter(range(len(Rhat)), Rhat - 1, label=c.label)
+            plt.xlim([0.5, len(c.params) - 4 + .5])
+            plt.legend(loc='lower left')
+    else:
+        Rhat, idx = grubin(core, M=M, threshold=threshold)
+        ax.scatter(range(len(Rhat)), Rhat - 1)
+        plt.xlim([0.5, len(core.params) - 4 + .5])
+    plt.axhline(threshold - 1, lw=2, ls='-.', color='k')
+    ax.set_yscale('log')
+    plt.ylabel(r'$\widehat{R} - 1$')
+    plt.xlabel('Parameter Index')
+    plt.title('Gelman-Rubin Diagnostic')
+    plt.show()
 
 
 def pp_plot(corefolder, param, outdir=None):
@@ -546,3 +545,82 @@ def pp_plot_all(corefolder, outdir=None):
         plt.savefig(outdir, dpi=100)
     plt.show()
     return q, pvalues, cdf, sigma
+
+
+def get_param_acorr(core, burn=0.25, selection="all"):
+    """
+    Function to get the autocorrelation length for each parameter in a ndim array
+
+    :param core:  la_forge.core object
+    :param burn: int, optional
+        Number of samples burned from beginning of array. Used when calculating
+        statistics and plotting histograms. If None, burn is `len(samples)/4`
+    :param cut_off_idx: int, optional
+        Sets end of parameter list to include
+
+    :return: Array of autocorrelation lengths for each parameter
+    """
+
+    selected_params = get_param_groups(core, selection=selection)
+    burn = int(burn * core.chain.shape[0])
+    tau_arr = np.zeros(len(selected_params["par"]))
+    for param_idx, param in enumerate(selected_params["par"]):
+        indv_param = core.get_param(param, to_burn=False)
+        try:
+            tau_arr[param_idx] = integrated_time(indv_param, quiet=False)
+        except:
+            print("Watch Out!", param)
+            tau_arr[param_idx] = integrated_time(indv_param, quiet=True)
+    return tau_arr
+
+
+def trim_array_acorr(arr, burn=None):
+    """
+    Function to trim an array by the longest autocorrelation length of all parameters in a ndim array
+
+    :param arr: array, optional
+        Array that contains samples from an MCMC chain that is samples x param
+        in shape.
+    :param burn: int, optional
+        Number of samples burned from beginning of chain. Used when calculating
+        statistics and plotting histograms. If None, burn is `len(samples)/4`.
+
+    :return: Thinned array
+    """
+    if burn is None:
+        burn = int(0.25 * arr.shape[0])
+    acorr_lens = get_param_acorr(arr, burn=burn)
+    max_acorr = int(np.unique(np.max(acorr_lens)))
+    return arr[burn::max_acorr]
+
+
+def check_convergence(core_list):
+    """Checks chain convergence using Gelman-Rubin split R-hat statistic (Vehtari et al. 2019) and the auto-correlation
+    :param core_list: list of `la_forge` core objects
+    """
+    cut_off_idx = -3
+    for core in core_list:
+        lp = np.unique(np.max(core.get_param("lnpost")))
+        ll = np.unique(np.max(core.get_param("lnlike")))
+        print("-------------------------------")
+        print(f"core: {core.label}")
+        print(f"\t lnpost: {lp[0]}, lnlike: {ll[0]}")
+        try:
+            grub = grubin(core.chain[:, :cut_off_idx])
+            if len(grub[1]) > 0:
+                print(
+                    "\t Params exceed rhat threshold: ",
+                    [core.params[p] for p in grub[1]],
+                )
+        except:
+            print("\t Can't run Grubin test")
+            pass
+        try:
+            max_acl = np.unique(np.max(get_param_acorr(core)))[0]
+            print(
+                f"\t Max autocorrelation length: {max_acl}, Effective sample size: {core.chain.shape[0]/max_acl}"
+            )
+        except:
+            print("\t Can't run Autocorrelation test")
+            pass
+        print("")

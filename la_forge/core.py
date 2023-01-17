@@ -464,12 +464,11 @@ class Core(object):
         for ky, val in d.items():
             try:
                 g.create_dataset(ky, data=val)
-            except (TypeError,AttributeError) as e:
+            except (TypeError, AttributeError):
                 dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
                 g.create_dataset(str(ky),
                                  data=np.array(val, dtype="O"),
                                  dtype=dt)
-
 
     def _hdf5_2dict(self, hdf5, name, dtype=float, set_return='set'):
         """
@@ -639,7 +638,6 @@ class HyperModelCore(Core):
         except KeyError:
             model_pars = self.param_dict[str(N)]
 
-
         if 'lnlike' in self.params:
             model_pars = list(model_pars)
             model_pars.extend(['lnpost',
@@ -721,12 +719,12 @@ class TimingCore(Core):
         for par, (val, err, ptype) in self.tm_pars_orig.items():
             if ptype == 'physical':
                 non_normalize_pars.append(par)
-            if par.lower() in ['elat','elong'] and timing_package.lower() == 'pint':
+            if par.lower() in ['elat', 'elong'] and timing_package.lower() == 'pint':
                 angle_conv_pars.append(par)
 
         self._norm_tm_par_idxs = [self.params.index(p) for p in self.params
                                   if ('timing' in p and not np.any([nm in p for nm in non_normalize_pars]))]
-        
+
         self._angle_conv_par_idxs = []
         for p in self.params:
             if ('timing' in p and np.any([nm in p for nm in angle_conv_pars])):

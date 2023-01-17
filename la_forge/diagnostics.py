@@ -174,6 +174,7 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                         continue
                     plt.axvline(truths[p], linewidth=2,
                                 color='k', linestyle='-.')
+
         else:
             if isinstance(core, list):
                 for jj, c in enumerate(core):
@@ -370,7 +371,7 @@ def plot_neff(core):
         print(neffs)
         x, y = zip(*sorted(neffs.items()))
         plt.scatter(range(len(core.params) - 4), y)
-        plt.xlim([0.5, len(core.params) - 4 + .5])
+        plt.xlim([-0.5, len(core.params) - 4 + .5])
     plt.ylabel(r'$N_{eff}$')
     plt.xlabel('Parameter Index')
     plt.title('Effective Samples')
@@ -420,7 +421,7 @@ def grubin(core, M=2, threshold=1.01):
     # do some clever broadcasting:
     sm_sq = 1 / (N - 1) * np.sum((data - theta_bar_dotm[:, None, :])**2, axis=1)
     W = 1 / M * np.sum(sm_sq, axis=0)  # within chains
-
+    
     var_post = (N - 1) / N * W + 1 / N * B
     Rhat = np.sqrt(var_post / W)
 
@@ -440,7 +441,7 @@ def plot_grubin(core, M=2, threshold=1.01):
     else:
         Rhat, idx = grubin(core, M=M, threshold=threshold)
         ax.scatter(range(len(Rhat)), Rhat - 1)
-        plt.xlim([0.5, len(core.params) - 4 + .5])
+        plt.xlim([-0.5, len(core.params) - 4 + .5])
     plt.axhline(threshold - 1, lw=2, ls='-.', color='k')
     ax.set_yscale('log')
     plt.ylabel(r'$\widehat{R} - 1$')
@@ -478,18 +479,18 @@ def pp_plot(corefolder, param, outdir=None):
     sigma = np.sqrt(p * (1 - p) / NUM_REALS)
     plt.figure(figsize=(10, 10))
     plt.title(param)
-    plt.plot(q, cdf)
-    plt.plot(p, p)
-    plt.plot(p, p + sigma, color='gray', alpha=0.5)
-    plt.plot(p, p + 2 * sigma, color='gray', alpha=0.5)
-    plt.plot(p, p + 3 * sigma, color='gray', alpha=0.5)
-    plt.plot(p, p - sigma, color='gray', alpha=0.5)
-    plt.plot(p, p - 2 * sigma, color='gray', alpha=0.5)
-    plt.plot(p, p - 3 * sigma, color='gray', alpha=0.5)
+    plt.plot(q, cdf, color='blue', alpha=0.3)
+    plt.plot(p, p, color='k')
+    plt.plot(p, p + sigma, color='gray')
+    plt.plot(p, p + 2 * sigma, color='gray')
+    plt.plot(p, p + 3 * sigma, color='gray')
+    plt.plot(p, p - sigma, color='gray')
+    plt.plot(p, p - 2 * sigma, color='gray')
+    plt.plot(p, p - 3 * sigma, color='gray')
     plt.xlabel('P Value')
     plt.ylabel('Cumulative Fraction of Realizations')
-    # plt.ylim([0, 1])
-    # plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.xlim([0, 1])
     if outdir is not None:
         plt.savefig(outdir, dpi=100)
     plt.show()
@@ -512,7 +513,9 @@ def pp_plot_all(corefolder, outdir=None):
 
     pvalues = np.zeros((num_params, num_cores))
     for ii, folder in enumerate(subfolders):
+        print(folder)
         c1 = Core(corepath=folder + '/core.hdf')
+        print(grubin(c1, M=2, threshold=1.01), '\n')
         for jj in range(num_params):
             tau = 1  # no thinning
             core_chain = c1.chain[c1.burn::tau, c1.params.index(c1.params[jj])]  # the part we want
@@ -523,21 +526,21 @@ def pp_plot_all(corefolder, outdir=None):
     NUM_REALS = num_cores
     sigma = np.sqrt(p * (1 - p) / NUM_REALS)
     plt.figure(figsize=(10, 10))
-    plt.plot(p, p)
-    plt.plot(p, p + sigma, color='gray', alpha=0.5)
-    plt.plot(p, p + 2 * sigma, color='gray', alpha=0.5)
-    plt.plot(p, p + 3 * sigma, color='gray', alpha=0.5)
-    plt.plot(p, p - sigma, color='gray', alpha=0.5)
-    plt.plot(p, p - 2 * sigma, color='gray', alpha=0.5)
-    plt.plot(p, p - 3 * sigma, color='gray', alpha=0.5)
+    plt.plot(p, p, color='k')
+    plt.plot(p, p + sigma, color='gray')
+    plt.plot(p, p + 2 * sigma, color='gray')
+    plt.plot(p, p + 3 * sigma, color='gray')
+    plt.plot(p, p - sigma, color='gray')
+    plt.plot(p, p - 2 * sigma, color='gray')
+    plt.plot(p, p - 3 * sigma, color='gray')
     for jj in range(num_params):
         cdf = np.zeros_like(q)
         for ii in range(len(q)):
             cdf[ii] = len(np.where(pvalues[jj, :] < q[ii])[0]) / len(pvalues[jj, :])
-        plt.plot(q, cdf)
-
-        # plt.ylim([0, 1])
-        # plt.xlim([0, 1])
+        plt.plot(q, cdf, color='blue', alpha=0.3)
+        
+    plt.ylim([0, 1])
+    plt.xlim([0, 1])
     plt.xlabel('P Value')
     plt.ylabel('Cumulative Fraction of Realizations')
     plt.title('All Parameters')
@@ -624,3 +627,88 @@ def check_convergence(core_list):
             print("\t Can't run Autocorrelation test")
             pass
         print("")
+
+
+def uniform_quantiles(core, param, num_reals=1000):
+    idx = core.params.index(param)
+    if 'uniform' not in core.priors[idx].lower():
+        print('This prior is not uniform.')
+    low = float(core.priors[idx].split('=')[1].split(',')[0])
+    high = float(core.priors[idx].split('=')[-1].split(')')[0])
+    data = core.get_param(param, thin_by=int(integrated_time(core.get_param(param))[0]))
+    # bootstrap for error bounds
+    d = np.random.uniform(low, high, size=(len(data), num_reals))
+    x = np.linspace(0, 1, num=100)
+    avg = np.mean(np.quantile(d, x, axis=0), axis=1)
+    std = np.std(np.quantile(d, x, axis=0), axis=1)
+    return np.quantile(data, x), avg, std
+
+
+def normal_quantiles(core, param, num_reals=1000):
+    idx = core.params.index(param)
+    if 'normal' not in core.priors[idx].lower():
+        print('This prior is not normal.')
+    mean = float(core.priors[idx].split('=')[1].split(',')[0])
+    std = float(core.priors[idx].split('=')[-1].split(')')[0])
+    data = core.get_param(param, thin_by=int(integrated_time(core.get_param(param))[0]))
+    # bootstrap for error bounds
+    d = np.random.normal(mean, std, size=(len(data), num_reals))
+    x = np.linspace(0, 1, num=100)
+    avg = np.mean(np.quantile(d, x, axis=0), axis=1)
+    unc = np.std(np.quantile(d, x, axis=0), axis=1)
+    return np.quantile(data, x), avg, unc
+
+
+# for checking prior recovery
+def qq_plot_uniform(core, param, num_reals=1000):
+    x = np.linspace(0, 1, num=100)
+    data, avg, std = uniform_quantiles(core, param, num_reals=num_reals)
+    plt.figure(figsize=(10, 10))
+    plt.plot(avg, avg)
+    for i in range(-3, 4):
+        plt.plot(avg, avg + i * std, color='gray', alpha=0.5)
+    plt.plot(avg, np.quantile(data, x))
+    plt.show()
+
+
+def qq_plot_normal(core, param, num_reals=1000):
+    x = np.linspace(0, 1, num=100)
+    data, avg, unc = normal_quantiles(core, param, num_reals=num_reals)
+    plt.figure(figsize=(10, 10))
+    plt.plot(avg, avg)
+    for i in range(-3, 4):
+        plt.plot(avg, avg + i * unc, color='gray', alpha=0.5)
+    plt.plot(avg, np.quantile(data, x))
+    plt.show()
+
+
+def qq_plot_all(core, num_reals=1000, savedir=None):
+    """
+    Note: Does not include GWB because it's parameters are usually different
+          than the intrinsic noise parameters.
+
+          This runs into issues whenever one of the parameters doesn't exist
+          -- for example, empirical distributions for IRN parameters (but not CP)
+    """
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
+    params = core.params[:-6]
+    for param in params:
+        idx = core.params.index(param)
+        if 'normal' in core.priors[idx].lower():
+            data_quant, norm_avg, norm_unc = normal_quantiles(core, param, num_reals=num_reals)
+            ax1.plot(norm_avg, data_quant, color='blue', alpha=0.1)
+        if 'uniform' in core.priors[idx].lower():
+            data_quant, unif_avg, unif_unc = uniform_quantiles(core, param, num_reals=num_reals)
+            ax2.plot(unif_avg, data_quant, color='blue', alpha=0.1)
+    for i in range(-3, 4):
+        ax1.plot(norm_avg, norm_avg, color='k', alpha=0.5)
+        ax2.plot(unif_avg, unif_avg, color='k', alpha=0.5)
+        ax1.plot(norm_avg, norm_avg + i * norm_unc, color='gray', alpha=0.5)
+        ax2.plot(unif_avg, unif_avg + i * unif_unc, color='gray', alpha=0.5)
+    ax1.set_title('Normal Parameters')
+    ax2.set_title('Uniform Parameters')
+    ax1.set(xlabel='Quantile', ylabel='Quantile')
+    ax2.set(xlabel='Quantile', ylabel='Quantile')
+    if savedir is not None:
+        plt.savefig(savedir + 'qq_plot.png', dpi=150, bbox_inches='tight')
+    plt.show()

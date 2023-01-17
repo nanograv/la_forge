@@ -103,3 +103,6 @@ ENV/
 
 # misc
 .DS_store
+
+# VSCode
+.vscode

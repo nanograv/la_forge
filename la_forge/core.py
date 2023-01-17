@@ -3,6 +3,7 @@ import json
 import os.path
 import pickle
 import logging
+from typing import Type
 
 import h5py
 import numpy as np
@@ -65,18 +66,24 @@ class Core(object):
         acts as a burn in, which can not be changed once the file is loaded
         (unless loade again). Useful when dealing with large chains and loading
         multiple times.
+    usecols : list of ints
+        Which columns to load. Defaults to None.
+    true_vals : str
+        File name containing simulation injections. For use with pp_plots.
     """
 
     def __init__(self, chaindir=None, corepath=None, burn=0.25, label=None,
                  fancy_par_names=None, chain=None, params=None,
-                 pt_chains=False, skiprows=0,):
+                 pt_chains=False, skiprows=0, usecols=None, true_vals=None):
         self.chaindir = chaindir
         self.fancy_par_names = fancy_par_names
         self.chain = chain
         self.params = params
         self.corepath = corepath
+        self.true_vals = true_vals
 
         # Set defaults to None for accounting
+        self.truths = None
         self.rn_freqs = None
         self.priors = None
         self.cov = None
@@ -106,32 +113,54 @@ class Core(object):
                 # Load chain
                 if os.path.isfile(chaindir + '/chain_1.txt'):
                     self.chain = np.loadtxt(chaindir + '/chain_1.txt',
-                                            skiprows=skiprows)
+                                            skiprows=skiprows, usecols=usecols)
                     self.chainpath = chaindir + '/chain_1.txt'
                 elif os.path.isfile(chaindir + '/chain_1.0.txt'):
                     self.chain = np.loadtxt(chaindir + '/chain_1.0.txt',
-                                            skiprows=skiprows)
+                                            skiprows=skiprows, usecols=usecols)
                     self.chainpath = chaindir + '/chain_1.0.txt'
                     if pt_chains:
                         self.chainpaths = sorted(glob.glob(chaindir + '/chain*.txt'))
                         self.hot_chains = {}
                         for chp in self.chainpaths[1:]:
-                            ch = np.loadtxt(chp, skiprows=skiprows)
+                            ch = np.loadtxt(chp, skiprows=skiprows, usecols=usecols)
                             ky = chp.split('/')[-1].split('_')[-1].replace('.txt', '')
-                            self.hot_chains.update({ky: ch})
+                            if ky == 'hot':
+                                ky = 1e80
+                            self.hot_chains.update({float(ky): ch})
                 else:
                     msg = f'No chain file found check chaindir: \n {chaindir}'
                     raise FileNotFoundError(msg)
 
                 # Load parameters
                 if os.path.isfile(chaindir + '/pars.txt'):
-                    self.params = list(np.loadtxt(chaindir + '/pars.txt',
-                                                  dtype='S').astype('U'))
+                    try:
+                        self.params = list(np.loadtxt(chaindir + '/pars.txt',
+                                                      dtype='S').astype('U'))
+                        if usecols is not None:
+                            ptmcmc_end = ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']
+                            self.params.extend(ptmcmc_end)
+                            self.params = list(np.array(self.params)[usecols])
+                    except TypeError:
+                        with open(chaindir + '/pars.txt', 'r') as f:
+                            self.params = [f.readlines()[0].split('\n')[0]]
+                        if usecols is not None:
+                            ptmcmc_end = ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']
+                            self.params.extend(ptmcmc_end)
+                            self.params = list(np.array(self.params)[usecols])
                 elif os.path.isfile(chaindir + '/pars.npy'):
                     self.params = list(np.load(chaindir + '/pars.npy'))
+                    if usecols is not None:
+                        ptmcmc_end = ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']
+                        self.params.extend(ptmcmc_end)
+                        self.params = list(np.array(self.params)[usecols])
                 elif os.path.isfile(chaindir + '/params.txt'):
                     self.params = list(np.loadtxt(chaindir + '/params.txt',
                                                   dtype='S').astype('U'))
+                    if usecols is not None:
+                        ptmcmc_end = ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']
+                        self.params.extend(ptmcmc_end)
+                        self.params = list(np.array(self.params)[usecols])
                 elif params is not None:
                     self.params = params
                 else:
@@ -141,8 +170,9 @@ class Core(object):
             jump_paths = glob.glob(chaindir + '/*jump*.txt')
             self.jumps = {}
             for path in jump_paths:
-                if 'jumps.txt' in path.split('/')[-1]:
-                    jf = np.loadtxt(path, dtype=str)
+
+                if path.split('/')[-1] == 'jumps.txt':
+                    jf = np.loadtxt(path, dtype=str, ndmin=2)
                     self.jump_fractions = dict(zip(jf[:, 0], jf[:, 1].astype(float)))
                 else:
                     ky = path.split('/')[-1].split('.')[0]
@@ -174,16 +204,20 @@ class Core(object):
         elif chain is not None and params is None:
             raise ValueError('Must declare parameters with chain.')
 
-        if self.chain.shape[1] > len(self.params):
-            ptmcmc_end = ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']
-            # This is a check for old Cores with only 'lnlike'.
-            if any([p in self.params for p in ptmcmc_end]):
-                for p in ptmcmc_end:
-                    if p in self.params:
-                        self.params.remove(p)
-            self.params.extend(ptmcmc_end)
-            msg = 'Appending [\'lnpost\',\'lnlike\',\'chain_accept\','
-            msg += '\'pt_chain_accept\'] to end of params list.'
+        try:
+            if self.chain.shape[1] > len(self.params):
+                ptmcmc_end = ['lnpost', 'lnlike', 'chain_accept', 'pt_chain_accept']
+                # This is a check for old Cores with only 'lnlike'.
+                if any([p in self.params for p in ptmcmc_end]):
+                    for p in ptmcmc_end:
+                        if p in self.params:
+                            self.params.remove(p)
+                self.params.extend(ptmcmc_end)
+                msg = 'Appending [\'lnpost\',\'lnlike\',\'chain_accept\','
+                msg += '\'pt_chain_accept\'] to end of params list.'
+                logger.info(msg)
+        except IndexError:  # case where entire chain is 1D
+            msg = 'Chain is 1D. Not adding PTMCMC params to params list'
             logger.info(msg)
 
         self.set_burn(burn)
@@ -192,6 +226,20 @@ class Core(object):
             pass
         else:
             self.set_fancy_par_names(fancy_par_names)
+
+        if true_vals is not None:
+            try:
+                if self.corepath is not None:
+                    path = self.corepath.split('/')[:-1]
+                    path = '/'.join(path)
+                    with open(path + '/' + true_vals, 'r') as f:
+                        self.truths = json.load(f)
+                else:
+                    with open(self.chaindir + '/' + true_vals, 'r') as f:
+                        self.truths = json.load(f)
+            except FileNotFoundError:
+                msg = 'true_vals file not found in chain directory.... Does the file exist?'
+                logger.warn(msg)
 
         if label is None:
             # Attempt to give the best label possible.
@@ -212,7 +260,36 @@ class Core(object):
         """
         return self.get_param(param, to_burn=to_burn)
 
-    def get_param(self, param, to_burn=True):
+    def get_param(self, param, thin_by=1, to_burn=True):
+        """
+        Returns array of samples for the parameter given.
+
+        `param` can either be a single list or list of strings.
+
+        `thin_by` will thin the returned array by that integer value.
+
+        `to_burn` will use the Core.burn value to ignore a portion of the chain.
+        """
+        if isinstance(param, (list, np.ndarray)):
+            idx = [self.params.index(p) for p in param]
+        else:
+            try:
+                idx = self.params.index(param)
+            except ValueError:
+                msg = f'\'{param}\' not in list.\nMust use one of:\n{self.params}'
+                raise ValueError(msg)
+        try:
+            if to_burn:
+                return self.chain[self.burn::thin_by, idx]
+            else:
+                return self.chain[::thin_by, idx]
+        except:  # when the chain is 1D:
+            if to_burn:
+                return self.chain[self.burn::thin_by]
+            else:
+                return self.chain[::thin_by]
+
+    def get_hot_param(self, param, thin_by=1, to_burn=True, temp=1.0):
         """
         Returns array of samples for the parameter given.
 
@@ -224,13 +301,26 @@ class Core(object):
             try:
                 idx = self.params.index(param)
             except ValueError:
-                msg = f'\'{param}\' not in list.\nMust use on of:\n{self.params}'
+                msg = f'\'{param}\' not in list.\nMust use one of:\n{self.params}'
                 raise ValueError(msg)
-
-        if to_burn:
-            return self.chain[self.burn:, idx]
-        else:
-            return self.chain[:, idx]
+        try:
+            if to_burn and temp == 1.0:
+                return self.chain[self.burn::thin_by, idx]
+            elif temp == 1.0 and not to_burn:
+                return self.chain[::thin_by, idx]
+            elif to_burn and temp != 1.0:
+                return self.hot_chains[temp][self.burn::thin_by, idx]
+            else:
+                return self.hot_chains[temp][::thin_by, idx]
+        except:  # when the chain is 1D:
+            if to_burn and temp == 1.0:
+                return self.chain[self.burn::thin_by]
+            elif temp == 1.0 and not to_burn:
+                return self.chain[::thin_by]
+            elif to_burn and temp != 1.0:
+                return self.hot_chains[temp][self.burn::thin_by]
+            else:
+                return self.hot_chains[temp][::thin_by]
 
     def get_map_param(self, param):
         """
@@ -463,7 +553,7 @@ class Core(object):
         g = hdf5.create_group(name)
         for ky, val in d.items():
             try:
-                g.create_dataset(ky, data=val)
+                g.create_dataset(str(ky), data=val)
             except (TypeError,AttributeError) as e:
                 dt = h5py.special_dtype(vlen=str)  # type to use for str arrays
                 g.create_dataset(str(ky),
@@ -506,7 +596,7 @@ class Core(object):
             files. Each member must be (str of attribute, list to append to).
         """
         self._metadata = ['label', 'burn', 'chaindir', 'chainpath', 'runtime_info']
-        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains']
+        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains', 'truths']
         self._savearrays = ['cov', 'rn_freqs']
         self._savelist_of_str = ['priors', 'fancy_par_names']
         if append is not None:
@@ -534,7 +624,7 @@ class Core(object):
         Loads various attributes from an hdf5 file. Looks in the lists set by
         `_set_hdf5_lists`.
         """
-        print('Loading data from HDF5 file....')
+        print('Loading data from HDF5 file....', end='\r')
         with h5py.File(filepath, 'r') as hf:
             self.chain = np.array(hf['chain'])
             self.params = np.array(hf['params']).astype(str).tolist()

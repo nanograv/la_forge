@@ -19,108 +19,16 @@ from .utils import get_param_groups
 from .utils import get_fancy_labels
 
 
-def get_pardict(psrs, datareleases):
-    """assigns a parameter dictionary for each psr per dataset the parfile values/errors
-
-    :param psrs: enterprise pulsar instances corresponding to datareleases
-    :param datareleases: list of datareleases
-    """
-    pardict = {}
-    for psr, dataset in zip(psrs, datareleases):
-        pardict[psr.name] = {}
-        pardict[psr.name][dataset] = {}
-        for par, vals, errs in zip(
-            psr.fitpars[1:],
-            np.longdouble(psr.t2pulsar.vals()),
-            np.longdouble(psr.t2pulsar.errs()),
-        ):
-            pardict[psr.name][dataset][par] = {}
-            pardict[psr.name][dataset][par]["val"] = vals
-            pardict[psr.name][dataset][par]["err"] = errs
-    return pardict
-
-
-def make_dmx_file(parfile):
-    """Strips the parfile for the dmx values to be used in an Advanced Noise Modeling Run
-
-    :param parfile: the parameter file to be stripped
-    """
-    dmx_dict = {}
-    with open(parfile, "r") as f:
-        lines = f.readlines()
-
-    for line in lines:
-        splt_line = line.split()
-        if "DMX" in splt_line[0] and splt_line[0] != "DMX":
-            for dmx_group in [
-                y.split()
-                for y in lines
-                if str(splt_line[0].split("_")[-1]) in str(y.split()[0])
-            ]:
-                # Columns: DMXEP DMX_value DMX_var_err DMXR1 DMXR2 DMXF1 DMXF2 DMX_bin
-                lab = f"DMX_{dmx_group[0].split('_')[-1]}"
-                if lab not in dmx_dict.keys():
-                    dmx_dict[lab] = {}
-                if "DMX_" in dmx_group[0]:
-                    if isinstance(dmx_group[1], str):
-                        dmx_dict[lab]["DMX_value"] = np.double(
-                            ("e").join(dmx_group[1].split("D"))
-                        )
-                    else:
-                        dmx_dict[lab]["DMX_value"] = np.double(dmx_group[1])
-                    if isinstance(dmx_group[-1], str):
-                        dmx_dict[lab]["DMX_var_err"] = np.double(
-                            ("e").join(dmx_group[-1].split("D"))
-                        )
-                    else:
-                        dmx_dict[lab]["DMX_var_err"] = np.double(dmx_group[-1])
-                    dmx_dict[lab]["DMX_bin"] = "DX" + dmx_group[0].split("_")[-1]
-                else:
-                    dmx_dict[lab][dmx_group[0].split("_")[0]] = np.double(dmx_group[1])
-    for dmx_name, dmx_attrs in dmx_dict.items():
-        if any([key for key in dmx_attrs.keys() if "DMXEP" not in key]):
-            dmx_dict[dmx_name]["DMXEP"] = (
-                dmx_attrs["DMXR1"] + dmx_attrs["DMXR2"]
-            ) / 2.0
-    dmx_df = pd.DataFrame.from_dict(dmx_dict, orient="index")
-    neworder = [
-        "DMXEP",
-        "DMX_value",
-        "DMX_var_err",
-        "DMXR1",
-        "DMXR2",
-        "DMXF1",
-        "DMXF2",
-        "DMX_bin",
-    ]
-    final_order = []
-    for order in neworder:
-        if order in dmx_dict["DMX_0001"]:
-            final_order.append(order)
-    dmx_df = dmx_df.reindex(columns=final_order)
-    new_dmx_file = (".dmx").join(parfile.split(".par"))
-    with open(new_dmx_file, "w") as f:
-        f.write(
-            f"# {parfile.split('/')[-1].split('.par')[0]} dispersion measure variation\n"
-        )
-        f.write(
-            f"# Mean DMX value = {np.mean([dmx_dict[x]['DMX_value'] for x in dmx_dict.keys()])} \n"
-        )
-        f.write(
-            f"# Uncertainty in average DM = {np.std([dmx_dict[x]['DMX_value'] for x in dmx_dict.keys()])} \n"
-        )
-        f.write(f"# Columns: {(' ').join(final_order)}\n")
-        dmx_df.to_csv(f, sep=" ", index=False, header=False)
-
-
 def tm_delay(psr, tm_params_orig, new_params, plot=True):
     """
     Compute difference in residuals due to perturbed timing model.
 
-    :param psr: enterprise pulsar object
-    :param tm_params_orig: dictionary of TM parameter tuples, (val, err)
-    :param new_params: dictionary of new TM parameter tuples, (val, err)
-    :param plot: Whether to plot the delay or return the delay
+    Parameters
+    ----------
+    psr: enterprise pulsar object
+    tm_params_orig: dictionary of TM parameter tuples, (val, err)
+    new_params: dictionary of new TM parameter tuples, (val, err)
+    plot: Whether to plot the delay or return the delay
     """
     if hasattr(psr, "model"):
         residuals = Residuals(psr.pint_toas, psr.model)
@@ -202,9 +110,12 @@ def tm_delay(psr, tm_params_orig, new_params, plot=True):
 
 def plotres_pint(psr, new_res, old_res, **kwargs):
     """Used to compare different sets of residuals from a pint pulsar
-    :param psr: an `enterprise` pulsar with the `PINT` pulsar object retained
-    :param new_res: the new residuals, post-run
-    :param old_res: the old residuals, generally from the parfile parameters
+
+    Parameters
+    ----------
+    psr: an `enterprise` pulsar with the `PINT` pulsar object retained
+    new_res: the new residuals, post-run
+    old_res: the old residuals, generally from the parfile parameters
     """
     kwargs.get("alpha", 0.5)
     plt.errorbar(
@@ -237,8 +148,11 @@ def plotres_pint(psr, new_res, old_res, **kwargs):
 
 def plotres_t2(psr, new_res, **kwargs):
     """Used to compare different sets of residuals from a T2 pulsar
-    :param psr: an `enterprise` pulsar with the `TEMPO2` pulsar object retained
-    :param new_res: the new residuals, post-run
+
+    Parameters
+    ----------
+    psr: an `enterprise` pulsar with the `TEMPO2` pulsar object retained
+    new_res: the new residuals, post-run
     """
     kwargs.get("alpha", 0.5)
     plt.errorbar(
@@ -277,9 +191,11 @@ def residual_comparison(
 ):
     """Used to compare old residuals to new residuals.
 
-    :param psr: `enterprise` pulsar object with either `PINT` or `libstempo` pulsar retained
-    :param core: `la_forge` core object
-    :param use_mean_median_map: {"median","mean","map"} determines which values from posteriors to take
+    Parameters
+    ----------
+    psr: `enterprise` pulsar object with either `PINT` or `libstempo` pulsar retained
+    core: `la_forge` core object
+    use_mean_median_map: {"median","mean","map"} determines which values from posteriors to take
         as values in the residual calculation
     """
     core_titles = get_titles(psr.name, core)
@@ -343,10 +259,13 @@ def residual_comparison(
 
 def summary_comparison(psr_name, core, selection="all"):
     """Makes comparison table of the form:
+
+    Parameters
+    ----------
     Par Name | Old Value | New Value | Difference | Old Sigma | New Sigma
-    :param psr_name: str, Name of the pulsar to be looked at
-    :param core: `la_forge` core object
-    :param selection: str, Used to select various groups of parameters:
+    psr_name: str, Name of the pulsar to be looked at
+    core: `la_forge` core object
+    selection: str, Used to select various groups of parameters:
         see `get_param_groups` for details
     """
     # TODO: allow for selection of subparameters
@@ -442,8 +361,11 @@ def summary_comparison(psr_name, core, selection="all"):
 
 def get_titles(psr_name, core):
     """Get titles for timing model parameters
-    :param psr_name: Name of the pulsar
-    :param core: `la_forge` core object
+
+    Parameters
+    ----------
+    psr_name: Name of the pulsar
+    core: `la_forge` core object
     """
     titles = []
     for core_param in core.params:
@@ -462,9 +384,12 @@ def get_titles(psr_name, core):
 
 def get_common_params_titles(psr_name, core_list, exclude=True):
     """Renames gets common parameters and titles
-    :param psr_name: Name of the pulsar
-    :param core_list: list of `la_forge` core objects
-    :param exclude: exclude ["lnpost","lnlike","chain_accept","pt_chain_accept",]
+
+    Parameters
+    ----------
+    psr_name: Name of the pulsar
+    core_list: list of `la_forge` core objects
+    exclude: exclude ["lnpost","lnlike","chain_accept","pt_chain_accept",]
     """
     common_params = []
     common_titles = []
@@ -505,8 +430,11 @@ def get_common_params_titles(psr_name, core_list, exclude=True):
 
 def get_other_param_overlap(psr_name, core_list):
     """Gets a dictionary of params with list of indices for corresponding core in core_list
-    :param psr_name: Name of the pulsar
-    :param core_list: list of `la_forge` core objects
+
+    Parameters
+    ----------
+    psr_name: Name of the pulsar
+    core_list: list of `la_forge` core objects
     """
     boring_params = ["lnpost", "lnlike", "chain_accept", "pt_chain_accept"]
     common_params_all, _ = get_common_params_titles(psr_name, core_list, exclude=False)
@@ -535,17 +463,20 @@ def plot_all_param_overlap(
     **kwargs,
 ):
     """Plots common parameters between cores in core_list
-    :param psr_name: Name of the pulsar
-    :param core_list: list of `la_forge` core objects
-    :param core_list_legend: list of labels corresponding to core_list
-    :param exclude: excludes ["lnpost","lnlike","chain_accept","pt_chain_accept",]
-    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
-    :param conf_int: float shades confidence interval region can be float between 0 and 1
-    :param close: Whether to close the figure after displaying
-    :param par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
-    :param ncols: number of columns to plot
-    :param hist_kwargs: kwargs for the histograms
-    :param fig_kwargs: general figure kwargs
+
+    Parameters
+    ----------
+    psr_name: Name of the pulsar
+    core_list: list of `la_forge` core objects
+    core_list_legend: list of labels corresponding to core_list
+    exclude: excludes ["lnpost","lnlike","chain_accept","pt_chain_accept",]
+    real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    conf_int: float shades confidence interval region can be float between 0 and 1
+    close: Whether to close the figure after displaying
+    par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
+    ncols: number of columns to plot
+    hist_kwargs: kwargs for the histograms
+    fig_kwargs: general figure kwargs
     """
     if not core_list_legend:
         core_list_legend = []
@@ -701,15 +632,18 @@ def plot_other_param_overlap(
     **kwargs,
 ):
     """Plots non-common parameters between cores in core_list
-    :param psr_name: Name of the pulsar
-    :param core_list: list of `la_forge` core objects
-    :param core_list_legend: list of labels corresponding to core_list
-    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
-    :param close: Whether to close the figure after displaying
-    :param selection: str, Used to select various groups of parameters:
+
+    Parameters
+    ----------
+    psr_name: Name of the pulsar
+    core_list: list of `la_forge` core objects
+    core_list_legend: list of labels corresponding to core_list
+    real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    close: Whether to close the figure after displaying
+    selection: str, Used to select various groups of parameters:
         see `get_param_groups` for details
-    :param par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
-    :param hist_kwargs: kwargs for the histograms
+    par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
+    hist_kwargs: kwargs for the histograms
     """
     linestyles = kwargs.get("linestyles", ["-" for x in core_list])
     legendloc = kwargs.get("legendloc", (0.0, 0.95 - 0.03 * len(core_list)))
@@ -842,19 +776,22 @@ def fancy_plot_all_param_overlap(
     **kwargs,
 ):
     """Plots common parameters between cores in core_list with fancier plotting methods
-    :param psr_name: Name of the pulsar
-    :param core_list: list of `la_forge` core objects
-    :param core_list_legend: list of labels corresponding to core_list
-    :param exclude: excludes ["lnpost","lnlike","chain_accept","pt_chain_accept",]
-    :param par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
-    :param conf_int: float shades confidence interval region can be float between 0 and 1
-    :param preliminary: Whether to display large 'preliminary' over plot
-    :param ncols: number of columns to plot
-    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
-    :param selection: str, Used to select various groups of parameters:
+
+    Parameters
+    ----------
+    psr_name: Name of the pulsar
+    core_list: list of `la_forge` core objects
+    core_list_legend: list of labels corresponding to core_list
+    exclude: excludes ["lnpost","lnlike","chain_accept","pt_chain_accept",]
+    par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
+    conf_int: float shades confidence interval region can be float between 0 and 1
+    preliminary: Whether to display large 'preliminary' over plot
+    ncols: number of columns to plot
+    real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    selection: str, Used to select various groups of parameters:
         see `get_param_groups` for details
-    :param hist_kwargs: kwargs for the histograms
-    :param fig_kwargs: general figure kwargs
+    hist_kwargs: kwargs for the histograms
+    fig_kwargs: general figure kwargs
     """
     if not core_list_legend:
         core_list_legend = []
@@ -1036,15 +973,18 @@ def corner_plots(
     corner_label_kwargs={},
 ):
     """Plots a corner plot for core
-    :param psr_name: Name of the pulsar
-    :param core: `la_forge` core object
-    :param save: Whether to save the figure
-    :param selection: str, Used to select various groups of parameters:
+
+    Parameters
+    ----------
+    psr_name: Name of the pulsar
+    core: `la_forge` core object
+    save: Whether to save the figure
+    selection: str, Used to select various groups of parameters:
         see `get_param_groups` for details
-    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
-    :param truths: Whether to plot shaded truth regions (only assumes scaled for now)
-    :param hist2d_kwargs: kwargs for the histograms
-    :param corner_label_kwargs: kwargs for the corner labels
+    real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    truths: Whether to plot shaded truth regions (only assumes scaled for now)
+    hist2d_kwargs: kwargs for the histograms
+    corner_label_kwargs: kwargs for the corner labels
     """
     if not hist2d_kwargs:
         hist2d_kwargs = {
@@ -1170,13 +1110,17 @@ def mass_pulsar(PB, A1, SINI, M2, errors={}):
     function uses a Newton-Raphson method since the equation is
     transcendental.
 
-    :param PB: orbital period [days]
-    :param A1: projected semimajor axis [lt-s]
-    :param SINI: sine of the system inclination [degrees]
-    :param M2: compaion mass [solar mass]
-    :param errors: dictionary of errors on each param
+    Parameters
+    ----------
+    PB: orbital period [days]
+    A1: projected semimajor axis [lt-s]
+    SINI: sine of the system inclination [degrees]
+    M2: compaion mass [solar mass]
+    errors: dictionary of errors on each param
 
-    :return: pulsar mass [solar mass]
+    Returns
+    -------
+    pulsar_mass: pulsar mass in [solar mass]
     """
     T_sun = 4.925490947e-6  # conversion from solar masses to seconds
     nb = 2 * np.pi / PB / 86400
@@ -1217,17 +1161,20 @@ def mass_plot(
     **kwargs,
 ):
     """Plots mass parameters for all cores in core_list
-    :param psr_name: Name of the pulsar
-    :param core_list: list of `la_forge` core objects
-    :param core_list_legend: list of labels corresponding to core_list
-    :param real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
-    :param preliminary: Whether to display large 'preliminary' over plot
-    :param conf_int: float shades confidence interval region can be float between 0 and 1
-    :param print_conf_int: Whether to print out confidence intervals
-    :param par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
-    :param ncols: number of columns to plot
-    :param hist_kwargs: kwargs for the histograms
-    :param fig_kwargs: general figure kwargs
+
+    Parameters
+    ----------
+    psr_name: Name of the pulsar
+    core_list: list of `la_forge` core objects
+    core_list_legend: list of labels corresponding to core_list
+    real_tm_pars: Whether to plot scaled or unscaled Timing Model parameters
+    preliminary: Whether to display large 'preliminary' over plot
+    conf_int: float shades confidence interval region can be float between 0 and 1
+    print_conf_int: Whether to print out confidence intervals
+    par_sigma: the error dictionary from the parfile of the form: {par_name:(val,err,'physical')}
+    ncols: number of columns to plot
+    hist_kwargs: kwargs for the histograms
+    fig_kwargs: general figure kwargs
     """
     if not core_list_legend:
         core_list_legend = []

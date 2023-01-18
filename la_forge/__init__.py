@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Top-level package for La Forge."""
 
-__author__ = """Jeffrey Shafiq Hazbboun"""
+__author__ = """Jeffrey Shafiq Hazboun"""
 __email__ = 'jeffrey.hazboun@gmail.com'
 __version__ = '1.0.2'
 #

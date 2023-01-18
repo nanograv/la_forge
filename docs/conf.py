@@ -51,8 +51,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'La Forge'
-copyright = u"2018, Jeffrey Shafiq Hazbboun"
-author = u"Jeffrey Shafiq Hazbboun"
+copyright = u"2018, Jeffrey Shafiq Hazboun"
+author = u"Jeffrey Shafiq Hazboun"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -136,7 +136,7 @@ latex_elements = {
 latex_documents = [
     (master_doc, 'la_forge.tex',
      u'La Forge Documentation',
-     u'Jeffrey Shafiq Hazbboun', 'manual'),
+     u'Jeffrey Shafiq Hazboun', 'manual'),
 ]
 
 

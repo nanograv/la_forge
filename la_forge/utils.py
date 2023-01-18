@@ -2,6 +2,8 @@ import glob
 
 import numpy as np
 import scipy.stats as sps
+import pandas as pd
+
 from scipy import interpolate as interp
 from scipy.ndimage import filters as filter
 from collections import defaultdict
@@ -414,9 +416,13 @@ def set_publication_params(param_dict=None, scale=0.5):
 
 def get_param_groups(core, selection="kep"):
     """Used to group parameters
-    :param core: `la_forge` core object
-    :param selection: {'all', or 'kep','mass','gr','spin','pos','noise', 'dm', 'chrom', 'dmx', 'fd'
-        all joined by underscores"""
+
+    Parameters
+    ----------
+    core: `la_forge` core object
+    selection: {'all', or 'kep','mass','gr','spin','pos','noise', 'dm', 'chrom', 'dmx', 'fd'
+        all joined by underscores
+    """
     if selection == "all":
         selection = "kep_mass_gr_pm_spin_pos_noise_dm_chrom_dmx_fd"
     kep_pars = [
@@ -553,7 +559,9 @@ def get_param_groups(core, selection="kep"):
 
 def get_fancy_labels(labels):
     """Latex compatible labels
-    :param labels: labels to change
+    Parameters
+    ----------
+    labels: labels to change
     """
     fancy_labels = []
     for lab in labels:
@@ -617,3 +625,101 @@ def get_fancy_labels(labels):
         else:
             fancy_labels.append(lab)
     return fancy_labels
+
+
+def get_pardict(psrs, datareleases):
+    """assigns a parameter dictionary for each psr per dataset the parfile values/errors
+
+    Parameters
+    ----------
+    psrs: enterprise pulsar instances corresponding to datareleases
+    datareleases: list of datareleases
+    """
+    pardict = {}
+    for psr, dataset in zip(psrs, datareleases):
+        pardict[psr.name] = {}
+        pardict[psr.name][dataset] = {}
+        for par, vals, errs in zip(
+            psr.fitpars[1:],
+            np.longdouble(psr.t2pulsar.vals()),
+            np.longdouble(psr.t2pulsar.errs()),
+        ):
+            pardict[psr.name][dataset][par] = {}
+            pardict[psr.name][dataset][par]["val"] = vals
+            pardict[psr.name][dataset][par]["err"] = errs
+    return pardict
+
+
+def make_dmx_file(parfile):
+    """Strips the parfile for the dmx values to be used in an Advanced Noise Modeling Run
+
+    Parameters
+    ----------
+    parfile: the parameter file to be stripped
+    """
+    dmx_dict = {}
+    with open(parfile, "r") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        splt_line = line.split()
+        if "DMX" in splt_line[0] and splt_line[0] != "DMX":
+            for dmx_group in [
+                y.split()
+                for y in lines
+                if str(splt_line[0].split("_")[-1]) in str(y.split()[0])
+            ]:
+                # Columns: DMXEP DMX_value DMX_var_err DMXR1 DMXR2 DMXF1 DMXF2 DMX_bin
+                lab = f"DMX_{dmx_group[0].split('_')[-1]}"
+                if lab not in dmx_dict.keys():
+                    dmx_dict[lab] = {}
+                if "DMX_" in dmx_group[0]:
+                    if isinstance(dmx_group[1], str):
+                        dmx_dict[lab]["DMX_value"] = np.double(
+                            ("e").join(dmx_group[1].split("D"))
+                        )
+                    else:
+                        dmx_dict[lab]["DMX_value"] = np.double(dmx_group[1])
+                    if isinstance(dmx_group[-1], str):
+                        dmx_dict[lab]["DMX_var_err"] = np.double(
+                            ("e").join(dmx_group[-1].split("D"))
+                        )
+                    else:
+                        dmx_dict[lab]["DMX_var_err"] = np.double(dmx_group[-1])
+                    dmx_dict[lab]["DMX_bin"] = "DX" + dmx_group[0].split("_")[-1]
+                else:
+                    dmx_dict[lab][dmx_group[0].split("_")[0]] = np.double(dmx_group[1])
+    for dmx_name, dmx_attrs in dmx_dict.items():
+        if any([key for key in dmx_attrs.keys() if "DMXEP" not in key]):
+            dmx_dict[dmx_name]["DMXEP"] = (
+                dmx_attrs["DMXR1"] + dmx_attrs["DMXR2"]
+            ) / 2.0
+    dmx_df = pd.DataFrame.from_dict(dmx_dict, orient="index")
+    neworder = [
+        "DMXEP",
+        "DMX_value",
+        "DMX_var_err",
+        "DMXR1",
+        "DMXR2",
+        "DMXF1",
+        "DMXF2",
+        "DMX_bin",
+    ]
+    final_order = []
+    for order in neworder:
+        if order in dmx_dict["DMX_0001"]:
+            final_order.append(order)
+    dmx_df = dmx_df.reindex(columns=final_order)
+    new_dmx_file = (".dmx").join(parfile.split(".par"))
+    with open(new_dmx_file, "w") as f:
+        f.write(
+            f"# {parfile.split('/')[-1].split('.par')[0]} dispersion measure variation\n"
+        )
+        f.write(
+            f"# Mean DMX value = {np.mean([dmx_dict[x]['DMX_value'] for x in dmx_dict.keys()])} \n"
+        )
+        f.write(
+            f"# Uncertainty in average DM = {np.std([dmx_dict[x]['DMX_value'] for x in dmx_dict.keys()])} \n"
+        )
+        f.write(f"# Columns: {(' ').join(final_order)}\n")
+        dmx_df.to_csv(f, sep=" ", index=False, header=False)

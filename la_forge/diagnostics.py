@@ -5,15 +5,20 @@ import copy
 import inspect
 import string
 import os
+import logging
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
+from emcee.autocorr import AutocorrError
 from emcee.autocorr import integrated_time
 
 from .core import Core
 from .utils import get_param_groups
+
+logging.disable(logging.CRITICAL)
+
 
 __all__ = ['plot_chains', 'noise_flower']
 
@@ -384,14 +389,16 @@ def grubin(core, M=2, threshold=1.01):
     See section 3.1 of https://arxiv.org/pdf/1903.08008.pdf.
     Values > 1.1 => recommend continuing sampling due to poor convergence.
     More recently, values > 1.01 => recommend continued sampling due to poor convergence.
-    Input:
-        core (Core): consists of entire chain file
-        pars (list): list of parameters for each column
-        M (integer): number of times to split the chain
-        threshold (float): Rhat value to tell when chains are good
-    Output:
-        Rhat (ndarray): array of values for each index
-        idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
+    Parameters
+    ----------
+    core (Core): consists of entire chain file
+    pars (list): list of parameters for each column
+    M (integer): number of times to split the chain
+    threshold (float): Rhat value to tell when chains are good
+    Returns
+    -------
+    Rhat (ndarray): array of values for each index
+    idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
     """
     if isinstance(core, list) and len(core) == 2:  # allow comparison of two chains
         data = np.concatenate([core[0].chain, core[1].chain])
@@ -569,11 +576,13 @@ def get_param_acorr(core, burn=0.25, selection="all"):
     tau_arr = np.zeros(len(selected_params["par"]))
     for param_idx, param in enumerate(selected_params["par"]):
         indv_param = core.get_param(param, to_burn=False)
+
         try:
             tau_arr[param_idx] = integrated_time(indv_param, quiet=False)
-        except:
+        except AutocorrError:
             print("Watch Out!", param)
             tau_arr[param_idx] = integrated_time(indv_param, quiet=True)
+
     return tau_arr
 
 

@@ -43,7 +43,7 @@ from a single pulsar, non-linear timing run from ``enterprise``.
     anm_core_loc = f'{datadir}/tests/data/chains/nonlinear_timing/{psr_name}_adv_noise'
 
 Load the Pulsar
-===============
+---------------
 
 Make sure the ephemeris is the same as in the parfile and you have to
 retain the t2pulsar object. If you want to use ``PINT`` that is also
@@ -55,7 +55,7 @@ cool, just change the final two kwargs to
     psr = Pulsar(parfile,timfile,ephem='DE421',clk=None,drop_t2pulsar=False,timing_package="tempo2",)
 
 Load TimingCores
-================
+----------------
 
 Don’t forget to include the location of the original timing parameters
 that you should have saved when initializing the pulsar before sampling
@@ -75,7 +75,7 @@ with ``enterprise``.
                           burn=burn)
 
 Check Convergence of Chains
-===========================
+---------------------------
 
 This function checks the autocorrelation of the chains of each parameter
 and returns the worst value (longest autocorrelation length), which then
@@ -302,7 +302,7 @@ These chains are not very well converged!
 
 
 Investigating a Single Chain
-============================
+----------------------------
 
 In addition to the usual way of investigating a single core as shown in
 Tutorial #2, we added a few special methods specific to usefulness with
@@ -415,7 +415,7 @@ those of the original parfile values.
 
 
 Comparing Multiple Chains
-=========================
+-------------------------
 
 Since the usual plotting in ``diagnostics`` is mainly used for a single
 core, we expanded it in a new function to be able to plot only the
@@ -479,7 +479,7 @@ use ``par_sigma``.
 
 
 Fancy Plotting
---------------
+~~~~~~~~~~~~~~
 
 For making the labels and display a little nicer to compare multiple
 cores, use ``fancy_plot_all_param_overlap``. As with the other two
@@ -503,7 +503,7 @@ non-scaled version with ``real_tm_pars``. This also supports
 
 
 Binary Pulsars
---------------
+~~~~~~~~~~~~~~
 
 For binary pulsars, it is often useful to plot the mass parameters.
 Since the pulsar mass is derived using the mass function, this method
@@ -606,7 +606,7 @@ printing them out.
 
 
 Utility Functions
-=================
+-----------------
 
 To make it easier to setup an ``enterprise`` run with DM Gaussian
 processes, we created a utility function to strip a parfile of its DMX

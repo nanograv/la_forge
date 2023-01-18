@@ -49,6 +49,7 @@ Features
 * Reconstruct Gaussian process realizations using posterior chains.
 * Plot red noise power spectral density.
 * Separate consituent models of a hypermodel analysis.
+* Plotting for timing model parameters (corner plots, mass plots, residuals)
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 

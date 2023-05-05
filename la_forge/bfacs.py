@@ -50,6 +50,26 @@ def bootstrap(core, param, num_reals=2000, num_samples=1000):
     return new_array
 
 
+def moving_block_bootstrap(chain, num_blocks=100):
+    """
+    Moving block bootstrap samples (with replacement) a 1d array of correlated samples.
+    By taking a mean and standard deviation of the resulting samples, we can get an uncertainty
+    estimate.
+
+    Input:
+        chain (np.array): array of correlated samples
+        num_blocks (int) [100]: number of blocks to divide into
+        num_reals (int) [1000]: number of realizations to sample
+    Output:
+        bs (np.array): array of single block bootstrap realization
+    """
+    array = chain
+    length = array.shape[0]
+    blocks = np.array(np.array_split(array[:length - length % num_blocks], num_blocks))
+    new_arrangement = np.random.choice(np.arange(num_blocks), size=num_blocks, replace=True)
+    return np.vstack(blocks[new_arrangement, :, :])
+
+
 def log10_bf(log_ev1, log_ev2, scale='log10'):
     """
     Compute log10(Bayes factor) comparing (model 2 / model 1)
@@ -124,6 +144,35 @@ def core_to_txt(slices_core, outfile):
         f.write(' '.join(temps_str))
         f.write('\n')
         np.savetxt(f, betalike)
+
+
+def ss_log_evidence(slices_core, num_reals=1000, num_blocks=100):
+    """
+    Use moving block bootstrap and the stepping stone algorithm
+    to compute evidences with parallel tempered chains.
+
+    Input:
+        slices_core (SlicesCore): SlicesCore object with PT chains
+        num_reals (int) [1000]: number of realizations to sample
+        num_blocks (int) [100]: number of blocks to divide chain into
+    Output:
+        log_evidence (float): log evidence
+        log_evidence_unc (float): log evidence uncertainty
+    """
+    temps, betalike = make_betalike(slices_core)
+    betas = 1 / temps[::-1]
+    betalike = betalike[:, ::-1]
+    dbetas = np.diff(betas)
+
+    results = []
+    for ii in tqdm.tqdm(range(num_reals)):
+        new_chain = moving_block_bootstrap(betalike, num_blocks=num_blocks)
+        new_result = np.sum(logsumexp(new_chain[:, :-1] * dbetas, axis=0) - np.log(new_chain.shape[0]))
+        results.append(new_result)
+    log_evidence = np.mean(results)
+    log_evidence_unc = np.std(results)
+
+    return (log_evidence, log_evidence_unc)
 
 
 def ti_log_evidence(slices_core, verbose=True, bs_iterations=2000,

@@ -468,7 +468,8 @@ def pp_plot(corefolder, param, outdir=None):
     sigma = np.sqrt(p * (1 - p) / NUM_REALS)
     plt.figure(figsize=(10, 10))
     plt.title(param)
-    plt.plot(q, cdf, color='blue', alpha=0.3)
+    #plt.plot(q, cdf, color='blue', alpha=0.3)      # Don't need cdf to plot pp
+    plt.plot(np.sort(pvals), q, color='blue', alpha=0.3)
     plt.plot(p, p, color='k')
     plt.plot(p, p + sigma, color='gray')
     plt.plot(p, p + 2 * sigma, color='gray')

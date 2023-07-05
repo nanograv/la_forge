@@ -20,6 +20,7 @@ __all__ = ['Core', 'HyperModelCore', 'TimingCore', 'load_Core']
 
 def load_Core(filepath):
     with open(filepath, "rb") as fin:
+        print(fin)
         core = pickle.load(fin)
         core.filepath = filepath
     return core

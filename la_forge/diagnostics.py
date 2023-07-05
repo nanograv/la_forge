@@ -4,17 +4,21 @@
 import copy
 import inspect
 import string
-import os, json
+import os
+import logging
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-import scipy.stats as sps
 import numpy as np
 
+from emcee.autocorr import AutocorrError
 from emcee.autocorr import integrated_time
 
 from .core import Core
-from .slices import SlicesCore
+from .utils import get_param_groups
+
+logging.disable(logging.CRITICAL)
+
 
 __all__ = ['plot_chains', 'noise_flower']
 
@@ -22,11 +26,11 @@ __all__ = ['plot_chains', 'noise_flower']
 def plot_chains(core, hist=True, pars=None, exclude=None,
                 ncols=3, bins=40, suptitle=None, color='k',
                 publication_params=False, titles=None,
-                linestyle=None, plot_map=False, truths=None,
+                linestyle=None, plot_map=False,
                 save=False, show=True, linewidth=1,
                 log=False, title_y=1.01, hist_kwargs={},
                 plot_kwargs={}, legend_labels=None, real_tm_pars=True,
-                legend_loc=None, **kwargs):
+                legend_loc=None, truths=None, **kwargs):
     """Function to plot histograms or traces of chains from cores.
 
     Parameters
@@ -75,8 +79,12 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     plot_kwargs={},
     legend_labels=None,
     legend_loc=None,
+    close=True
 
     """
+
+    close = kwargs.get("close", True)
+
     if pars is not None:
         params = pars
     elif exclude is not None and pars is not None:
@@ -173,9 +181,16 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
                                 color='k', linestyle='-.')
 
         else:
-            gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)
-            plt.plot(core.get_param(p, to_burn=True, **gpar_kwargs),
-                     lw=linewidth, **plot_kwargs)
+            if isinstance(core, list):
+                for jj, c in enumerate(core):
+                    gpar_kwargs= _get_gpar_kwargs(c, real_tm_pars)
+                    plt.plot(c.get_param(p, to_burn=True, **gpar_kwargs),
+                             linestyle=linestyle[jj],
+                             lw=linewidth, **plot_kwargs)
+            else:
+                gpar_kwargs= _get_gpar_kwargs(core, real_tm_pars)
+                plt.plot(core.get_param(p, to_burn=True, **gpar_kwargs),
+                         lw=linewidth, **plot_kwargs)
 
         if (titles is None) and (fancy_par_names is None):
             if psr_name is not None:
@@ -221,7 +236,8 @@ def plot_chains(core, hist=True, pars=None, exclude=None,
     if show:
         plt.show()
 
-    plt.close()
+    if close:
+        plt.close()
 
 
 def noise_flower(hmc,
@@ -373,14 +389,16 @@ def grubin(core, M=2, threshold=1.01):
     See section 3.1 of https://arxiv.org/pdf/1903.08008.pdf.
     Values > 1.1 => recommend continuing sampling due to poor convergence.
     More recently, values > 1.01 => recommend continued sampling due to poor convergence.
-    Input:
-        core (Core): consists of entire chain file
-        pars (list): list of parameters for each column
-        M (integer): number of times to split the chain
-        threshold (float): Rhat value to tell when chains are good
-    Output:
-        Rhat (ndarray): array of values for each index
-        idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
+    Parameters
+    ----------
+    core (Core): consists of entire chain file
+    pars (list): list of parameters for each column
+    M (integer): number of times to split the chain
+    threshold (float): Rhat value to tell when chains are good
+    Returns
+    -------
+    Rhat (ndarray): array of values for each index
+    idx (ndarray): array of indices that are not sampled enough (Rhat > threshold)
     """
     if isinstance(core, list) and len(core) == 2:  # allow comparison of two chains
         data = np.concatenate([core[0].chain, core[1].chain])
@@ -388,7 +406,7 @@ def grubin(core, M=2, threshold=1.01):
         data = core.chain
     burn = 0
     try:
-        data_split = np.split(data[burn:,:-2], M)  # cut off last two columns
+        data_split = np.split(data[burn:, :-2], M)  # cut off last two columns
     except:
         # this section is to make everything divide evenly into M arrays
         P = int(np.floor((len(data[:, 0]) - burn) / M))  # nearest integer to division
@@ -396,7 +414,7 @@ def grubin(core, M=2, threshold=1.01):
         burn += X  # burn in to the nearest divisor
         burn = int(burn)
 
-        data_split = np.split(data[burn:,:-2], M)  # cut off last two columns
+        data_split = np.split(data[burn:, :-2], M)  # cut off last two columns
 
     N = len(data[burn:, 0])
     data = np.array(data_split)
@@ -410,7 +428,7 @@ def grubin(core, M=2, threshold=1.01):
     # do some clever broadcasting:
     sm_sq = 1 / (N - 1) * np.sum((data - theta_bar_dotm[:, None, :])**2, axis=1)
     W = 1 / M * np.sum(sm_sq, axis=0)  # within chains
-    
+
     var_post = (N - 1) / N * W + 1 / N * B
     Rhat = np.sqrt(var_post / W)
 
@@ -419,8 +437,8 @@ def grubin(core, M=2, threshold=1.01):
 
 
 def plot_grubin(core, M=2, threshold=1.01):
-    fig, ax = plt.subplots(figsize = (12, 5))
-    
+    fig, ax = plt.subplots(figsize=(12, 5))
+
     if isinstance(core, list):
         for c in core:
             Rhat, idx = grubin(c, M=M, threshold=threshold)
@@ -527,7 +545,7 @@ def pp_plot_all(corefolder, outdir=None):
         for ii in range(len(q)):
             cdf[ii] = len(np.where(pvalues[jj, :] < q[ii])[0]) / len(pvalues[jj, :])
         plt.plot(q, cdf, color='blue', alpha=0.3)
-        
+
     plt.ylim([0, 1])
     plt.xlim([0, 1])
     plt.xlabel('P Value')
@@ -537,6 +555,87 @@ def pp_plot_all(corefolder, outdir=None):
         plt.savefig(outdir, dpi=100)
     plt.show()
     return q, pvalues, cdf, sigma
+
+
+def get_param_acorr(core, burn=0.25, selection="all"):
+    """
+    Function to get the autocorrelation length for each parameter in a ndim array
+
+    :param core:  la_forge.core object
+    :param burn: int, optional
+        Number of samples burned from beginning of array. Used when calculating
+        statistics and plotting histograms. If None, burn is `len(samples)/4`
+    :param cut_off_idx: int, optional
+        Sets end of parameter list to include
+
+    :return: Array of autocorrelation lengths for each parameter
+    """
+
+    selected_params = get_param_groups(core, selection=selection)
+    burn = int(burn * core.chain.shape[0])
+    tau_arr = np.zeros(len(selected_params["par"]))
+    for param_idx, param in enumerate(selected_params["par"]):
+        indv_param = core.get_param(param, to_burn=False)
+
+        try:
+            tau_arr[param_idx] = integrated_time(indv_param, quiet=False)
+        except AutocorrError:
+            print("Watch Out!", param)
+            tau_arr[param_idx] = integrated_time(indv_param, quiet=True)
+
+    return tau_arr
+
+
+def trim_array_acorr(arr, burn=None):
+    """
+    Function to trim an array by the longest autocorrelation length of all parameters in a ndim array
+
+    :param arr: array, optional
+        Array that contains samples from an MCMC chain that is samples x param
+        in shape.
+    :param burn: int, optional
+        Number of samples burned from beginning of chain. Used when calculating
+        statistics and plotting histograms. If None, burn is `len(samples)/4`.
+
+    :return: Thinned array
+    """
+    if burn is None:
+        burn = int(0.25 * arr.shape[0])
+    acorr_lens = get_param_acorr(arr, burn=burn)
+    max_acorr = int(np.unique(np.max(acorr_lens)))
+    return arr[burn::max_acorr]
+
+
+def check_convergence(core_list):
+    """Checks chain convergence using Gelman-Rubin split R-hat statistic (Vehtari et al. 2019) and the auto-correlation
+    :param core_list: list of `la_forge` core objects
+    """
+    cut_off_idx = -3
+    for core in core_list:
+        lp = np.unique(np.max(core.get_param("lnpost")))
+        ll = np.unique(np.max(core.get_param("lnlike")))
+        print("-------------------------------")
+        print(f"core: {core.label}")
+        print(f"\t lnpost: {lp[0]}, lnlike: {ll[0]}")
+        try:
+            grub = grubin(core.chain[:, :cut_off_idx])
+            if len(grub[1]) > 0:
+                print(
+                    "\t Params exceed rhat threshold: ",
+                    [core.params[p] for p in grub[1]],
+                )
+        except:
+            print("\t Can't run Grubin test")
+            pass
+        try:
+            max_acl = np.unique(np.max(get_param_acorr(core)))[0]
+            print(
+                f"\t Max autocorrelation length: {max_acl}, Effective sample size: {core.chain.shape[0]/max_acl}"
+            )
+        except:
+            print("\t Can't run Autocorrelation test")
+            pass
+        print("")
 
 
 def uniform_quantiles(core, param, num_reals=1000):

@@ -6,8 +6,8 @@ La Forge
 .. image:: https://img.shields.io/pypi/v/la_forge.svg
         :target: https://pypi.python.org/pypi/la_forge
 
-.. image:: https://github.com/Hazboun6/la_forge/workflows/Build/badge.svg
-        :target: https://github.com/Hazboun6/la_forge/actions
+.. image:: https://github.com/nanograv/la_forge/workflows/Build/badge.svg
+        :target: https://github.com/nanograv/la_forge/actions
 
 .. image:: https://readthedocs.org/projects/la-forge/badge/?version=latest
         :target: https://la-forge.readthedocs.io/en/latest/?badge=latest
@@ -18,7 +18,7 @@ La Forge
 
 Pulsar Timing Array Bayesian Data Visualization
 
-.. image:: https://raw.githubusercontent.com/Hazboun6/la_forge/master/visor.png
+.. image:: https://raw.githubusercontent.com/nanograv/la_forge/master/visor.png
    :target: https://www.deviantart.com/sjvernon/art/Geordi-La-Forge-Star-Trek-Next-Generation-Visor-646311950
    :alt: Graphic Credit: Stewart Vernon, via Deviant Art
    :align: center
@@ -49,6 +49,7 @@ Features
 * Reconstruct Gaussian process realizations using posterior chains.
 * Plot red noise power spectral density.
 * Separate consituent models of a hypermodel analysis.
+* Plotting for timing model parameters (corner plots, mass plots, residuals)
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 

@@ -247,8 +247,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
     for ii, (c, rn_type) in enumerate(zip(cores, rn_types)):
         if all([pulsar not in par for par in c.params]):
             raise ValueError('Pulsar not in any parameter names.')
-        # Free Spectral Plotting
-        if pulsar + rn_type + '_log10_rho_0' in c.params:
+        ### Free Spectral Plotting
+        if any(pulsar + rn_type + '_log10_rho_0' in x for x in c.params):
             Color = Colors[color_idx]
 
             if free_spec_ct==1:
@@ -272,126 +272,293 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
             free_spec_ct += 1
             color_idx += 1
 
-        # T-Process Plotting
-        elif pulsar + rn_type + '_alphas_0' in c.params:
-            amp_par = pulsar+rn_type+'_log10_A'
-            gam_par = pulsar+rn_type+'_gamma'
-            Color = Colors[color_idx]
+        ### T-Process Plotting
+        elif any(pulsar + rn_type + '_alphas_0' in x for x in c.params):
+            par_dict = {}
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    par_dict[y] = {}
+                    par_dict[y]['amp_par'] = y
+            for y in c.params:
+                if pulsar + rn_type + '_gamma' in y:
+                    if y.split('_')[-1] != 'gamma':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
+                    else:
+                        par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
+
             par_root = pulsar + rn_type + '_alphas'
+            for group in [x for x, y in par_dict.items() if 'gam_par' in y]:
+                Color = Colors[color_idx]
 
-            plot_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
-                          alpha_parname_root=par_root, Color=Color,
-                          n_realizations=n_tproc_realizations,
-                          Tspan=Tspan)
+                plot_tprocess(c, axes[0], amp_par=par_dict[group]['amp_par'],
+                              gam_par=par_dict[group]['gam_par'],
+                              alpha_parname_root=par_root, Color=Color,
+                              n_realizations=n_tproc_realizations,
+                              Tspan=Tspan)
 
-            if plot_2d_hist:
-                corner.hist2d(c.get_param(gam_par)[c.burn:],
-                              c.get_param(amp_par)[c.burn:],
-                              bins=bins, ax=axes[1], plot_datapoints=False,
-                              plot_density=plot_density[ii],
-                              plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color)
-                ax1_ylim.append(list(axes[1].get_ylim()))
+                if plot_2d_hist:
+                    corner.hist2d(c.get_param(par_dict[group]['gam_par'])[c.burn:],
+                                  c.get_param(par_dict[group]['amp_par'])[c.burn:],
+                                  bins=bins, ax=axes[1], plot_datapoints=False,
+                                  plot_density=plot_density[ii],
+                                  plot_contours=plot_contours[ii],
+                                  no_fill_contours=True, color=Color)
+                    ax1_ylim.append(list(axes[1].get_ylim()))
 
-            # Track lines and labels for legend
-            lines.append(plt.Line2D([0], [0], color=Color, linewidth=2))
-            if make_labels is True:
-                labels.append('T-Process')
-            tproc_ct += 1
-            color_idx += 1
+                # Track lines and labels for legend
+                lines.append(plt.Line2D([0], [0], color=Color, linewidth=2))
+                if make_labels is True:
+                    labels.append('T-Process')
+                tproc_ct += 1
+                color_idx += 1
 
-        # Adaptive T-Process Plotting
-        elif pulsar + rn_type + '_alphas_adapt_0' in c.params:
-            amp_par = pulsar+rn_type+'_log10_A'
-            gam_par = pulsar+rn_type+'_gamma'
-            Color = Colors[color_idx]
-            alpha_par = pulsar + rn_type + '_alphas_adapt_0'
-            nfreq_par = pulsar + rn_type + '_nfreq'
-            plot_adapt_tprocess(c, axes[0], amp_par=amp_par, gam_par=gam_par,
-                                alpha_par=alpha_par, nfreq_par=nfreq_par,
-                                n_realizations=100, Color=Color,
-                                Tspan=Tspan)
+        ### Adaptive T-Process Plotting
+        elif any(pulsar + rn_type + '_alphas_adapt_0' in x for x in c.params):
+            par_dict = {}
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    par_dict[y] = {}
+                    par_dict[y]['amp_par'] = y
+            for y in c.params:
+                if pulsar + rn_type + '_gamma' in y:
+                    if y.split('_')[-1] != 'gamma':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
+                    else:
+                        par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
+                if pulsar + rn_type + '_alphas_adapt_0' in y:
+                    if y.split('_')[-1] != '0':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['alpha_par'] = y
+                    else:
+                        par_dict[pulsar + rn_type + '_log10_A']['alpha_par'] = y
+                if pulsar + rn_type + '_nfreq' in y:
+                    if y.split('_')[-1] != 'nfreq':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['nfreq_par'] = y
+                    else:
+                        par_dict[pulsar + rn_type + '_log10_A']['nfreq_par'] = y
 
-            if plot_2d_hist:
-                corner.hist2d(c.get_param(gam_par)[c.burn:],
-                              c.get_param(amp_par)[c.burn:],
-                              bins=bins, ax=axes[1], plot_datapoints=False,
-                              plot_density=plot_density[ii],
-                              plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color)
-                ax1_ylim.append(list(axes[1].get_ylim()))
+            for group in [x for x, y in par_dict.items() if 'gam_par' in y]:
+                Color = Colors[color_idx]
+                plot_adapt_tprocess(c, axes[0], amp_par=par_dict[group]['amp_par'],
+                                    gam_par=par_dict[group]['gam_par'],
+                                    alpha_par=par_dict[group]['alpha_par'],
+                                    nfreq_par=par_dict[group]['nfreq_par'],
+                                    n_realizations=100, Color=Color,
+                                    Tspan=Tspan)
 
-            # Track lines and labels for legend
-            lines.append(plt.Line2D([0], [0], color=Color, linewidth=2))
-            if make_labels is True:
-                labels.append('Adaptive T-Process')
-            tproc_adapt_ct += 1
-            color_idx += 1
+                if plot_2d_hist:
+                    corner.hist2d(c.get_param(par_dict[group]['gam_par'])[c.burn:],
+                                  c.get_param(par_dict[group]['amp_par'])[c.burn:],
+                                  bins=bins, ax=axes[1], plot_datapoints=False,
+                                  plot_density=plot_density[ii],
+                                  plot_contours=plot_contours[ii],
+                                  no_fill_contours=True, color=Color)
+                    ax1_ylim.append(list(axes[1].get_ylim()))
 
-        # Broken Power Law Plotting
-        elif pulsar + rn_type + '_log10_fb' in c.params:
-            amp_par = pulsar + rn_type + '_log10_A'
-            gam_par = pulsar + rn_type + '_gamma'
-            fb_par = pulsar + rn_type + '_log10_fb'
-            del_par = pulsar + rn_type + '_delta'
-            kappa_par = pulsar + rn_type + '_kappa'
+                # Track lines and labels for legend
+                lines.append(plt.Line2D([0], [0], color=Color, linewidth=2))
+                if make_labels is True:
+                    labels.append('Adaptive T-Process')
+                tproc_adapt_ct += 1
+                color_idx += 1
 
-            Color = Colors[color_idx]
-            plot_broken_powerlaw(c, axes[0], amp_par, gam_par, del_par,
-                                 fb_par, kappa_par,
-                                 verbose=True, Color=Color,
-                                 Linestyle='-',
-                                 n_realizations=n_bplaw_realizations,
-                                 Tspan=None, to_resid=True, **bplaw_kwargs)
+        ### Broken Power Law Plotting
+        elif any(pulsar + rn_type + '_log10_fb' in x for x in c.params):
+            if any(pulsar + rn_type + '_beta' in x for x in c.params):
+                par_dict = {}
+                for y in c.params:
+                    if pulsar + rn_type + '_log10_A' in y:
+                        par_dict[y] = {}
+                        par_dict[y]['amp_par'] = y
+                for y in c.params:
+                    if pulsar + rn_type + '_gamma' in y:
+                        if y.split('_')[-1] != 'gamma':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
+                        else:
+                            par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
+                    if pulsar + rn_type + '_delta' in y:
+                        if y.split('_')[-1] != 'delta':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['del_par'] = y
+                        else:
+                            par_dict[pulsar + rn_type + '_log10_A']['del_par'] = y
+                    if pulsar + rn_type + '_beta' in y:
+                        if y.split('_')[-1] != 'beta':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['beta_par'] = y
+                        else:
+                            par_dict[pulsar + rn_type + '_log10_A']['beta_par'] = y
 
-            if plot_2d_hist:
-                corner.hist2d(c.get_param(gam_par)[c.burn:],
-                              c.get_param(amp_par)[c.burn:],
-                              bins=bins, ax=axes[1], plot_datapoints=False,
-                              plot_density=plot_density[ii],
-                              plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color)
-                ax1_ylim.append(list(axes[1].get_ylim()))
+                    if pulsar + rn_type + '_log10_fb' in y:
+                        if y.split('_')[-1] == 'fb':
+                            # e.g. gw_log10_fb
+                            par_dict[pulsar + rn_type + '_log10_A']['fb_par'] = y
+                        elif y.split('_')[-2] == 'fb':
+                            # e.g. gw_log10_fb_1 or gw_log10_fb_other
+                            if len(y.split('_')[-1]) >= 2.:
+                                # e.g. gw_log10_fb_other
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['fb_par'] = y
+                            else:
+                                # e.g. gw_log10_fb_1
+                                par_dict[pulsar + rn_type + '_log10_A'][f"fb_par_{y.split('_')[-1]}"] = y
+                        elif y.split('_')[-3] == 'fb':
+                            # e.g. gw_log10_fb_1_other or gw_log10_fb_other_1
+                            if len(y.split('_')[-2]) >= 2.:
+                                # e.g. gw_log10_fb_other_1
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-2]][f"fb_par_{y.split('_')[-1]}"] = y
+                            else:
+                                # e.g. gw_log10_fb_1_other
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]][f"fb_par_{y.split('_')[-2]}"] = y
+                        else:
+                            print(f"{y} how we split it is not in {par_dict.keys()}")
 
-            # Track lines and labels for legend
-            lines.append(plt.Line2D([0], [0], color=Color, linewidth=2))
-            if make_labels is True:
-                labels.append('Broken Power Law')
-            tproc_adapt_ct += 1
-            color_idx += 1
+                    if pulsar + rn_type + '_kappa' in y:
+                        if y.split('_')[-1] == 'kappa':
+                            # e.g. gw_kappa
+                            par_dict[pulsar + rn_type + '_log10_A']['kappa_par'] = y
+                        elif y.split('_')[-2] == 'kappa':
+                            # e.g. gw_kappa_1 or gw_kappa_other
+                            if len(y.split('_')[-1]) >= 2.:
+                                # e.g. gw_kappa_other
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['kappa_par'] = y
+                            else:
+                                # e.g. gw_kappa_1
+                                par_dict[pulsar + rn_type + '_log10_A'][f"kappa_par_{y.split('_')[-1]}"] = y
+                        elif y.split('_')[-3] == 'kappa':
+                            # e.g. gw_kappa_1_other or gw_kappa_other_1
+                            if len(y.split('_')[-2]) >= 2.:
+                                # e.g. gw_kappa_other_1
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-2]][f"kappa_par_{y.split('_')[-1]}"] = y
+                            else:
+                                # e.g. gw_kappa_1_other
+                                par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]][f"kappa_par_{y.split('_')[-2]}"] = y
+                        else:
+                            print(f"{y} how we split it is not in {par_dict.keys()}")
+
+                for group in [x for x, y in par_dict.items() if 'gam_par' in y]:
+                    Color = Colors[color_idx]
+                    plot_extra_broken_powerlaw(c, axes[0], par_dict[group]['amp_par'],
+                                               par_dict[group]['gam_par'],
+                                               par_dict[group]['del_par'],
+                                               par_dict[group]['beta_par'],
+                                               par_dict[group]['fb_par'],
+                                               [par_dict[group][x] for x in par_dict[group].keys() if 'fb_par_' in x][0],
+                                               par_dict[group]['kappa_par'],
+                                               [par_dict[group][x] for x in par_dict[group].keys() if 'kappa_par_' in x][0],
+                                               verbose=True, Color=Color,
+                                               Linestyle='-',
+                                               n_realizations=n_bplaw_realizations,
+                                               Tspan=None, to_resid=True, **bplaw_kwargs)
+                    if plot_2d_hist:
+                        corner.hist2d(c.get_param(par_dict[group]['gam_par'])[c.burn:],
+                                      c.get_param(par_dict[group]['amp_par'])[c.burn:],
+                                      bins=bins, ax=axes[1], plot_datapoints=False,
+                                      plot_density=plot_density[ii],
+                                      plot_contours=plot_contours[ii],
+                                      no_fill_contours=True, color=Color)
+                        ax1_ylim.append(list(axes[1].get_ylim()))
+
+                    # Track lines and labels for legend
+                    lines.append(plt.Line2D([0], [0], color=Color, linewidth=2))
+                    if make_labels is True:
+                        labels.append('Extra Broken Power Law')
+                    tproc_adapt_ct += 1
+                    color_idx += 1
+            else:
+                par_dict = {}
+                for y in c.params:
+                    if pulsar + rn_type + '_log10_A' in y:
+                        par_dict[y] = {}
+                        par_dict[y]['amp_par'] = y
+                for y in c.params:
+                    if pulsar + rn_type + '_gamma' in y:
+                        if y.split('_')[-1] != 'gamma':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
+                        else:
+                            par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
+                    if pulsar + rn_type + '_delta' in y:
+                        if y.split('_')[-1] != 'delta':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['del_par'] = y
+                        else:
+                            par_dict[pulsar + rn_type + '_log10_A']['del_par'] = y
+                    if pulsar + rn_type + '_log10_fb' in y:
+                        if y.split('_')[-1] != 'fb':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['fb_par'] = y
+                        else:
+                            par_dict[pulsar + rn_type + '_log10_A']['fb_par'] = y
+                    if pulsar + rn_type + '_kappa' in y:
+                        if y.split('_')[-1] != 'kappa':
+                            par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['kappa_par'] = y
+                        else:
+                            par_dict[pulsar + rn_type + '_log10_A']['kappa_par'] = y
+                for group in [x for x, y in par_dict.items() if 'del_par' in y]:
+                    Color = Colors[color_idx]
+                    plot_broken_powerlaw(c, axes[0], par_dict[group]['amp_par'],
+                                         par_dict[group]['gam_par'],
+                                         par_dict[group]['del_par'],
+                                         par_dict[group]['fb_par'],
+                                         par_dict[group]['kappa_par'],
+                                         verbose=True, Color=Color,
+                                         Linestyle='-',
+                                         n_realizations=n_bplaw_realizations,
+                                         Tspan=None, to_resid=True, **bplaw_kwargs)
+
+                    if plot_2d_hist:
+                        corner.hist2d(c.get_param(par_dict[group]['gam_par'])[c.burn:],
+                                      c.get_param(par_dict[group]['amp_par'])[c.burn:],
+                                      bins=bins, ax=axes[1], plot_datapoints=False,
+                                      plot_density=plot_density[ii],
+                                      plot_contours=plot_contours[ii],
+                                      no_fill_contours=True, color=Color)
+                        ax1_ylim.append(list(axes[1].get_ylim()))
+
+                    # Track lines and labels for legend
+                    lines.append(plt.Line2D([0], [0], color=Color, linewidth=2))
+                    if make_labels is True:
+                        labels.append('Broken Power Law')
+                    tproc_adapt_ct += 1
+                    color_idx += 1
 
         # Powerlaw Plotting
         else:
-            amp_par = pulsar+rn_type+'_log10_A'
-            gam_par = pulsar+rn_type+'_gamma'
-            if plaw_ct==1:
-                Linestyle = '-'
-            else:
-                Linestyle = '-'
+            par_dict = {}
+            for y in c.params:
+                if pulsar + rn_type + '_log10_A' in y:
+                    par_dict[y] = {}
+                    par_dict[y]['amp_par'] = y
+            for y in c.params:
+                if pulsar + rn_type + '_gamma' in y:
+                    if y.split('_')[-1] != 'gamma':
+                        par_dict[pulsar + rn_type + '_log10_A_' + y.split('_')[-1]]['gam_par'] = y
+                    else:
+                        par_dict[pulsar + rn_type + '_log10_A']['gam_par'] = y
 
-            Color = Colors[color_idx]
+            for group in [x for x, y in par_dict.items() if 'gam_par' in y]:
+                if plaw_ct==1:
+                    Linestyle = '-'
+                else:
+                    Linestyle = '-'
 
-            plot_powerlaw(c, axes[0], amp_par, gam_par, Color=Color,
-                          Linestyle=Linestyle, Tspan=None, verbose=verbose,
-                          n_realizations=n_plaw_realizations)
+                Color = Colors[color_idx]
 
-            if plot_2d_hist:
-                corner.hist2d(c.get_param(gam_par, to_burn=True),
-                              c.get_param(amp_par, to_burn=True),
-                              bins=bins, ax=axes[1], plot_datapoints=False,
-                              plot_density=plot_density[ii],
-                              plot_contours=plot_contours[ii],
-                              no_fill_contours=True, color=Color,
-                              levels=levels)
-                ax1_ylim.append(list(axes[1].get_ylim()))
+                plot_powerlaw(c, axes[0], par_dict[group]['amp_par'],
+                              par_dict[group]['gam_par'], Color=Color,
+                              Linestyle=Linestyle, Tspan=None, verbose=verbose,
+                              n_realizations=n_plaw_realizations)
 
-            lines.append(plt.Line2D([0], [0], color=Color, linewidth=2,
-                                    linestyle=Linestyle))
-            if make_labels is True:
-                labels.append('Power Law')
+                if plot_2d_hist:
+                    corner.hist2d(c.get_param(par_dict[group]['gam_par'], to_burn=True),
+                                  c.get_param(par_dict[group]['amp_par'], to_burn=True),
+                                  bins=bins, ax=axes[1], plot_datapoints=False,
+                                  plot_density=plot_density[ii],
+                                  plot_contours=plot_contours[ii],
+                                  no_fill_contours=True, color=Color,
+                                  levels=levels)
+                    ax1_ylim.append(list(axes[1].get_ylim()))
 
-            plaw_ct += 1
-            color_idx += 1
+                lines.append(plt.Line2D([0], [0], color=Color, linewidth=2, linestyle=Linestyle))
+                if make_labels is True:
+                    labels.append('Power Law')
+
+                plaw_ct += 1
+                color_idx += 1
 
     if isinstance(freq_yr, int):
         for ln in [ii+1. for ii in range(freq_yr)]:
@@ -438,8 +605,7 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
         ncol=len(labels)
 
     if legend:
-        leg = fig.legend(lines, labels, loc=legend_loc, fontsize=12, fancybox=True,
-                         ncol=ncol)  # , bbox_to_anchor=Bbox_anchor)
+        leg = fig.legend(lines, labels, loc=legend_loc, fontsize=12, fancybox=True, ncol=ncol)  # , bbox_to_anchor=Bbox_anchor)
         leg.get_frame().set_alpha(leg_alpha)
     if excess_noise:
         fig.subplots_adjust(hspace=0.2)
@@ -469,7 +635,8 @@ def plot_rednoise_spectrum(pulsar, cores, show_figure=True, rn_types=None,  # no
 ########## Red Noise Plotting Commands #########################
 
 def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
-                  Linestyle='-', n_realizations=0, Tspan=None, to_resid=True):
+                  Linestyle='-', n_realizations=0, Tspan=None, to_resid=True,
+                  gam_idx=None,):
     """
     Plots a power law line from the given parmeters in units of residual
     time.
@@ -503,6 +670,9 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
         Timespan of the data set. Used for converting amplitudes to
         residual time. Calculated from lowest red noise frequency if not
         provided.
+
+    gam_idx : float, optional
+        index of the red noise powerlaw spectral index parameter (gamma) if it is fixed (e.g. not in the core).
     """
     F, nfreqs = get_rn_freqs(core)
 
@@ -522,14 +692,22 @@ def plot_powerlaw(core, axis, amp_par, gam_par, verbose=True, Color='k',
         sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
 
         sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
-        sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
-        for idx in range(n_realizations):
-            rho = utils.compute_rho(sorted_Amp[idx],
-                                    sorted_gam[idx], F, T)
+        if not gam_idx:
+            sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
+        for idx in range(np.min((len(sorted_idx), n_realizations))):
+            if gam_idx:
+                rho = utils.compute_rho(sorted_Amp[idx],
+                                        gam_idx, F, T)
+            else:
+                rho = utils.compute_rho(sorted_Amp[idx],
+                                        sorted_gam[idx], F, T)
             axis.plot(F, np.log10(rho), color=Color, lw=0.4,
                       ls='-', zorder=6, alpha=0.03)
-
-    log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
+    if gam_idx:
+        gamma = gam_idx
+        log10_A = core.get_param_median(amp_par)
+    else:
+        log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
 
     if verbose:
         print('Plotting Powerlaw RN Params:'
@@ -916,7 +1094,7 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
             raise ValueError(err_msg)
 
         df = np.diff(np.concatenate((np.array([0]), F)))
-        for idx in range(n_realizations):
+        for idx in range(np.min((len(sorted_idx), n_realizations))):
             exp = sorted_kappa[idx] * (sorted_gam[idx] - sorted_del[idx]) / 2
             hcf = (10**sorted_Amp[idx] * (F / fyr) ** ((3-sorted_gam[idx])/2)
                    * (1 + (F / 10**sorted_log10_fb[idx]) ** (1/sorted_kappa[idx])) ** exp)
@@ -936,5 +1114,171 @@ def plot_broken_powerlaw(core, axis, amp_par, gam_par, del_par, log10_fb_par,
     exp = kappa * (gamma - delta) / 2
     hcf = (10**log10_A * (F / fyr) ** ((3-gamma)/2)
            * (1 + (F / 10**log10_fb) ** (1/kappa)) ** exp)
+    rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
+    axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)
+
+
+def plot_extra_broken_powerlaw(core, axis, amp_par, gam_par, del_par, beta_par,
+                               log10_fb_1_par, log10_fb_2_par,
+                               kappa_1_par, kappa_2_par,
+                               verbose=True, Color='k', Linestyle='-',
+                               n_realizations=0, Tspan=None, to_resid=True,
+                               gam_val=None, del_val=None, beta_val=None,
+                               kappa_1_val=None, kappa_2_val=None):
+    """
+    Plots a broken power law line from the given parameters in units of residual
+    time.
+    Parameters
+    ----------
+    core : list
+        `la_forge.core.Core()` object which contains the posteriors
+        for the relevant red noise parameters to be plotted.
+    axis : matplotlib.pyplot.Axis
+        Matplotlib.pyplot axis object to append various red noise parameter
+        plots.
+    amp_par : str
+        Name of red noise powerlaw amplitude parameter.
+    gam_par : str
+        Name of 2nd (middle freq) red noise powerlaw spectral index parameter
+        (gamma1).
+    del_par : str
+        Name of 3rd (highest freq) red noise powerlaw spectral index parameter
+        (gamma2).
+    beta_par : str
+        Name of 1st (lowest freq) red noise powerlaw spectral index parameter
+        (gamma3).
+    log10_fb_1_par : str
+        Name of 1st (lowest freq) red noise powerlaw frequency split parameter (freq_split).
+    log10_fb_2_par : str
+        Name of 2nd (highest freq) red noise powerlaw frequency split parameter (freq_split).
+    kappa_1_par : float
+        1st Break transition parameter name.
+    kappa_2_par : float
+        2nd Break transition parameter name.
+    gam_val : float, optional
+        Set constant value for gamma, if not sampled over.
+    del_val : float, optional
+        Set constant value for delta, if not sampled over.
+    kappa_val : float, optional
+        Set constant value for kappa, if not sampled over.
+    verbose : bool, optional
+    n_realizations : int, optional
+        Number of realizations to plot.
+    Color : list, optional
+        Color to make the plot.
+    Tspan : float, optional
+        Timespan of the data set. Used for converting amplitudes to
+        residual time. Calculated from lowest red noise frequency if not
+        provided.
+    """
+    F , nfreqs = get_rn_freqs(core)
+
+    if Tspan is None:
+        T = 1/np.amin(F)
+    else:
+        T = Tspan
+
+    if n_realizations==0:
+        n_realizations = 1
+
+    if n_realizations>0:
+        # sort data in descending order of lnlike
+        if 'lnlike' in core.params:
+            lnlike_idx = core.params.index('lnlike')
+        else:
+            lnlike_idx = -4
+
+        sorted_idx = core.chain[:, lnlike_idx].argsort()[::-1]
+        sorted_idx = sorted_idx[sorted_idx > core.burn][:n_realizations]
+
+        sorted_Amp = core.get_param(amp_par, to_burn=False)[sorted_idx]
+        sorted_log10_fb_1 = core.get_param(log10_fb_1_par, to_burn=False)[sorted_idx]
+        sorted_log10_fb_2 = core.get_param(log10_fb_2_par, to_burn=False)[sorted_idx]
+
+        if gam_par in core.params:
+            sorted_gam = core.get_param(gam_par, to_burn=False)[sorted_idx]
+            gamma = core.get_param_median(gam_par)
+            # log10_A, gamma = utils.get_params_2d_mlv(core, amp_par, gam_par)
+        elif gam_val is not None:
+            sorted_gam = gam_val*np.ones_like(sorted_Amp)
+            gamma = gam_val
+            # log10_A, gamma = sorted_Amp[0], gam_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(gam_par)
+            err_msg += 'nor is `gam_val` set.'
+            raise ValueError(err_msg)
+
+        if del_par in core.params:
+            sorted_del = core.get_param(del_par, to_burn=False)[sorted_idx]
+            delta = core.get_param_median(del_par)
+        elif del_val is not None:
+            sorted_del = del_val*np.ones_like(sorted_Amp)
+            delta = del_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(del_par)
+            err_msg += 'nor is `del_val` set.'
+            raise ValueError(err_msg)
+
+        if beta_par in core.params:
+            sorted_beta = core.get_param(beta_par, to_burn=False)[sorted_idx]
+            beta = core.get_param_median(beta_par)
+        elif beta_par is not None:
+            sorted_beta = beta_val*np.ones_like(sorted_Amp)
+            beta = beta_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(beta_par)
+            err_msg += 'nor is `beta_par` set.'
+            raise ValueError(err_msg)
+
+        if kappa_1_par in core.params:
+            sorted_kappa_1 = core.get_param(kappa_1_par, to_burn=False)[sorted_idx]
+            kappa_1 = core.get_param_median(kappa_1_par)
+        elif kappa_1_val is not None:
+            sorted_kappa_1 = kappa_1_val*np.ones_like(sorted_Amp)
+            kappa_1 = kappa_1_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(kappa_1_par)
+            err_msg += 'nor is `kappa_1_val` set.'
+            raise ValueError(err_msg)
+
+        if kappa_2_par in core.params:
+            sorted_kappa_2 = core.get_param(kappa_2_par, to_burn=False)[sorted_idx]
+            kappa_2 = core.get_param_median(kappa_2_par)
+        elif kappa_2_val is not None:
+            sorted_kappa_2 = kappa_2_val*np.ones_like(sorted_Amp)
+            kappa_2 = kappa_2_val
+        else:
+            err_msg = '{0} does not appear in param list, '.format(kappa_2_par)
+            err_msg += 'nor is `kappa_2_val` set.'
+            raise ValueError(err_msg)
+
+        df = np.diff(np.concatenate((np.array([0]), F)))
+
+        for idx in range(np.min((len(sorted_idx), n_realizations))):
+            outer_piece = (10**sorted_Amp[idx]) * ((F / fyr) ** ((3-sorted_beta[idx])/2))
+            exp_1 = sorted_kappa_1[idx]*(sorted_beta[idx]-sorted_gam[idx])/2
+            exp_2 = sorted_kappa_2[idx]*(sorted_gam[idx]-sorted_del[idx])/2
+            inner_piece_1 = (F / (10**sorted_log10_fb_1[idx])) ** (1/sorted_kappa_1[idx])
+            inner_piece_2 = (F / (10**sorted_log10_fb_2[idx])) ** (1/sorted_kappa_2[idx])
+            hcf = outer_piece*((1+inner_piece_1*((1+inner_piece_2)**(exp_2/exp_1)))**exp_1)
+            rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
+            axis.plot(F, np.log10(rho), color=Color, lw=0.4, ls='-', zorder=6, alpha=0.03)
+
+    if verbose:
+        print('Plotting Powerlaw RN Params:'
+              'Tspan = {0:.1f} yrs, 1/Tspan = {1:.1e}'.format(T/secperyr, 1./T))
+        print('Red noise parameters: log10_A = '
+              '{0:.2f}, gamma = {1:.2f}'.format(sorted_Amp[0], sorted_gam[0]))
+
+    log10_A = core.get_param_median(amp_par)
+    log10_fb_1 = core.get_param_median(log10_fb_1_par)
+    log10_fb_2 = core.get_param_median(log10_fb_2_par)
+
+    outer_piece = (10**log10_A) * ((F / fyr) ** ((3-beta)/2))
+    exp_1 = kappa_1*(beta-gamma)/2
+    exp_2 = kappa_2*(gamma-delta)/2
+    inner_piece_1 = (F / (10**log10_fb_1)) ** (1/kappa_1)
+    inner_piece_2 = (F / (10**log10_fb_2)) ** (1/kappa_2)
+    hcf = outer_piece*((1+inner_piece_1*((1+inner_piece_2)**(exp_2/exp_1)))**exp_1)
     rho = np.sqrt(hcf**2 / 12 / np.pi**2 / F**3 * df)
     axis.plot(F, np.log10(rho), color=Color, lw=1.5, ls=Linestyle, zorder=6)

@@ -30,49 +30,44 @@ class SlicesCore(Core):
 
     Parameters
     ----------
-    """
+    label : str
+        Label for this chain.
 
+    slicedirs : list
+        Directories where the various chain files can be found.
+
+    pars2pull : list of str, list of lists of str
+        Parameter names to extract from chains. If list of parameter names
+        is provided this set of parameters will be extracted from each
+        directory. If list of list, main list must be the same length as
+        `slicedirs`, but inner lists may be arbitrary length. The parameters
+        in each inner list will be extracted.
+
+    params : list of str
+        User defined names of parameters in constructed array.
+
+    pt_chains : bool
+        Whether to load all higher temperature chains from a parallel tempering
+        (PT) analysis. Assumes 1 entry in `slicedirs`.
+
+    parfile : str
+        Name of parameter list file in the directories that corresponds to
+        columns of the chains.
+
+    corepath : str
+        Path to a SlicedCore saved as an hdf5 file.
+
+    fancy_par_names : list of str
+        A set of parameter names for plotting.
+
+    burn : int
+        Burn in length for chains. Will automatically be set to 1/4 of chain
+        length if none is provided.
+    """
     def __init__(self, label=None, slicedirs=None, pars2pull=None, params=None,
                  corepath=None, fancy_par_names=None, verbose=True,
                  burn=0.25, pt_chains=False, parfile='pars.txt'):
-        """
-        Parameters
-        ----------
 
-        label : str
-            Label for this chain.
-
-        slicedirs : list
-            Directories where the various chain files can be found.
-
-        pars2pull : list of str, list of lists of str
-            Parameter names to extract from chains. If list of parameter names
-            is provided this set of parameters will be extracted from each
-            directory. If list of list, main list must be the same length as
-            `slicedirs`, but inner lists may be arbitrary length. The parameters
-            in each inner list will be extracted.
-
-        params : list of str
-            User defined names of parameters in constructed array.
-
-        pt_chains : bool
-            Whether to load all higher temperature chains from a parallel tempering
-            (PT) analysis. Assumes 1 entry in `slicedirs`.
-
-        parfile : str
-            Name of parameter list file in the directories that corresponds to
-            columns of the chains.
-
-        corepath : str
-            Path to a SlicedCore saved as an hdf5 file.
-
-        fancy_par_names : list of str
-            A set of parameter names for plotting.
-
-        burn : int
-            Burn in length for chains. Will automatically be set to 1/4 of chain
-            length if none is provided.
-        """
         super()._set_hdf5_lists(append=[('slicedirs', '_savelist_of_str'),
                                         ('pars2pull', '_savelist_of_str')])
         if corepath is not None:

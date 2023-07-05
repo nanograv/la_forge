@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/Hazboun6/la_forge
+    $ git clone git://github.com/nanograv/la_forge
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/Hazboun6/la_forge/tarball/master
+    $ curl  -OL https://github.com/nanograv/la_forge/tarball/main
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/Hazboun6/la_forge
-.. _tarball: https://github.com/Hazboun6/la_forge/tarball/master
+.. _Github repo: https://github.com/nanograv/la_forge
+.. _tarball: https://github.com/nanograv/la_forge/tarball/main

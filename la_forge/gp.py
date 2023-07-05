@@ -8,6 +8,7 @@ import scipy.linalg as sl
 import scipy.sparse as sps
 import six
 
+from .timing import get_param_groups
 # import la_forge dependencies
 
 __all__ = ['Signal_Reconstruction']
@@ -628,3 +629,17 @@ class KernelMatrix(np.ndarray):
                 return inv, ld
             else:
                 return inv
+
+
+def get_dmgp_timescales(core):
+    plot_params = get_param_groups(core, selection="dm_chrom")
+    for dm_par in plot_params['par']:
+        if "ell" in dm_par:
+            plot_params['conv_med_val'].append(f"{np.median(10**core.get_param(dm_par,tm_convert=True))} days")
+        elif "log10_p" in dm_par:
+            plot_params['conv_med_val'].append(f"{np.median(10**core.get_param(dm_par,tm_convert=True)*3.16e7/86400)} days")
+        elif "n_earth" in dm_par:
+            plot_params['conv_med_val'].append(f"{np.median(core.get_param(dm_par,tm_convert=True))} SW electron density")
+        else:
+            plot_params['conv_med_val'].append(f"{np.median(10**core.get_param(dm_par,tm_convert=True))} seconds")
+    return plot_params

@@ -55,6 +55,8 @@ model stochastic processes in data and while there are often functions
 that are used to describe them, they are inherently realization
 dependent. In order to get a feeling for how well the GPs are fitting
 the data we use ``enterprise`` to make realizations of the GPs.
+Thankfully this is straightofrward using the the various tools
+available.
 
 We start by importing a few functions, retrieving the pulsar and making
 the PTA object.
@@ -76,7 +78,7 @@ the PTA object.
 
     with open(filepath,'rb') as fin:
         psr=pickle.load(fin)
-
+    
     with open(chaindir+'/model_kwargs.json' , 'r') as fin:
         model_kwargs=json.load(fin)
 
@@ -136,7 +138,7 @@ can be retrieved with the same functions.
 
 .. code:: ipython3
 
-    psr.fitpars
+    psr.fitpars 
 
 
 
@@ -178,7 +180,7 @@ can be retrieved with the same functions.
     # parameter indices to pull from chain. Change `size` flag for more or less.
     # first one picks the "most likely values"
     idxs = np.argsort(c0.get_param('lnpost',to_burn=False))[::-1][:20]
-
+    
     # this one just picks random values. Should be broadly the same as above if well converged
     # idxs = np.random.randint(sr.burn, sr.chain.shape[0],size=100)
 
@@ -257,19 +259,19 @@ GP.
 .. code:: ipython3
 
     fig = plt.figure(figsize=[14,6])
-
+    
     ####### First Plot ########
     fig.add_subplot(311)
     plt.plot(psr.toas/(24*3600),mn_DM*(psr.freqs/1400)**2*1e6,label='DM1+DM2+SW')
     plt.legend()
     plt.ylabel(r'$\Delta$t [us] $\times (\frac{f}{1.4 GHz})^2$')
     plt.title(psrname)
-
+    
     ####### Second Plot ########
     fig.add_subplot(312)
     plt.plot(psr.toas/(24*3600),mn_dmgp*(psr.freqs/1400)**2*1e9,label='DM GP 1')
     plt.ylabel(r'$\Delta$t [ns] $\times (\frac{f}{1.4 GHz})^2$')
-
+    
     ####### Third Plot ########
     fig.add_subplot(313)
     plt.plot(psr.toas/(24*3600),mn_chrom_gp*(psr.freqs/1400)**4*1e9,label='Chrom GP')
@@ -293,8 +295,8 @@ DM GP models are matching the changes in the dispersion measure.
 .. code:: ipython3
 
     #Load DMX values
-    dtypes = {'names': ('DMXEP', 'DMX_value', 'DMX_var_err',
-                        'DMXR1', 'DMXR2', 'DMXF1',
+    dtypes = {'names': ('DMXEP', 'DMX_value', 'DMX_var_err', 
+                        'DMXR1', 'DMXR2', 'DMXF1', 
                         'DMXF2', 'DMX_bin'),
               'formats': ('f4','f4','f4','f4','f4','f4','f4','U6')}
     dmx = np.loadtxt('/Users/hazboun/nanograv_detection/12p5yr/noise_model_selection/dmx/{0}_NANOGrav_12yv3.dmx'.format(psrname),
@@ -304,7 +306,7 @@ DM GP models are matching the changes in the dispersion measure.
 .. code:: ipython3
 
     # Convert signals into units of DM [pc/cm^3]
-    dm_units = (dm_gp  + DM)*psr.freqs[np.newaxis,:]**2*2.41e-4
+    dm_units = (dm_gp  + DM)*psr.freqs[np.newaxis,:]**2*2.41e-4 
     dm_mean = (mn_DM + mn_dmgp )*psr.freqs**2*2.41e-4
 
 .. code:: ipython3
@@ -312,14 +314,14 @@ DM GP models are matching the changes in the dispersion measure.
     plt.figure(figsize=[12,3])
     for dm in dm_units:
         plt.plot(psr.toas/(24*3600),dm-dm.mean(),linewidth=0.2,alpha=0.3,color='C1')
-
+    
     plt.plot(psr.toas/(24*3600),dm_mean-dm_mean.mean(),linewidth=2,color='C1')
     plt.errorbar(x=dmx['DMXEP'],
                  y=dmx['DMX_value']-dmx['DMX_value'].mean(),
                  yerr=dmx['DMX_var_err'],
                  marker='x',color='k',linestyle='none')
-
-
+    
+    
     plt.ylim(-0.0010,0.0005)
     plt.xlabel('MJD')
     plt.ylabel(r'$\Delta$ DM [$pc/cm^3$]')
@@ -391,11 +393,11 @@ allows us to plot by frequency.
 
     sec_to_day = 24*3600
     fig=plt.figure(figsize=[14,8])
-
+    
     #--------- 1st Plot -------------#
     fig.add_subplot(211)
     high_rec = 'Rcvr1_2'
-
+    
     plt.scatter(x=resids[high_rec][:,0]/sec_to_day,
                 y=resids[high_rec][:,1]*1e6-np.mean(resids[high_rec][:,1]*1e6),
                 s=8,c='C0')
@@ -404,7 +406,7 @@ allows us to plot by frequency.
                 s=6,
                 c='C0',alpha=0.05)
     plt.ylabel(r'$\Delta t$ [$\mu s$]')
-
+    
     #--------- 2nd Plot -------------#
     fig.add_subplot(212)
     low_rec = 'Rcvr_800'
@@ -415,7 +417,7 @@ allows us to plot by frequency.
                 y=((psr.residuals-all_chrgp)[msks[low_rec]]-(psr.residuals-all_chrgp)[msks[low_rec]].mean())*1e6,
                 s=6,
                 c='red',alpha=0.05)#psr.freqs,cmap='RdBu')
-
+    
     plt.ylabel(r'$\Delta t$ [$\mu s$]')
     plt.xlabel('MJD')
     fig.suptitle(psrname,y=1.01)
@@ -458,9 +460,9 @@ there is interesting that is missed by the current modeling.
                 c='C0',alpha=0.05)
     plt.ylim(-7.5,5)
     plt.ylabel(r'$\Delta t$ [$\mu s$]')
-
+    
     fig.add_subplot(412)
-
+    
     plt.scatter(x=resids2['Rcvr_800'][:,0]/sec_to_day,
                 y=resids2['Rcvr_800'][:,1]*1e6,
                 s=8,c='red')
@@ -469,29 +471,29 @@ there is interesting that is missed by the current modeling.
                 s=6,
                 c='red',alpha=0.05)
     plt.ylim(-12,10)
-
+    
     plt.ylabel(r'$\Delta t$ [$\mu s$]')
-
+    
     fig.add_subplot(413)
-
+    
     for dm in dm_units:
         plt.plot(psr.toas/(24*3600),dm-dm.mean(),linewidth=0.2,alpha=0.3,color='C1')
-
+    
     plt.plot(psr.toas/(24*3600),dm_mean-dm_mean.mean(),linewidth=2,color='C1')
     plt.errorbar(x=dmx['DMXEP'],
                  y=dmx['DMX_value']-dmx['DMX_value'].mean(),
                  yerr=dmx['DMX_var_err'],
                  marker='x',color='k',linestyle='none')
-
+    
     plt.ylim(-0.0025,0.0037)
     plt.xlabel('MJD')
     plt.ylabel(r'$\Delta$ DM [$pc/cm^3$]')
-
+    
     fig.add_subplot(414)
     plt.plot(psr.toas/sec_to_day, mn_chrom_gp*(psr.freqs/1400)**4,'x',color='k')
     plt.ylabel(r'$\Delta t$ Scattering [s] $\times (\frac{f}{1.4GHz})^4$')
     plt.xlabel('MJD')
-
+    
     fig.suptitle(psrname,y=1.01)
     fig.tight_layout(pad=1.01)
     plt.show()
@@ -501,3 +503,5 @@ there is interesting that is missed by the current modeling.
 .. image:: gp_visualization_files/gp_visualization_49_0.png
    :width: 999px
    :height: 730px
+
+

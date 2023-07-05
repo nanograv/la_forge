@@ -1,6 +1,8 @@
 =======
 History
 =======
+1.0.2 (2022-07-19) Fixes a delimiter bug for pulling in priors.txt.
+
 1.0.1 (2021-10-21) Fixes a bug that did not allow parameter dictionary I/O in HyperModelCores
 
 1.0.0 (2021-10-18) Capabilities to save as HDF5 files. Added full documentation and filled out the testing suite.

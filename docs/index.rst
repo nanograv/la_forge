@@ -12,6 +12,7 @@ Welcome to La Forge's documentation!
    tutorial3
    hyper_model
    gp_visualization
+   timing_model
    modules
    contributing
    authors

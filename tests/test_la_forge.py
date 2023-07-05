@@ -74,6 +74,7 @@ def test_core_from_ptmcmc_chains():
     assert hasattr(c0, 'get_param')
     assert hasattr(c0, 'params')
     assert np.array_equal(c0(c0.params[0]), c0.get_param(c0.params[0]))  # Test __call__
+    assert np.array_equal(c0(c0.params[2])[::10], c0.get_param(c0.params[2], thin_by=10))
     assert isinstance(c0.get_map_dict(), dict)
     assert isinstance(c0.credint(c0.params[0], onesided=True, interval=95), float)
     assert isinstance(c0.credint(c0.params[0]), tuple)
@@ -95,12 +96,14 @@ def test_core_loading(pta_core):
                          nsamples=10, smallest_dA=0.05, largest_dA=0.1)
     assert isinstance(bf, tuple)
 
+
 def test_hypermodel_core_loading(hmc_core):
     """Tests the loading of a Core into a class. """
     corepath = os.path.join(testdir, 'test_hdf5_hmc.core')
     hmc_core.save(corepath)
     c1 = core.HyperModelCore(corepath=corepath)  # test loading
-    assert isinstance(c1.param_dict,dict)
+    assert isinstance(c1.param_dict, dict)
+
 
 def test_percentiles(pta_core):
     """Tests calculations of median and credible intervals."""

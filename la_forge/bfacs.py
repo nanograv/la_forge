@@ -207,7 +207,7 @@ def ti_log_evidence(slices_core, verbose=True, bs_iterations=4000, plot=False, s
         for ii in range(len(inv_temps)):
             plt.axvline(inv_temps[ii], color='k', linestyle='--')
         plt.xlim([1e-10, 1])
-        plt.xlabel('Temperature')
+        plt.xlabel('Inverse Temperature')
         plt.ylabel('Mean(beta * lnlikelihood)')
         if save:
             plt.savefig(save, bbox_inches='tight', dpi=150)

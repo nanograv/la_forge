@@ -1,6 +1,8 @@
 =======
 History
 =======
+1.0.3 (2023-10-22) Adds Bayes factor calculations.
+
 1.0.2 (2022-07-19) Fixes a delimiter bug for pulling in priors.txt.
 
 1.0.1 (2021-10-21) Fixes a bug that did not allow parameter dictionary I/O in HyperModelCores

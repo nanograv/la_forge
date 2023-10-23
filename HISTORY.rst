@@ -1,7 +1,7 @@
 =======
 History
 =======
-1.0.3 (2023-10-22) Adds Bayes factor calculations.
+1.1.0 (2023-10-22) Adds Bayes factor calculations.
 
 1.0.2 (2022-07-19) Fixes a delimiter bug for pulling in priors.txt.
 

@@ -691,7 +691,7 @@ class HyperModelCore(Core):
         """
         # Call to add `param_dict` and `log_weights` to dictionaries for hdf5 to search for.
         self.param_dict = param_dict
-	self.log_weights = log_weights
+        self.log_weights = log_weights
         super()._set_hdf5_lists(append=[('param_dict', '_savedicts')])
         super()._set_hdf5_lists(append=[('log_weights', '_savedicts')])
         super().__init__(chaindir=chaindir, burn=burn,

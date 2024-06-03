@@ -720,12 +720,12 @@ class HyperModelCore(Core):
 	# search for hypermodel weights and add them to core if found
         if self.log_weights is None and corepath is None:
             try:
-                with open(chaindir + '/log_weights.json', 'r') as fin:
+                with open(chaindir + '/model_log_weights.json', 'r') as fin:
                     log_weights = json.load(fin)
 
                 if any([isinstance(ky, str) for ky in log_weights]):
                     self.log_weights = {}
-                    for ky, val in param_dict.items():
+                    for ky, val in log_weights.items():
                         self.log_weights.update({int(ky): val})
                 else:
                     self.log_weights = log_weights

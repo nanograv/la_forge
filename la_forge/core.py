@@ -727,11 +727,12 @@ class HyperModelCore(Core):
                     self.log_weights = {}
                     for ky, val in param_dict.items():
                         self.log_weights.update({int(ky): val})
-		else:
-		    self.log_weights = log_weights
+                else:
+                    self.log_weights = log_weights
             except:
-		pass
-	
+                pass
+
+
         self.nmodels = len(list(self.param_dict.keys()))
 
     def model_core(self, nmodel):

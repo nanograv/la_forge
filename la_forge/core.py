@@ -732,7 +732,6 @@ class HyperModelCore(Core):
             except:
                 pass
 
-
         self.nmodels = len(list(self.param_dict.keys()))
 
     def model_core(self, nmodel):

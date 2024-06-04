@@ -693,7 +693,7 @@ class HyperModelCore(Core):
         self.param_dict = param_dict
         self.log_weights = log_weights
         super()._set_hdf5_lists(append=[('param_dict', '_savedicts')])
-        super()._set_hdf5_lists(append=[('log_weights', '_savedicts')])
+        #super()._set_hdf5_lists(append=[('log_weights', '_savedicts')])
         super().__init__(chaindir=chaindir, burn=burn,
                          corepath=corepath,
                          label=label,

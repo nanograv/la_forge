@@ -596,7 +596,7 @@ class Core(object):
             files. Each member must be (str of attribute, list to append to).
         """
         self._metadata = ['label', 'burn', 'chaindir', 'chainpath', 'runtime_info']
-        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains', 'truths']
+        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains', 'truths', 'log_weights']
         self._savearrays = ['cov', 'rn_freqs']
         self._savelist_of_str = ['priors', 'fancy_par_names']
         if append is not None:

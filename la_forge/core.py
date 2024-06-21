@@ -596,7 +596,7 @@ class Core(object):
             files. Each member must be (str of attribute, list to append to).
         """
         self._metadata = ['label', 'burn', 'chaindir', 'chainpath', 'runtime_info']
-        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains', 'truths', 'log_weights']
+        self._savedicts = ['jumps', 'jump_fractions', 'hot_chains', 'truths']
         self._savearrays = ['cov', 'rn_freqs']
         self._savelist_of_str = ['priors', 'fancy_par_names']
         if append is not None:
@@ -678,7 +678,7 @@ class HyperModelCore(Core):
     """
 
     def __init__(self, label=None, param_dict=None, log_weights=None,
-		 chaindir=None, burn=0.25, corepath=None,
+		         chaindir=None, burn=0.25, corepath=None,
                  fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, skiprows=0):
         """
@@ -693,7 +693,6 @@ class HyperModelCore(Core):
         self.param_dict = param_dict
         self.log_weights = log_weights
         super()._set_hdf5_lists(append=[('param_dict', '_savedicts'), ('log_weights', '_savedicts')])
-        #super()._set_hdf5_lists(append=[('log_weights', '_savedicts')])
         super().__init__(chaindir=chaindir, burn=burn,
                          corepath=corepath,
                          label=label,

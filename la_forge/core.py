@@ -677,8 +677,8 @@ class HyperModelCore(Core):
     HyperModel framework.
     """
 
-    def __init__(self, label=None, param_dict=None, chaindir=None,
-                 burn=0.25, corepath=None,
+    def __init__(self, label=None, param_dict=None, log_weights=None,
+		         chaindir=None, burn=0.25, corepath=None,
                  fancy_par_names=None, chain=None, params=None,
                  pt_chains=False, skiprows=0):
         """
@@ -689,9 +689,10 @@ class HyperModelCore(Core):
             Dictionary of parameter lists, corresponding to the parameters in
             each sub-model of the hypermodel.
         """
-        # Call to add `param_dict` to dictionaries for hdf5 to search for.
+        # Call to add `param_dict` and `log_weights` to dictionaries for hdf5 to search for.
         self.param_dict = param_dict
-        super()._set_hdf5_lists(append=[('param_dict', '_savedicts')])
+        self.log_weights = log_weights
+        super()._set_hdf5_lists(append=[('param_dict', '_savedicts'), ('log_weights', '_savedicts')])
         super().__init__(chaindir=chaindir, burn=burn,
                          corepath=corepath,
                          label=label,
@@ -715,6 +716,20 @@ class HyperModelCore(Core):
             self.param_dict = param_dict
         else:
             pass
+	# search for hypermodel weights and add them to core if found
+        if self.log_weights is None and corepath is None:
+            try:
+                with open(chaindir + '/model_log_weights.json', 'r') as fin:
+                    log_weights = json.load(fin)
+
+                if any([isinstance(ky, str) for ky in log_weights]):
+                    self.log_weights = {}
+                    for ky, val in log_weights.items():
+                        self.log_weights.update({int(ky): val})
+                else:
+                    self.log_weights = log_weights
+            except:
+                pass
 
         self.nmodels = len(list(self.param_dict.keys()))
 

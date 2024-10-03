@@ -5,8 +5,14 @@ import pickle
 import logging
 from typing import Type
 
+import datetime
+from functools import cached_property
+
+import arviz as az
 import h5py
 import numpy as np
+import pandas as pd
+import xarray as xr
 from astropy.io import fits
 from astropy.table import Table
 
@@ -109,6 +115,18 @@ class Core(object):
                 self.params = table.colnames
                 self.chain = np.array([table[p] for p in self.params]).T
                 self.chainpath = chaindir + '/chain.fits'
+            # Check if it's in a common arviz format
+            elif os.path.isfile(chaindir + '/chain.nc') or os.path.isfile(chaindir + '/chain.zarr'):
+                self.chainpath = chaindir + '/chain.nc' if os.path.isfile(chaindir + '/chain.nc') else chaindir + '/chain.zarr'
+                extension = self.chainpath.split(".")[-1]
+                try:
+                    inf_data = az.from_netcdf(self.chainpath) if extension=="nc" else az.from_zarr(self.chainpath)
+                except:
+                    msg = f"{self.chainpath} is not a valid ArviZ InferenceData object."
+                    raise ValueError(msg)
+                stacked = az.extract(inf_data)  # combines chains
+                self.chain = stacked.to_array().to_numpy().T  # ArviZ uses dimension 1 for samples, we want it to be 0
+                self.params = [param for param in stacked.variables if param not in ['sample', 'chain', 'draw']]
             else:
                 # Load chain
                 if os.path.isfile(chaindir + '/chain_1.txt'):
@@ -665,6 +683,35 @@ class Core(object):
     def map_params(self):
         """Return all Maximum a posteri parameters."""
         return self.chain[self.burn + self.map_idx, :]
+
+    @cached_property
+    def arviz(self) -> az.InferenceData:
+        """Create an arviz.InferenceData object from a Core."""
+
+        # Easiest to make a dataframe first
+        df = pd.DataFrame(data=self.chain, columns=self.params)
+
+        # ArviZ wants to see `chain` and `draw` dimensions
+        df["chain"] = 0
+        df["draw"] = np.arange(len(df), dtype=int)
+        df = df.set_index(["chain", "draw"])
+
+        # Make an xarray `Dataset` to give ArviZ
+        xdata = xr.Dataset.from_dataframe(df)
+
+        # Store some metadata
+        xdata.attrs.update(
+            source="la_forge_core",
+            created_at=datetime.datetime.now(datetime.timezone.utc)
+            .replace(microsecond=0)
+            .isoformat(),
+        )
+
+        # Make the ArviZ object
+        dataset = az.InferenceData(posterior=xdata)
+
+        return dataset
+
 
 # --------------------------------------------#
 # ---------------HyperModel Core--------------#

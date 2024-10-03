@@ -11,15 +11,23 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['numpy>=1.16',
-                'scipy>=1.0.0',
-                'matplotlib>=2.0.0',
-                'corner',
-                'h5py>=3.4.0',
-                'astropy>=3.0',
-                'six',
+requirements = [
+    "numpy>=1.16",
+    "scipy>=1.0.0",
+    "matplotlib>=2.0.0",
+    "corner",
+    "h5py>=3.4.0",
+    "astropy>=3.0",
+    "six",
+    "arviz>=0.19.0",
+    "zarr>=2.5.0,<3",
+    "netcdf4",
+    "xarray-datatree",
+    "dm-tree",
+    "contourpy",
+    "bokeh>=3",
 
-                ]
+]
 
 test_requirements = ['pytest', ]
 

@@ -180,7 +180,7 @@ class Core(object):
 
             try:
                 prior_path = glob.glob(chaindir + '/priors.txt')[0]
-                self.priors = np.loadtxt(prior_path, dtype=str, delimiter='\t')
+                self.priors = np.genfromtxt(prior_path ,dtype=str,delimiter='\n')
             except (FileNotFoundError, IndexError):
                 self.priors = None
 
